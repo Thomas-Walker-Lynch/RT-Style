@@ -1,0 +1,45 @@
+#+TITLE: Project Ontology: Authored vs. Loadable
+#+AUTHOR: Harmony Developer
+#+DATE: 2025-11-21
+#+OPTIONS: toc:t num:nil
+
+* The Core Philosophy
+This project distinguishes files based on fundamental **invariants** (properties) rather than arbitrary file types[cite: 889, 890]. This creates a clear semantic structure:
+- **Provenance**: Who created this file?
+- **Capability**: What is the file's primary function in the system? [cite: 890, 891]
+
+**The Golden Rule:** God and Artists (Developers) *create* things; Factories (Build Systems) *make* things[cite: 892].
+
+* Directory Structure Overview
+
+#+BEGIN_SRC text
+developer/
+├── authored/              # (The Logic) Human-written source code.
+├── loadable/              # (Capability) Agnostic Entry Points.
+├── scratchpad/            # (Transient) Intermediates, Objects.
+└── tool/                  # (The Factory) Build scripts.
+
+release/
+├── loadable/              # (Capability) Shared, Agnostic Release Entry Points.
+├── local_build/           # (Action/Locality) Architecture-specific binaries.
+#+END_SRC
+
+* Detailed Invariants
+
+** ~developer/authored/~
+- **Invariant:** Primary Logic Source (Code). Every file here is written by a human author[cite: 898, 899].
+- **Rule:** Scripts must treat this directory as read-only. This replaces the old `cc/` and `python3/` source directories.
+
+** ~developer/loadable/~
+- **Invariant:** Architecture-Agnostic Entry Points. Files here possess the property of being executable by the user[cite: 902].
+- **Contents:** Symlinks to interpreted code, shared scripts, and wrappers that are safe to commit[cite: 903].
+
+** ~developer/scratchpad/loadable/~
+- **Invariant:** Machine-Generated Executables (Intermediate). This is the transient output location during development[cite: 904].
+- **Rule:** This directory is **ignored by Git** and houses compiled binaries and libraries derived by the build system[cite: 905, 906].
+
+** ~release/local_build/~
+- **Invariant:** Local Action Required.
+- **Rule:** This directory is added to the `.gitignore` in the release directory. Its presence signals to a new developer: **"You must perform a local build to populate this directory with machine-specific executables."**
+- **Contents:** Final binaries are copied here by the release script from the `scratchpad/`[cite: 915].
+  <

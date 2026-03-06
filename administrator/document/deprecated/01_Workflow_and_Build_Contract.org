@@ -1,0 +1,146 @@
+#+TITLE: 01 - Workflow and Build Contract
+#+AUTHOR: RT
+#+DATE: 2025-11-21
+#+OPTIONS: toc:2 num:nil
+
+#+HTML_HEAD_EXTRA: <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="../style/rt_dark_doc.css">
+
+#+BEGIN_EXPORT html
+<div class="page">
+#+END_EXPORT
+
+* Purpose
+The workflow contract defines the steps from authorship through release of work product.
+
+There are three circular loops. 
+
+In the development loop, developers author code and run experiments, eventually then promoting work product to the =release/= directory.
+
+In the developer tester loop, testers test the promoted release candidates and file issues against them, developers address these, and then promote new release candidates. Or in a tighter version of this loop, a developer with a local copy of this project plays both roles so as to speed the cycle.
+
+In the third loop, the tester finds the release candidates to meet the goals for the release version, and to be of sufficient quality that they create a new release branch.  Released code then has bug reports filed against it. Developers address these and the prior two loops are run until a new release candidate is stable, and a new release branch is made.
+
+Release branches have two integer numbers. The first number is the version of the software, as per the architectural specification. (That specification is placed into the project document directory.) The second number counts the number of times the tester has created a release branch for said version of the software.
+
+The workflow is designed for forward motion of through release numbers, so as to avoid having to maintain older releases separately. It is better to give a customer a new release if a bug must be fixed, even the customer will not pay for the new release, that it is to pay the cost of dealing with multi-release level bug fixes.  However, as each release has its own branch, it is possible to perform multi-release level bug fixes if that is what is required or desired.
+
+* Roles and Process
+
+** Developer Role
+Responsibilities:
+
+1. Write and modify authored source. Ensure code meets RT style (see =02_RT_Code_Format.org=).
+2. Run builds.
+3. Spot testing in =experiment/=
+4. Promotes release candidates for more thorough testing using the customized =prommote= script.
+5. Rinse, lather, repeat.
+
+** Tester Role
+Responsibilities:
+
+1. Validate candidates under =release/=.  
+2. Run regression suites.  
+3. Approve for quality and completeness, and create release branches.
+
+** Toolsmith Role
+Responsibilities:
+
+1. Setup the project directory, and keep the project in sync with the Harmony skeleton.
+2. Maintain the role environments, apart from the =<role>/tool/env= files which are owned by the respective =<role>=.
+3. Install and maintained shared tools, =tool/= and =shared/=, and other tools upon request.
+4. Address issues with project workflow. Propose updates to the Harmony skeleton.
+
+
+* Entering the project
+
+What I do to enter a project is to first run an emacs shell. I cd to the project I want to work on, and then source the =env_toolsmith=, =env_developer=, or =env_tester= file, depending on which role I want to work in. Although sourcing these files affects the environment of the shell I am running, it does not effect the environment of emacs.  Hence after sourcing the environment, I launch an IDE.  This newly launched IDE will have a correct environment.  For myself, these days, that new IDE will be emacs again.
+
+It is common that I will have two or three IDE's (emacs invocations) running side by side, each as different roles.  Then I can write code, spot test it, promote it, then change to the other IDE and run regression tests.  And if it is a phase of the project where tools are in flux, I will use the third IDE for modifying tools.  Hence, as one person I will taken on three roles simultaneously, each in a different IDE.
+
+On a large project, chances are that all team members will be doing something similar to this on their local clones of the project. However, there will be team members concentrating on code development, and others on testing and release.  Early on a toolsmith will setup the project, and then continue to maintain it.
+
+* Developer
+
+** Authoring and Building
+
+Developers write the build fodder files in the =authored/= directory. File name extensions are used to signal to the build tools how the build fodder is to be used.  When the conventional single extension giving the main file type is not enough, two extensions are used.
+
+For example, with the default makefile for C, compiler fodder is found in the =authored/= directory, each file has one these file name extensions:
+
+- CLIs end in =.cli.c=  
+- Libary code source end in =.lib.c=  
+- Kernel module sources are =.mod.c=  
+
+Fodder with the =.cli.c= extension is made into a stand alone executable.
+
+Fodder with =.lib.c= extension is compiled as an object file and added to the =lib<project>.a= archive. The =.cli.c= files are linkedin against said archive.
+
+Build tools never write into the =developer/authored= directory. Build products that are not to be tracked go on the =scratchpad/=. Those that are tracked go into the =developer/made= directory.
+
+It is expected that developers customize and add to the build scripts that come with the Harmony skeleton in order to fit their specific build needs. Note the Ariadne project for complex builds.
+
+** Developer Testing
+
+Spot tests are run in the =experiment/= directory. If the tests grow complex or are to be kept for the long term, move them to the tester environment.
+
+Once the developer finds the edits to be stable he or she can promote them.  The promoted code is referred to as release candidates. Promoted release candidates can then be read by the tester role.
+
+As I mentioned, it is not uncommon for a team member to have two IDEs open, with one being in the developer environment, and one being in the tester environment, and then to bounce back and fourth between them.
+
+Once the release candidate code is stable, the developer can pull the remote repo, address merge conflicts, then push the local repo back. Merge conflicts on tracked release candidates are common as it is a bottleneck point in the code development.
+
+** Promotion for release
+
+As mentioned, files are promoted from the developer environment to the top level =release/= directory by the developer. The developer effects promotion for release by running the customized =developer/tool/promote= script, and then pushing the repository. Only a tester can actually perform a release.
+
+Building and promotion are separate activities.
+
+- No tool may rebuild during promotion.  
+- Promotion is a copy-only operation.  
+- No builds are run in the =release/= directory.
+
+If architecture specific files are to be part of the release, the developer will develop a  =build_untracked= script and promote it into the =release/tool= directory. Then when a user clones a released project, as a second step the user will invoke the =release/tool/build_untracked= script. That script will fill in the =release/made_untracked= directory with code built specifically for the user's platform. 
+
+- =release/documnt/= (documents for those who intend to use the work product)
+- =release/authored=  (interpreter fodder - _none are run directly_)
+- =release/made_tracked/= (pushed to remote, pulled from remote, links into authored scripts)
+- =release/made_untracked/= (local-only)
+- =release/tool/= (=build_untracked= and other tools for maintaining released code)
+
+We chose the 'build after clone' approach over the 'thousand architecture specific binary release directories' approach, because maintaining many architecture release files became a maintenance problem.  Note this new approach requires that third party tools be installed so that the =release/tool/build_untracked= script can run. This is the trade off cost for nothing having the thousand architecture directories. 
+
+A user of the Harmony skeleton is free to customize the promotion tool and go back to multiple architecture specific binary release directories if that is what they want.
+
+Clearly if work product is intended to be distributed to lay users, there must be a deployment step after the release step, but we do not address this in these documents, as it this is not part of Harmony.
+
+
+* Tester
+
+The developer has promoted release candidates to the =release/= directory. He or she claims those represent a complete high quality product at the given release level. The testers are going to prove the developers to be wrong about that claim. If testers can't disprove this claim, the testers will make a release branch at the next minor release number for the given major release version.
+
+- The tester reads the spec, and writes a complete set of feature tests.
+
+- The tester uses the Mosaic test tool, and writes a set of tests, first for the individual functions that make up the program, then for functions in groups.
+
+- The tester accumulates tests for each bug that ever comes back on a release.
+
+- The tester collects tests from the developer when they are offered.
+
+- The tester writes other tests as he or she sees fit.
+
+- When the tests pass, one presumes, the tester will create a release branch.
+
+* Separation of roles.
+
+A tester never patches code in the =developer/= directory, instead the tester files issues. A tester could propose a code fix on another branch, and then point the developers at it in the issue report.
+
+A developer never writes into =tester/=, instead a developer adds to the =experiment/= and  offers to share tests. A developer can propose tests on another branch, and then point testers at it.
+
+It is up the project manager how strict role assignments will be. 
+
+As mentioned before, one person can play multiple roles. For example, it makes perfect sense for a developer with a local copy of the repo, to have an IDE open as a tester, so that he or she can run tests on release candidates before pushing them. However, in when doing this, the test code might be read only. The developer is merely running it and has no plans to push changes to it.
+
+#+BEGIN_EXPORT html
+</div>
+#+END_EXPORT

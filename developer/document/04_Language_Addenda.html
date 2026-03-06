@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Language Addenda (C, Python, Bash, Lisp)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+    <script src="../../style/body_visibility_hidden.js"></script>
+    <script> window.StyleRT.body_visibility_hidden(); </script>
+  </head>
+  <body>
+    <RT-article>
+      <RT-title 
+        author="RT" 
+        date="2026-03-05" 
+        title="Language Addenda (C, Python, Bash, Lisp)">
+      </RT-title>
+
+      <RT-TOC level="1"></RT-TOC>
+
+      <h1>Purpose</h1>
+      <p>
+        The RT code format is language-agnostic, but actual languages differ in syntax and constraints. This document explains how the RT rules are applied in C, Python, Bash, and Lisp dialects.
+      </p>
+
+      <h1>1. C Addendum</h1>
+      <h2>1.1 Control Structure and File Layout</h2>
+      <p>
+        Each module has an <strong>Interface</strong> section and an <strong>Implementation</strong> section in the same file. The sections are toggled using preprocessor macros (e.g., <RT-code>FACE</RT-code>). Interface declarations are processed even when included multiple times; the implementation is compiled only when used as an implementation.
+      </p>
+
+      <h2>1.2 Indentation and Comma Lists</h2>
+      <p>C code follows the RT two-space indentation and vertical comma lists:</p>
+      <RT-code>
+result = some_function(
+  first_argument
+  ,second_argument_with_longer_name
+  ,third_argument
+);
+      </RT-code>
+
+      <h2>1.3 Error Handling and Ownership</h2>
+      <ul>
+        <li>Functions should document ownership of pointers and lifetimes.</li>
+        <li>Prefer explicit <RT-code>*_count</RT-code> parameters over sentinel values when passing arrays.</li>
+      </ul>
+
+      <h1>2. Python Addendum</h1>
+      <h2>2.1 Indentation and Layout</h2>
+      <p>Python enforces indentation syntactically, so the RT two-space rule becomes:</p>
+      <ul>
+        <li>Use <strong>two-space indentation</strong> for all Python code, even though four is common in the wider ecosystem.</li>
+        <li>Vertical comma lists still place the comma at the start of the line, after the indentation.</li>
+      </ul>
+
+      <h2>2.2 Modules and CLI Separation</h2>
+      <p>Python scripts distinguish between:</p>
+      <ol>
+        <li><strong>Work functions</strong> (importable API).</li>
+        <li><strong>CLI entry points</strong> (argument parsing, printing, exit codes).</li>
+      </ol>
+      <p>Put argument parsing and <RT-code>if __name__ == "__main__":</RT-code> in the CLI section. Keep side effects out of import time.</p>
+
+      <h1>3. Bash Addendum</h1>
+      <h2>3.1 Shebang and Safety</h2>
+      <p>Bash scripts should start with:</p>
+      <RT-code>
+#!/usr/bin/env bash
+set -euo pipefail
+      </RT-code>
+
+      <h2>3.2 Functions vs. Top-Level Code</h2>
+      <p>RT-style Bash separates a small top-level CLI harness (argument parsing, usage, dispatch) from a set of functions that implement the work. Parse arguments into variables, call a main function with explicit parameters, and avoid relying on global mutable state where possible.</p>
+
+      <h1>4. Lisp / Emacs Lisp Addendum</h1>
+      <h2>4.1 Identifier Separators (snake-kebab_case)</h2>
+      <p>
+        Because Lisp dialects support the hyphen (<RT-code>-</RT-code>) in symbols, they utilize <RT-code>snake-kebab_case</RT-code> as the standard for functions and variables. The hyphen replaces the underscore as the primary word separator.
+      </p>
+      <p>
+        The underscore (<RT-code>_</RT-code>) is reserved strictly as a secondary separator. It is used to group logically related portions of an identifier or to denote semantic boundaries, acting as a structural namespace within the symbol (e.g., <RT-code>city-scape_building-height</RT-code>).
+      </p>
+      
+      <h2>4.2 Enclosures and Indentation</h2>
+      <p>
+        Lisp relies entirely on parentheses for evaluation boundaries. The RT multi-level enclosure rule applies: one space of padding is applied to the outermost parentheses of an evaluated list, while inner lists receive no padding. Indentation remains strictly two spaces.
+      </p>
+
+      <h1>5. Using the Addenda</h1>
+      <p>
+        When in doubt, start with <RT-code>02_RT_Code_Format.html</RT-code> for the core rules, then apply the relevant language section here. If a language requires deviation from the generic rules, document that deviation in this file instead of ad-hoc decisions.
+      </p>
+
+      <script src="../../style/style_orchestrator.js"></script>
+    </RT-article>
+  </body>
+</html>

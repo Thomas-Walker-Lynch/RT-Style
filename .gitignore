@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.pytest_cache/
+
+# editor backup files (optional)
+*~
+*.bak
+
+# so that .gitignore is not required in user/release
+/user/release

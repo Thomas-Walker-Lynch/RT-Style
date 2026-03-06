@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Naming and Directory Conventions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+    <script src="../../style/body_visibility_hidden.js"></script>
+    <script> window.StyleRT.body_visibility_hidden(); </script>
+  </head>
+  <body>
+    <RT-article>
+      <RT-title 
+        author="RT" 
+        date="2026-03-05" 
+        title="Naming and Directory Conventions">
+      </RT-title>
+
+      <p>
+        A directory name is taken as a <RT-term>property</RT-term> for a set of files. Consequently, directory names are rarely plural. For example, suppose we have a number of test files in a directory. The directory would be named <RT-code>test</RT-code>, as each file in the directory has the property of being a test.
+      </p>
+
+      <p>
+        It would be nice if we could attach multiple properties to a file as part of the file system framework, but conventional file systems do not support this. Consequently, when needed, people add a second property to a file using dot extensions to the file's name. Hence, we get something like <RT-code>sqrt.c</RT-code> in a directory called <RT-code>source</RT-code>. The first property is that the file is source code, and the second property is that it is C code.
+      </p>
+
+      <p>
+        We could extend the dot suffix model of adding a property to a file by using multiple dot suffixes. Our C makefile structure makes use of this.
+      </p>
+
+      <p>So what is a reasonable primary property for a set of files? Perhaps:</p>
+      <ul>
+        <li>Who uses each file with this property. Home directories are named like this.</li>
+        <li>The role of the people using the file. This is a more generic version of the prior rule. The <RT-code>developer</RT-code> and <RT-code>tester</RT-code> directories were named in this manner.</li>
+        <li>What program are the files for. Thus we might name a directory of files for the C compiler <RT-code>cc</RT-code>.</li>
+        <li>The generic category of program said files are for. Thus we end up with directories called <RT-code>src</RT-code> or <RT-code>executable</RT-code>.</li>
+      </ul>
+
+      <p>
+        As for the names <RT-code>src</RT-code> and <RT-code>executable</RT-code>, those come from times when almost all programs were compiled. We prefer instead the names <RT-code>authored</RT-code> and <RT-code>made</RT-code>. <RT-code>authored</RT-code> files are those written by humans (or these days, perhaps AI), while <RT-code>made</RT-code> files are products of tools. For a Python program, we put packages in <RT-code>authored</RT-code> with a module called <RT-code>CLI.py</RT-code> for the command line interface. Then we link from <RT-code>made</RT-code> into <RT-code>authored</RT-code> so as to give the program a name.
+      </p>
+
+      <p>
+        The RT C coding environment does not use separate source and header files. Instead, a variable is set that gates off the implementation if the source code is to be used as a header. Hence, all of our C source fits fine within an <RT-code>authored</RT-code> directory.
+      </p>
+
+      <script src="../../style/style_orchestrator.js"></script>
+    </RT-article>
+  </body>
+</html>

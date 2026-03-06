@@ -1,0 +1,162 @@
+#+TITLE: 00 - Project Structure and Ontology
+#+AUTHOR: Harmony Project Team
+#+DATE: 2025-11-21
+#+OPTIONS: toc:2 num:nil
+
+#+HTML_HEAD_EXTRA: <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="../style/rt_dark_doc.css">
+
+#+BEGIN_EXPORT html
+<div class="page">
+#+END_EXPORT
+
+* Purpose
+
+Harmony provides a language agnostic project directory structure and maintenance tools for long-lived, multi-person team software development.  The structure exists to enforce:
+
+1. Clarity about where things live.  
+1.1. Role based work areas
+1.2. Separation of skeleton, team member authored, machine-made, and third party installed software.
+3. A safe, predictable build and release workflow.  
+
+A newcomer should be able to clone Harmony and understand the entire
+working model in minutes.
+
+To make a new project a toolsmith first clones Harmony, renames it to the project name, resets the history, and disconnects it from the Harmony project. The skeleton of the new project can be kept in sync with the Harmony skeleton by going to a Harmony skeleton clone and running the =Harmony/tool/sync= tool.
+
+Harmony is IDE agnostic. I typically use Emacs as an IDE and encourage its use. Because of this the documents standard format is emacs `.org` format. Files in this format can be exported to other formats, such as HTML. I have also used IntelliJ IDEA and Eclipse with Harmony, though the project skeleton has drifted some since then. I would like to update Harmony to work out of the box with these and other IDEs in the future.
+
+* 1. Key Concepts
+
+** Created vs. Made
+Harmony divides the world into two categories:
+
+- *Created / Authored*  
+   Human-written: source files, docs, design notes.
+
+- *Made*  
+   Tool-produced: binaries, generated sources, intermediates.
+
+This separation protects authored material from accidental overwrite and
+makes build artifacts fully disposable.
+
+** Semantic Paths
+Directory names in Harmony are not decorative.  
+Each directory name is a *property* shared among files. Thus, a full path forms a semantic
+sentence describing said files.
+
+Example:
+
+- =developer/authored/=  
+  “Developer authored code”
+
+- =developer/scratchpad/made/=  
+  “Developer → scratch workspace → tool-made binaries”
+
+Once you learn the ontology, you can infer the meaning of any path.
+
+* Top-Level Repository Layout
+
+The layout below is stable across all Harmony skeleton based projects:
+
+| Directory | Meaning |
+|----------|---------|
+| =developer/= | Primary workspace for developers  |
+| =tester/= | Regression and validation workspace for testers |
+| =tool/= | Project-local tools |
+| =shared/= | Shared ecosystem tools |
+| =document/= | Documentation (local to project) |
+| =release/= | Central Working Point for promoted artifacts |
+| =scratchpad/= | Global scratch (misc experiments) |
+| =env_* = | Role activators |
+
+The `env_*` files prepare PATH, set environment variables, and cd into
+the correct workspace. A team member will source one of the =env_*= files to take on a role in the project. As of this writing the supported roles are: toolsmith, developer, and tester.
+
+* The =release/= tree.
+
+The =release/= tree is where developers put work product that is to be shared with testers.  Once the contents of the =release/= directory are blessed by the tester, the project will be given a release branch, and then the =release/= tree contains the files that are shared with users. Users should not be pulling files from anywhere else in the project tree.
+
+The =release/= tree is owned by the developer. No other role should write into this tree. 
+
+Ideally, artifacts arrive in the =release/= tree *only* then the developer invokes the =promote= tool. And take note, The developer's =promote= script, as initially provided with the Harmony skeleton, has a command for erasing the contents of the release directory.
+
+** =release/made_tracked/=  
+   Architecture-agnostic artifacts. Tracked by Git, comes when the project is cloned. Users update the release directory when on a release branch, by pulling the project.
+
+** =release/made_untracked/=  
+   Architecture-specific artifacts. Directory tracked, contents are git ignored. The contents of this directory are created by running a build after the project is cloned/pulled. This was a compromise to avoid the problem of maintaining architecture and platform specific binaries.
+
+** =release/documnt/=  
+   Documents for users of the code in the release directory.
+
+* The =developer/= tree
+
+This property is set, i.e. this director is entered, by first going to the top level directory of the project, then sourcing the =env_developer= environment file. The developer can hook additional items into the environment by putting them into the =developer/tool/env= file.
+
+** =authored/=  
+   Human-written source. Tools should never delete files in this directory. =authored/= files are tracked.
+
+** =made/=  
+
+   Generated by tools, and the artifacts are tracked. These artifacts
+   are stable across machine architectures. A common item to find in
+   the =developer/made/= directory is a link to a Python program in
+   the =authored/= directory.  When following RT conventions the entry
+   point of command line driven Python files is `CLI.py`, so the link
+   in =developer/made/= gives the program a name. 
+
+** =experiment/=  
+   Try-it-here code. Short-lived. Developers do spot testing here. If tests are to longer lived, they should be moved to the tester role.
+
+** =scratchpad/=  
+   Contents of this directory are git ignored. It is intended to hold all intermediate build outputs, and anything else the developer might consider scratchpad work. 
+
+** =scratchpad/made/=  
+   By RT convention, architecture specific build artifacts are not tracked, but rather are built each time the project is cloned. Such build artifacts are placed in =developer/scratchpad/made= and if they are to be shared with the tester, the release script will release them to =release/made_untracted=.
+
+** =tool/=  
+   Developer specific tools. Additional tools will be found under =shared=.  If the project is not self contained, then yet additional tools might come from the system environment.
+
+* Documents
+
+** =release/document/=  
+   Documentation for users of released code. E.g.s a =man= page, user manual for an application, or a reference manually for a released library.
+
+** =document/=  
+   Project wide documentation for project team members.
+
+** =developer/document/=  
+   Documentation for developers.
+   
+** =tester/document/=
+   Documentation for testers.
+
+** =shared/document/=
+   Documentation on installing the shared tools. Note if a tool has a document directory that remains with the tool.
+   This will typically have a list of tools that need to be installed for the project, and notes to help make installs go more smoothly.
+
+* Tools
+
+** =tool/=
+
+We call the team members who administer the project and install tools the 'toolsmith'.  The top level =tool/= directory holds the toolsmith's tools.
+
+** =shared/=
+
+Shared tools are available to all team members. Those that have been written specifically for the Harmony skeleton or for this project go into the =shared/authored= directory. Note the tool =scratchpad=,  try =scratchpat help=.
+
+Tools installed from third parties go into the git ignored directory =shared/third_party=. 
+
+** =developer/tool=
+
+Developer role specific tools. The =release= script and the RT project shared =make= scripts are found here.
+
+** =tester/tool=
+
+Tester role specific tools.
+
+
+#+BEGIN_EXPORT html
+</div>
+#+END_EXPORT

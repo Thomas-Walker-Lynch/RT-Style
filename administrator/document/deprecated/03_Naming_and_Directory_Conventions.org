@@ -1,0 +1,33 @@
+#+TITLE: 03 - Naming and Directory Conventions
+#+AUTHOR: RT
+#+DATE: 2025-11-21
+#+OPTIONS: toc:2 num:nil
+#+HTML_HEAD_EXTRA: <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="../style/rt_dark_doc.css">
+
+#+BEGIN_EXPORT html
+<div class="page">
+#+END_EXPORT
+
+A directory name is taken a property for a set of files. Consequently, directory names are rarely plural. E.g. suppose we have a number of test files in a directory.  The directory would be named =test=. As each file in the directory has the property of being a test.
+
+It would be nice if we could attach multiple properties to a file as part of the file system framework, but conventional file systems do not support this.  Consequently, when needed, people add a second property to a file use dot extensions to the file's name. Hence, we get something like =sqrt.c=  in a directory called =source=.  So the first property is that the file is source code, and the second property is that it is C code.
+
+We could extent the dot suffix model of adding a property to file by using multiple dot suffixes. Our C makefile structure makes use of this.
+
+So what is a reasonable primary property for a set of files?  Perhaps:
+
+- Who uses each file with this property.  Home directories are named like this.
+- The role of the people using the file. This is a more generic version of the prior rule. The =developer= and =tester= directories were named in this manner.
+- What program are the files for. Thus we might name a directory a bunch of files for the cc compiler `cc`.
+- The generic category of program said files are for. Thus we end up with directories called =src= or =executable=.
+
+As for the names =src= and =executable= those come from times when almost all programs were compiled. We prefer instead the names =authored=  and =made=.  =authored= files are those written by humans (or these days, perhaps AI), while =made= files are products of tools. For a Python program, we put packages in =authored= with a module called =CLI.py= for the command line interface. Then we link from =made= into =authored= so as to give the program a name.
+
+The RT C coding environment does not use separate source and header files. Instead a variable is set that gates off the implementation if the source code is to be used as a header. Hence, all of our C source fits fine within and =authored= directory.
+
+
+
+#+BEGIN_EXPORT html
+</div>
+#+END_EXPORT

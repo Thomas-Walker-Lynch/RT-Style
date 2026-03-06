@@ -1,0 +1,415 @@
+#!/usr/bin/env -S python3 -B
+# -*- mode: python; coding: utf-8; python-indent-offset: 2; indent-tabs-mode: nil -*-
+"""
+RT_Format — Reasoning Technology code formatter (commas + bracketed phrases per line)
+
+Commands:
+  RT_Format write <file ...>      Format files in place (rewrite originals)
+  RT_Format copy  <file ...>      Save backups as <file>~ then format originals
+  RT_Format pipe                  Read from stdin, write to stdout
+  RT_Format self_test             Run built-in tests
+  RT_Format version               Show tool version
+  RT_Format help | --help         Show usage
+
+Rules:
+  • Horizontal lists -> a ,b ,c   (space BEFORE comma, none after)
+  • Tight (){}[] by default; add one space just inside borders only when an
+    OUTERMOST bracketed phrase on the line contains an INNER bracket.
+  • Multiple outermost phrases can exist on a line (e.g., `g() { ... }`);
+    apply the rule to EACH such phrase independently.
+  • Per-line, tolerant of unbalanced brackets: first unmatched opener OR last
+    unmatched closer is treated as “the” outermost for padding purposes.
+  • Strings and single-line comments (#, //) are not altered.
+"""
+
+from typing import List ,Tuple ,Optional ,TextIO
+import sys ,re ,io ,shutil ,os
+
+RTF_VERSION = "0.2.2"  # pad all outermost-with-nesting phrases on a line
+
+BR_OPEN  = "([{<"
+BR_CLOSE = ")]}>"
+PAIR = dict(zip(BR_OPEN ,BR_CLOSE))
+REV  = dict(zip(BR_CLOSE ,BR_OPEN))
+
+USAGE = """\
+Usage:
+  RT_Format write <file ...>
+  RT_Format copy  <file ...>
+  RT_Format pipe
+  RT_Format self_test
+  RT_Format version
+  RT_Format help | --help
+"""
+
+# --------------- Core token helpers ----------------
+
+def split_code_comment(line: str):
+  """Return (code ,comment), keeping the comment marker if present; ignore markers inside strings."""
+  in_s = None
+  esc = False
+  for i ,ch in enumerate(line):
+    if in_s:
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      continue
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        continue
+      if ch == "#":
+        return line[:i] ,line[i:]
+      if ch == "/" and i + 1 < len(line) and line[i + 1] == "/":
+        return line[:i] ,line[i:]
+  return line ,""
+
+def format_commas(code: str) -> str:
+  """Space BEFORE comma, none after, outside strings."""
+  out: List[str] = []
+  in_s = None
+  esc = False
+  i = 0
+  while i < len(code):
+    ch = code[i]
+    if in_s:
+      out.append(ch)
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      i += 1
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        out.append(ch)
+        i += 1
+      elif ch == ",":
+        while out and out[-1] == " ":
+          out.pop()
+        if out and out[-1] != " ":
+          out.append(" ")
+        out.append(",")
+        j = i + 1
+        while j < len(code) and code[j] == " ":
+          j += 1
+        i = j
+      else:
+        out.append(ch)
+        i += 1
+  return "".join(out)
+
+# --------------- Bracket discovery ----------------
+
+def top_level_spans(code: str) -> List[Tuple[int ,int]]:
+  """Return all balanced OUTERMOST bracketed spans (start,end) for this line, ignoring strings."""
+  in_s = None
+  esc = False
+  stack: List[Tuple[str ,int]] = []
+  spans: List[Tuple[int ,int]] = []
+  for i ,ch in enumerate(code):
+    if in_s:
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      continue
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        continue
+      if ch in BR_OPEN:
+        stack.append((ch ,i))
+      elif ch in BR_CLOSE:
+        if stack and REV[ch] == stack[-1][0]:
+          _ ,pos = stack.pop()
+          if not stack:
+            spans.append((pos ,i))
+        else:
+          # unmatched closer ignored here; handled in unbalanced logic
+          pass
+  return spans
+
+def first_unmatched_opener(code: str) -> Optional[int]:
+  in_s = None
+  esc = False
+  stack: List[Tuple[str ,int]] = []
+  for i ,ch in enumerate(code):
+    if in_s:
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      continue
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        continue
+      if ch in BR_OPEN:
+        stack.append((ch ,i))
+      elif ch in BR_CLOSE:
+        if stack and REV[ch] == stack[-1][0]:
+          stack.pop()
+        else:
+          # unmatched closer: do nothing here
+          pass
+  return stack[0][1] if stack else None
+
+def last_unmatched_closer(code: str) -> Optional[int]:
+  in_s = None
+  esc = False
+  depth = 0
+  last: Optional[int] = None
+  for i ,ch in enumerate(code):
+    if in_s:
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      continue
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        continue
+      if ch in BR_OPEN:
+        depth += 1
+      elif ch in BR_CLOSE:
+        if depth > 0:
+          depth -= 1
+        else:
+          last = i
+  return last
+
+def contains_inner_bracket(code: str ,start: Optional[int] ,end: Optional[int]) -> bool:
+  """Check for any bracket token inside the given bounds (respect strings)."""
+  if start is None and end is None:
+    return False
+  in_s = None
+  esc = False
+  lo = (start + 1) if start is not None else 0
+  hi = (end - 1) if end is not None else len(code) - 1
+  if hi < lo:
+    return False
+  for i ,ch in enumerate(code):
+    if i < lo or i > hi:
+      continue
+    if in_s:
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      continue
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        continue
+      if ch in BR_OPEN or ch in BR_CLOSE:
+        return True
+  return False
+
+# --------------- Spacing transforms ----------------
+
+def tighten_all_brackets(code: str) -> str:
+  """Tight margins and remove immediate interior spaces next to borders."""
+  out: List[str] = []
+  in_s = None
+  esc = False
+  i = 0
+  while i < len(code):
+    ch = code[i]
+    if in_s:
+      out.append(ch)
+      if esc:
+        esc = False
+      elif ch == "\\":
+        esc = True
+      elif ch == in_s:
+        in_s = None
+      i += 1
+    else:
+      if ch in ("'" ,'"'):
+        in_s = ch
+        out.append(ch)
+        i += 1
+      elif ch in BR_CLOSE:
+        if out and out[-1] == " ":
+          out.pop()
+        out.append(ch)
+        i += 1
+      elif ch in BR_OPEN:
+        if out and out[-1] == " ":
+          out.pop()
+        out.append(ch)
+        i += 1
+        while i < len(code) and code[i] == " ":
+          i += 1
+      else:
+        out.append(ch)
+        i += 1
+  return "".join(out)
+
+def apply_bracket_padding(code: str) -> str:
+  """
+  1) Tighten globally.
+  2) For EACH balanced outermost span, if it contains an inner bracket,
+     ensure exactly one space just inside its borders — but only if missing.
+  3) If there are no balanced spans, pad the first unmatched opener OR the last unmatched closer
+     only if that outer fragment contains an inner bracket, and only if padding is missing.
+  """
+  s = tighten_all_brackets(code)
+
+  def borders_have_space(text: str, start: int, end: int) -> Tuple[bool, bool]:
+    # Return (left_has_space, right_has_space) for just-inside borders.
+    left_has = (start + 1 < len(text)) and (text[start + 1] == " ")
+    right_has = (end - 1 >= 0) and (text[end - 1] == " ")
+    return left_has, right_has
+
+  # Balanced top-level spans: may be multiple on one line (e.g., g() { ... }).
+  # Iterate while applying at most one mutation per pass; recompute spans after.
+  while True:
+    spans = top_level_spans(s)
+    changed = False
+    for (start, end) in spans:
+      if contains_inner_bracket(s, start, end):
+        left_has, right_has = borders_have_space(s, start, end)
+        if not left_has or not right_has:
+          # Insert exactly one space just inside each border that lacks it.
+          if not right_has:
+            # Right side first to avoid shifting the 'start' index computation
+            s = s[:end].rstrip(" ") + " " + s[end:].lstrip(" ")
+          if not left_has:
+            s = s[:start + 1].rstrip(" ") + " " + s[start + 1:].lstrip(" ")
+          changed = True
+          break  # after a mutation, recompute spans fresh
+    if not changed:
+      break
+
+  # If there are no balanced spans, consider unbalanced fragment once
+  if not top_level_spans(s):
+    o = first_unmatched_opener(s)
+    c = last_unmatched_closer(s)
+    if o is not None and contains_inner_bracket(s, o, None):
+      # add one space after opener only if missing
+      if not (o + 1 < len(s) and s[o + 1] == " "):
+        s = s[:o + 1].rstrip(" ") + " " + s[o + 1:]
+    elif c is not None and contains_inner_bracket(s, None, c):
+      # add one space before closer only if missing
+      if not (c - 1 >= 0 and s[c - 1] == " "):
+        s = s[:c].rstrip(" ") + " " + s[c:]
+
+  return s
+
+# --------------- Public API ----------------
+
+def rt_format_line(line: str) -> str:
+  code ,comment = split_code_comment(line.rstrip("\n"))
+  code = format_commas(code)
+  code = apply_bracket_padding(code)
+  return code + comment
+
+def rt_format_text(text: str) -> str:
+  return "\n".join(rt_format_line(ln) for ln in text.splitlines())
+
+def rt_format_stream(inp: TextIO ,out: TextIO) -> None:
+  for line in inp:
+    out.write(rt_format_line(line) + "\n")
+
+# --------------- Self-test ----------------
+
+def run_self_test() -> bool:
+  ok = True
+  def chk(src ,exp):
+    nonlocal ok
+    got = rt_format_line(src)
+    if got != exp:
+      print("FAIL:" ,src ,"=>" ,got ,"expected:" ,exp)
+      ok = False
+
+  # Commas
+  chk("a,b,c" ,"a ,b ,c")
+  chk("a , b ,  c" ,"a ,b ,c")
+
+  # Tight () by default
+  chk("f ( x )" ,"f(x)")
+  chk("f(x) + g(y)" ,"f(x) + g(y)")
+
+  # Balanced: multiple outermost spans (g() and {...}) -> only pad {...} if it has inner bracket
+  src = "int g(){int a=0,b=1,c=2; return h(a,b,c);}"
+  exp = "int g(){ int a=0 ,b=1 ,c=2; return h(a ,b ,c); }"
+  chk(src ,exp)
+
+  # Balanced: single outermost with nesting
+  chk("outer( inner(a,b) )" ,"outer( inner(a ,b) )")
+
+  # Unbalanced open-right with nesting
+  chk("compute(x, f(y" ,"compute( x ,f(y)")
+
+  # Unbalanced open-left without prior inner bracket => unchanged
+  chk("return z) + 1" ,"return z) + 1")
+
+  print("SELFTEST OK" if ok else "SELFTEST FAILED")
+  return ok
+
+# --------------- CLI ----------------
+
+def write_files(paths: List[str]) -> int:
+  for path in paths:
+    with open(path ,"r" ,encoding="utf-8") as f:
+      data = f.read()
+    formatted = rt_format_text(data)
+    with open(path ,"w" ,encoding="utf-8") as f:
+      f.write(formatted + ("\n" if not formatted.endswith("\n") else ""))
+  return 0
+
+def copy_files(paths: List[str]) -> int:
+  for path in paths:
+    shutil.copy2(path ,path + "~")
+  return write_files(paths)
+
+def CLI(argv=None) -> int:
+  args = list(sys.argv[1:] if argv is None else argv)
+  if not args or args[0] in {"help" ,"--help" ,"-h"}:
+    print(USAGE)
+    return 0
+
+  cmd = args[0]
+  rest = args[1:]
+
+  if cmd == "version":
+    print(RTF_VERSION)
+    return 0
+  if cmd == "self_test":
+    ok = run_self_test()
+    return 0 if ok else 1
+  if cmd == "pipe":
+    rt_format_stream(sys.stdin ,sys.stdout)
+    return 0
+  if cmd == "write":
+    if not rest:
+      print("write: missing <file ...>\n" + USAGE)
+      return 2
+    return write_files(rest)
+  if cmd == "copy":
+    if not rest:
+      print("copy: missing <file ...>\n" + USAGE)
+      return 2
+    return copy_files(rest)
+
+  print(f"Unknown command: {cmd}\n" + USAGE)
+  return 2
+
+if __name__ == "__main__":
+  sys.exit(CLI())

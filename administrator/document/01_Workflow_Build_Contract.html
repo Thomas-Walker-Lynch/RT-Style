@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Workflow and Build Contract</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+    <script src="../../style/body_visibility_hidden.js"></script>
+    <script> window.StyleRT.body_visibility_hidden(); </script>
+  </head>
+  <body>
+    <RT-article>
+      <RT-title 
+        author="Harmony Project Team" 
+        date="2026-03-05" 
+        title="Workflow and Build Contract">
+      </RT-title>
+
+      <RT-TOC level="1"></RT-TOC>
+
+      <h1>Roles and Process</h1>
+
+      <h2>Administrator Role</h2>
+      <p>Responsibilities:</p>
+      <ol>
+        <li>Setup the project directory and keep it in sync with the Harmony skeleton.</li>
+        <li>Maintain the role environments, apart from the <RT-code>&lt;role&gt;/tool/setup</RT-code> files which are owned by the respective role.</li>
+        <li>Install and maintain shared tools.</li>
+      </ol>
+
+      <h2>Developer Role</h2>
+      <p>Responsibilities:</p>
+      <ol>
+        <li>Write and modify <RT-code>authored/</RT-code> source.</li>
+        <li>Run builds and stage artifacts in <RT-code>scratchpad/stage</RT-code>.</li>
+        <li>Spot test in <RT-code>experiment/</RT-code>.</li>
+        <li>Execute the <RT-code>release write</RT-code> script to copy artifacts to <RT-code>user/release</RT-code> for consumption/testing.</li>
+      </ol>
+
+      <h2>Tester Role</h2>
+      <p>Responsibilities:</p>
+      <ol>
+        <li>Validate candidates under <RT-code>user/release/</RT-code>.</li>
+        <li>Run regression suites.</li>
+        <li>Approve for quality and completeness, and create release branches.</li>
+      </ol>
+
+      <h1>Entering the Project</h1>
+      <p>
+        To enter a project, cd to the top-level directory and source the setup file for your desired role:
+      </p>
+      <RT-code>
+. setup administrator
+. setup developer
+. setup tester
+. setup user
+      </RT-code>
+      <p>
+        It is common to have multiple terminal sessions or IDEs open, each running under a different role environment.
+      </p>
+
+      <h1>Release Promotion</h1>
+      <p>
+        Building and promotion are separate activities. The developer compiles and stages files in <RT-code>developer/scratchpad/stage</RT-code>. The developer then runs <RT-code>release write</RT-code> to transfer those files to <RT-code>user/release</RT-code>. 
+      </p>
+      <p>
+        The <RT-code>user/release</RT-code> directory is strictly an untracked deployment target. No tools may rebuild during promotion, and no builds are run directly inside the release directory.
+      </p>
+
+      <script src="../../style/style_orchestrator.js"></script>
+    </RT-article>
+  </body>
+</html>

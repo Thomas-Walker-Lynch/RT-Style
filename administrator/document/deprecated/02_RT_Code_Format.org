@@ -1,0 +1,230 @@
+#+TITLE: 02 - RT Prescriptive Code Format Guide (Version 3)
+#+AUTHOR: Thomas Walker Lynch
+#+DATE: 2025-12-05
+#+OPTIONS: toc:2 num:nil
+
+#+HTML_HEAD_EXTRA: <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+#+HTML_HEAD_EXTRA: <link rel="stylesheet" type="text/css" href="../style/rt_dark_doc.css">
+
+#+BEGIN_EXPORT html
+<div class="page">
+#+END_EXPORT
+
+* Purpose
+
+The goal is consistency, readability, and predictability across all
+languages and tools.
+
+This document covers:
+
+1. Naming conventions  
+2. Object vs. Instance Nomenclature  
+3. Vertical comma lists  
+4. Enclosure spacing  
+5. Line breaks and indentation  
+6. Cross-language guidance  
+
+* Object vs. Instance Nomenclature
+
+In the RT world, we reserve the word 'object' for its general English meaning, as its technical meaning in programming often causes confusion. When discussing data that is manipulated solely through a defined interface, use the term **instance**.
+
+- **Object:** Anything that can be described or reasoned about. A 'math object' is anything defined using mathematics, and a 'Python object' is anything that can be described with Python syntax.
+- **Instance:** Data that is only accessed or manipulated through a defined interface. This term is used to clearly denote data encapsulation and separation of concerns.
+
+
+* Identifer Naming Conventions
+
+** Identifier Naming
+
+- Types, modules: *PascalCase*  
+- Functions, variables: *snake_case*  
+- Globals: UPPER_SNAKE_CASE  
+
+** Proper Noun and Acronyms
+
+Even in PascalCase and snake_case, they remain capitalized, as per the English language convention.
+
+E.g.s
+
+- IEEE_publication_count
+- person_Sara_novelties_list
+
+
+** Suffix Semantics
+Optionally suffixes are added to variable names to suggest type or interface.
+
+- =*_dp  :: directory path, not specified if relative or absolute
+- =*_dpr :: relative directory path  
+- =*_dpa :: absolute directory path  
+
+- =*_fp  :: file path, not specified if relative or absolute
+- =*_fpr :: relative file path  
+- =*_fpa :: absolute file path  
+
+If the file system node type is not specifically specified
+
+- =*_fs_nod_p  :: file system node path, not specified if relative or absolute
+- =*_fs_nod_pr :: relative file system node path
+- =*_fs_nod_pa :: absolute file system node path
+
+- =*_list= :: generic ordered items
+- =*_seq=  :: ordered items accessed by index
+
+- =*_map=  :: a keyed container
+- =*_dict  :: a keyed container
+
+- =*_count= :: number of elements  
+- =*_flag= :: boolean  
+
+- = *_Type :: names specific type, where the type name is given in PascalCase, as is the norm for types. E.g.s =name_Array= or =name_Map= for the cases that name is an instance of a defined Array or Map type.
+
+Add a container type suffix instead of making variables names plural. For example,
+
+- =name_seq= :: a sequence of zero or more names, used in place of =names=.
+
+  
+* Comma separated list
+
+RT code format treats the comma in a list as belonging to the item that caused the comma to be needed.
+
+** Horizontal Comma List
+
+For lists on a single line, the comma is preceded by a space and abuts the item it follows.
+
+#+BEGIN_SRC c
+  int x ,y ,z;
+#+END_SRC
+
+Note the space before the comma, and the comma abuts the item that caused the comma to be needed. This applies to language statements and data values alike.
+
+** Vertical Comma List
+
+For lists spanning multiple lines, the comma is placed *before* the item on the new line, aligned with the item's indentation.
+
+#+BEGIN_SRC c
+result = some_function(
+  first_argument
+  ,second_argument
+  ,third_argument
+);
+#+END_SRC
+
+Example in Python:
+
+#+BEGIN_SRC python
+items = [
+  first_item
+  ,second_item
+  ,third_item
+]
+#+END_SRC
+
+- Two-space indent.  
+- Comma at column after indentation.  
+- All items aligned except the first, as it does not have a comma before it.
+- This convention works identically across C, Python, Bash arrays, JSON-like data, etc.
+
+* Enclosure Spacing
+
+This rule applies on a line by line basis.
+
+** General Rules
+
+**No Space Between Adjacent Enclosures:** Generally, there is no space between adjacent enclosure punctuation (e.g., `f(g(x))`).
+
+** Single-Level Enclosures
+
+For enclosures that do not contain other enclosures (e.g., a simple `if(condition)`), there is **no space padding** inside the enclosure punctuation.
+
+Conforming:
+
+#+BEGIN_SRC c
+if(condition){
+  do_something();
+}
+#+END_SRC
+ 
+Bad, non-conforming:
+
+#+BEGIN_SRC c
+if(condition) {
+  do_something();
+}
+#+END_SRC
+
+Bad, non-conforming:
+
+#+BEGIN_SRC c
+if ( condition ) {
+  do_something ( );
+}
+#+END_SRC
+
+** Multi-Level Enclosures
+
+For enclosures that contain other enclosures (e.g., `if( f(g(x)) )`), one space of padding is applied only to the **level one (outermost)** enclosure punctuation. All other levels follow the single-level rule (no padding).
+
+#+BEGIN_SRC c
+if( f(g(x)) ){
+  do_something();
+}
+#+END_SRC
+
+In this example, the =if= has a three-level enclosure structure. The outermost parentheses of the =if= condition get one space of padding, while the inner parentheses for =f(...)= and =g(...)= get no padding.
+
+** Unmatched Enclosure Punctuation
+
+Format the enclosure punctuation that is present, as though it were matched. Treat an orphaned opening enclosure punctuation as though it were closed at the end of the line. Treat an extraneous closing, as though there were an opening at the beginning of the line.
+
+** Short Stuff Rule
+
+If a statement, such as an =if= block or a loop, can fit on a single line and is shorter than a reasonable line length (e.g., 40-60 characters), it should be kept on a single line without braces.
+
+#+BEGIN_SRC c
+if(x == 0) return;
+#+END_SRC
+
+* Indentation
+
+- Two spaces per indentation level.  
+- Never use tabs.  
+- Nest lines under the syntactic element that opened them.
+
+* Exercises
+
+To ensure a full understanding of the RT code format, please complete the following exercises.
+
+** Exercise 1: Comma and Function Call Formatting
+
+Reformat the following C code snippet to strictly adhere to the RT code format rules. Pay close attention to the horizontal and vertical comma lists, and the enclosure spacing for the function call.
+
+#+BEGIN_SRC c
+void my_function(int a, int b, int c) {
+  int result = calculate_value(a, b, c);
+  printf("Result: %d, a: %d, b: %d, c: %d\n", result, a, b, c);
+}
+
+result = my_function(
+  rediculously_long_first_argument,
+  rediculously_long_second_argument,
+  rediculously_long_third_argument
+);
+#+END_SRC
+
+** Exercise 2: Multi-Level Enclosure and Short Stuff Rule
+
+Reformat the following C code snippet. The `if` statement should use the multi-level enclosure rule, and the `for` loop body should use the short stuff rule.
+
+#+BEGIN_SRC c
+if (check_permissions(user_id, file_path) && is_valid(file_path)) {
+  for (int i = 0; i < 10; i++) {
+    if (i % 2 == 0) {
+      printf("Even: %d\n", i);
+    }
+  }
+}
+#+END_SRC
+
+#+BEGIN_EXPORT html
+</div>
+#+END_EXPORT
