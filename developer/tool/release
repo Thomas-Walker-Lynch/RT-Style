@@ -4,10 +4,10 @@
 import os ,sys ,shutil ,stat ,pwd ,grp ,glob ,tempfile
 
 HELP = """usage: release {write|clean|ls|diff|help|dry write}
-  write       Writes promoted files from scratchpad/stage into user/release. Only updates newer files.
-  clean       Remove all contents of the user/release directory.
-  ls          List user/release as an indented tree: PERMS  OWNER  NAME.
-  diff        List files in user/release that are not in scratchpad/stage, or are newer.
+  write       Writes promoted files from scratchpad/stage into consumer/release. Only updates newer files.
+  clean       Remove all contents of the consumer/release directory.
+  ls          List consumer/release as an indented tree: PERMS  OWNER  NAME.
+  diff        List files in consumer/release that are not in scratchpad/stage, or are newer.
   help        Show this message.
   dry write   Preview what write would do without modifying the filesystem.
 """
@@ -20,15 +20,15 @@ def exit_with_status(msg ,code=1):
   print(f"release: {msg}" ,file=sys.stderr)
   sys.exit(code)
 
-def assert_env():
-  env = os.environ.get("ENV" ,"")
-  if(env != ENV_MUST_BE):
+def assert_setup():
+  setup_val = os.environ.get("SETUP" ,"")
+  if(setup_val != SETUP_MUST_BE):
     hint = (
       "SETUP is not 'developer/tool/setup'.\n"
       "Enter the project with:  . setup developer\n"
       "That script exports: ROLE=developer; SETUP=$ROLE/tool/setup"
     )
-    exit_with_status(f"bad environment: ENV='{env}'. {hint}")
+    exit_with_status(f"bad environment: SETUP='{setup_val}'. {hint}")
 
 def repo_home():
   rh = os.environ.get("REPO_HOME")
@@ -43,10 +43,10 @@ def dpath(*parts):
     ,*parts
   )
 
-def upath(*parts):
+def cpath(*parts):
   return os.path.join(
     repo_home()
-    ,"user"
+    ,"consumer"
     ,"release"
     ,*parts
   )
@@ -54,8 +54,8 @@ def upath(*parts):
 def dev_root():
   return dpath()
 
-def user_root():
-  return upath()
+def consumer_root():
+  return cpath()
 
 def _display_src(p_abs: str) -> str:
   try:
@@ -69,10 +69,10 @@ def _display_dst(p_abs: str) -> str:
   try:
     rel = os.path.relpath(
       p_abs
-      ,user_root()
+      ,consumer_root()
     )
     rel = "" if rel == "." else rel
-    return "$REPO_HOME/user/release" + ("/" + rel if rel else "")
+    return "$REPO_HOME/consumer/release" + ("/" + rel if rel else "")
   except Exception:
     return p_abs
 
@@ -83,7 +83,7 @@ def ensure_mode(path_str ,mode):
 def ensure_dir(path_str ,mode=DEFAULT_DIR_MODE ,dry=False):
   if(dry):
     if( not os.path.isdir(path_str) ):
-      shown = _display_dst(path_str) if path_str.startswith(user_root()) else (
+      shown = _display_dst(path_str) if path_str.startswith(consumer_root()) else (
         os.path.relpath(path_str ,dev_root()) if path_str.startswith(dev_root()) else path_str
       )
       print(f"(dry) mkdir -m {oct(mode)[2:]} '{shown}'")
@@ -141,7 +141,7 @@ def list_tree(root_dp):
     if( len(ownergrp) > ogw ):
       ogw = len(ownergrp)
 
-  print("user/release/")
+  print("consumer/release/")
   for isdir ,depth ,perms ,ownergrp ,name in entries:
     indent = "  " * depth
     print(f"{perms}  {ownergrp:<{ogw}}  {indent}{name}")
@@ -175,8 +175,8 @@ def copy_one(src_abs ,dst_abs ,mode ,dry=False):
   print(f"+ install -m {oct(mode)[2:]} '{src_show}' '{dst_show}'")
 
 def cmd_write(dry=False):
-  assert_env()
-  ensure_dir(upath() ,DEFAULT_DIR_MODE ,dry=dry)
+  assert_setup()
+  ensure_dir(cpath() ,DEFAULT_DIR_MODE ,dry=dry)
 
   src_root = dpath(
     "scratchpad"
@@ -192,7 +192,7 @@ def cmd_write(dry=False):
     for fn in files:
       src_abs = os.path.join(root ,fn)
       rel = os.path.relpath(src_abs ,src_root)
-      dst_abs = os.path.join(upath() ,rel)
+      dst_abs = os.path.join(cpath() ,rel)
 
       if( os.path.exists(dst_abs) ):
         src_mtime = os.stat(src_abs).st_mtime
@@ -216,8 +216,8 @@ def cmd_write(dry=False):
     print(f"(info) nothing new to promote from {_display_src(src_root)}")
 
 def cmd_diff():
-  assert_env()
-  dst_root = upath()
+  assert_setup()
+  dst_root = cpath()
   src_root = dpath(
     "scratchpad"
     ,"stage"
@@ -250,12 +250,12 @@ def cmd_diff():
     print("No differences found. Release matches stage.")
 
 def cmd_clean():
-  assert_env()
-  user_root_dir = upath()
-  if( not os.path.isdir(user_root_dir) ):
+  assert_setup()
+  consumer_root_dir = cpath()
+  if( not os.path.isdir(consumer_root_dir) ):
     return
-  for name in os.listdir(user_root_dir):
-    p = os.path.join(user_root_dir ,name)
+  for name in os.listdir(consumer_root_dir):
+    p = os.path.join(consumer_root_dir ,name)
     if( os.path.isdir(p) and not os.path.islink(p) ):
       shutil.rmtree(p ,ignore_errors=True)
     else:
@@ -272,7 +272,7 @@ def CLI():
   elif(cmd == "clean"):
     cmd_clean()
   elif(cmd == "ls"):
-    list_tree(upath())
+    list_tree(cpath())
   elif(cmd == "diff"):
     cmd_diff()
   elif(cmd == "help"):
