@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <title>RT Prescriptive Code Format Guide</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
-    <script src="../../style/body_visibility_hidden.js"></script>
-    <script> window.StyleRT.body_visibility_hidden(); </script>
+    <script src="setup.js"></script>
+    <script>
+      window.StyleRT.include('RT/theme');
+      window.StyleRT.include('RT/layout/article_tech_ref');
+    </script>
   </head>
   <body>
     <RT-article>
@@ -92,8 +94,6 @@ if(x == 0) return;
         <li>Never use tabs.</li>
         <li>Nest lines under the syntactic element that opened them.</li>
       </ul>
-
-      <script src="../../style/style_orchestrator.js"></script>
     </RT-article>
   </body>
 </html>

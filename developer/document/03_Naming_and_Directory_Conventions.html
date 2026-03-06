@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <title>Naming and Directory Conventions</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
-    <script src="../../style/body_visibility_hidden.js"></script>
-    <script> window.StyleRT.body_visibility_hidden(); </script>
+    <script src="setup.js"></script>
+    <script>
+      window.StyleRT.include('RT/theme');
+      window.StyleRT.include('RT/layout/article_tech_ref');
+    </script>
   </head>
   <body>
     <RT-article>
@@ -42,8 +44,6 @@
       <p>
         The RT C coding environment does not use separate source and header files. Instead, a variable is set that gates off the implementation if the source code is to be used as a header. Hence, all of our C source fits fine within an <RT-code>authored</RT-code> directory.
       </p>
-
-      <script src="../../style/style_orchestrator.js"></script>
     </RT-article>
   </body>
 </html>

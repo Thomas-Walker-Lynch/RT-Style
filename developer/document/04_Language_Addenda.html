@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <title>Language Addenda (C, Python, Bash, Lisp)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
-    <script src="../../style/body_visibility_hidden.js"></script>
-    <script> window.StyleRT.body_visibility_hidden(); </script>
+    <script src="setup.js"></script>
+    <script>
+      window.StyleRT.include('RT/theme');
+      window.StyleRT.include('RT/layout/article_tech_ref');
+    </script>
   </head>
   <body>
     <RT-article>
@@ -89,8 +91,6 @@ set -euo pipefail
       <p>
         When in doubt, start with <RT-code>02_RT_Code_Format.html</RT-code> for the core rules, then apply the relevant language section here. If a language requires deviation from the generic rules, document that deviation in this file instead of ad-hoc decisions.
       </p>
-
-      <script src="../../style/style_orchestrator.js"></script>
     </RT-article>
   </body>
 </html>

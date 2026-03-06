@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Project Structure and Ontology</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
     <script src="setup.js"></script>
-    <script> window.StyleRT.body_visibility_hidden(); </script>
     <script>
       window.StyleRT.include('RT/theme');
       window.StyleRT.include('RT/layout/article_tech_ref');
@@ -55,20 +53,20 @@
 
       <h1>Top-Level Repository Layout</h1>
       <p>
-        A team member will source the project setup file to take on a role. As of this writing, the supported roles are: <RT-code>administrator</RT-code>, <RT-code>developer</RT-code>, <RT-code>tester</RT-code>, and <RT-code>user</RT-code>.
+        A team member will source the project setup file to take on a role. As of this writing, the supported roles are: <RT-code>administrator</RT-code>, <RT-code>developer</RT-code>, <RT-code>tester</RT-code>, and <RT-code>consumer</RT-code>.
       </p>
 
       <ul>
         <li><RT-code>administrator/</RT-code> — Project-local tools and skeleton maintenance.</li>
         <li><RT-code>developer/</RT-code> — Primary workspace for developers.</li>
         <li><RT-code>tester/</RT-code> — Regression and validation workspace for testers.</li>
-        <li><RT-code>user/</RT-code> — Consumption workspace holding the <RT-code>release</RT-code> directory.</li>
+        <li><RT-code>consumer/</RT-code> — Consumption workspace holding the <RT-code>release</RT-code> directory.</li>
         <li><RT-code>shared/</RT-code> — Shared ecosystem tools and global environments.</li>
       </ul>
 
-      <h1>The User Tree</h1>
+      <h1>The Consumer Tree</h1>
       <p>
-        The <RT-code>user/release/</RT-code> tree is where developers put work product that is ready to be consumed. The entire <RT-code>user/release</RT-code> directory is git-ignored and treated as a transient deployment target.
+        The <RT-code>consumer/release/</RT-code> tree is where developers put work product that is ready to be consumed. The entire <RT-code>consumer/release</RT-code> directory is git-ignored and treated as a transient deployment target.
       </p>
       <p>
         Artifacts arrive in the <RT-code>release/</RT-code> tree <em>only</em> when the developer invokes the <RT-code>release</RT-code> script, which performs a flat-copy from the developer's <RT-code>scratchpad/stage</RT-code> directory.
