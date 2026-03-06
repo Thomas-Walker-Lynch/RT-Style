@@ -1,4 +1,4 @@
 window.StyleRT_namespaces = {
-  "RT": window.RT_REPO_ROOT + "shared/third_party/RT-style-JS_public/consumer/release/RT"
+  "RT": window.RT_REPO_ROOT + "developer/authored/RT"
   ,"Project": window.RT_REPO_ROOT + "shared/authored/style"
 };
