@@ -87,18 +87,10 @@
         The <RT-term>RT Style System</RT-term> is a client-side, JavaScript-driven publishing framework designed to turn raw HTML into high-readability technical documentation. Unlike standard CSS frameworks, RT uses JavaScript to handle complex layout tasks like <RT-neologism>ink-ratio balancing</RT-neologism> and dynamic pagination.
       </p>
 
-      <h2>The Orchestrator</h2>
-      <p>
-        The core of the system is <RT-code>style_orchestrator.js</RT-code>. It is placed at the bottom of the HTML <RT-code>&lt;body&gt;</RT-code>. Its job is to:
-      </p>
-      <ol>
-        <li>Detect which modules are already loaded.</li>
-        <li>Load missing modules (defaulting to Dark Theme if none is specified).</li>
-        <li>Execute the <strong>Semantics Phase</strong> (styling tags).</li>
-        <li>Wait for MathJax (if present).</li>
-        <li>Execute the <strong>Layout Phase</strong> (pagination, page rendering).</li>
-        <li>Reveal the document.</li>
-      </ol>
+      <h2>Pulling style files into a document</h2>
+      <p> Put `setup.js` in the directory, and include it at the top of the document,
+        `setup.js` points at the style files and is installation specific.</p>
+        
 
       <h1>Semantic Tags</h1>
       <p>
