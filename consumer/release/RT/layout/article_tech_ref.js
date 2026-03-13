@@ -47,8 +47,79 @@
       style.color = "var(--rt-content-main)";
     }
 
-    // CSS injection for headers, lists, etc., goes here 
-    // (Omitted for brevity, but carried over from the original file)
+    // CSS injection for headers, lists, and layout mapped from theme variables
+// CSS injection for headers, lists, and layout mapped from theme variables
+    const style_node = document.createElement("style");
+    style_node.innerHTML = `
+      rt-article {
+        font-family: 'Noto Sans JP', Arial, sans-serif;
+        background-color: var(--rt-surface-0);
+        color: var(--rt-content-main);
+        padding: 2rem;
+      }
+      rt-article rt-page {
+        display: block;
+        padding: 3rem;
+        margin: 1.25rem auto;
+        max-width: 46.875rem;
+        background-color: var(--rt-surface-0);
+        box-shadow: 0 0 0.625rem var(--rt-brand-primary);
+      }
+      
+      /* --- HEADER CASCADE --- */
+      rt-article h1 {
+        font-size: 1.5rem;
+        text-align: center;
+        color: var(--rt-brand-primary);
+        font-weight: 500; /* Softened from the default heavy bold */
+        margin-top: 1.5rem;
+        line-height: 1.15;
+      }
+      rt-article h2 {
+        font-size: 1.25rem;
+        color: var(--rt-brand-secondary);
+        text-align: left;
+        margin-top: 2rem;
+        margin-left: 0;
+      }
+      rt-article h3 {
+        font-size: 1.125rem;
+        color: var(--rt-brand-tertiary);
+        text-align: left;
+        margin-top: 1.5rem;
+        margin-left: 4ch; /* Indented 4 characters */
+      }
+      rt-article h4 {
+        font-size: 1.05rem;
+        color: var(--rt-content-main);
+        font-weight: 600;
+        text-align: left;
+        margin-top: 1.25rem;
+        margin-left: 8ch; /* Indented 8 characters */
+      }
+
+      /* --- BODY TEXT (Flush Left) --- */
+      rt-article p,
+      rt-article ul,
+      rt-article ol {
+        color: var(--rt-content-main);
+        text-align: justify;
+        margin-bottom: 1rem;
+        margin-left: 0; 
+      }
+      rt-article li {
+        margin-bottom: 0.5rem;
+      }
+      
+      /* --- CODE FORMATTING --- */
+      rt-article rt-code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: var(--rt-surface-code);
+        padding: 0.125rem 0.25rem;
+        color: var(--rt-content-main);
+      }
+    `;
+    document.head.appendChild(style_node);
   };
 
   // 3. The Execution Sequence

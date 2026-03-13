@@ -315,6 +315,40 @@
       <script>
         window.StyleRT.style_orchestrator();
       </script>
+
+      <h1>RT Conventions</h1>
+      <p> Headings are first letter capitalized. Remaining words are as they would be in English prose.</p>
+
+      <h1>Exercises</h1>
+
+      <ol>
+        <li>
+          <p>
+            <strong>Term Occurrences:</strong> If an author tags a word with <RT-code>&lt;RT-term&gt;</RT-code> five times in a document, how many times will the term be visually decorated by the styling engine? How does a person force the engine to decorate a later occurrence?
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Term Normalization:</strong> A person writes <RT-code>&lt;RT-term&gt;Parse Tree&lt;/RT-term&gt;</RT-code> in paragraph one, and <RT-code>&lt;RT-term&gt;parse tree&lt;/RT-term&gt;</RT-code> in paragraph two. Will the system assign a definition anchor to the second occurrence?
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>TOC Generation:</strong> What happens if one places an <RT-code>&lt;RT-TOC&gt;</RT-code> tag without a level attribute before the first heading of a section?
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Code and Math Formatting:</strong> How does the RT system determine whether to render an <RT-code>&lt;RT-code&gt;</RT-code> or <RT-code>&lt;RT-math&gt;</RT-code> element inline with the text versus as a standalone block?
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>Pagination Logic:</strong> When the script bundles elements into an <RT-code>&lt;RT-page&gt;</RT-code> container, how does the soft limit pagination handle a heading that falls at the very bottom of the page capacity?
+          </p>
+        </li>
+      </ol>
+
     </RT-article>
   </body>
 </html>
