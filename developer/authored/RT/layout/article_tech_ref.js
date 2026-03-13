@@ -48,20 +48,39 @@
     }
 
     // CSS injection for headers, lists, and layout mapped from theme variables
-// CSS injection for headers, lists, and layout mapped from theme variables
+    // 1. Adjust paginator capacity to fit the physical page minus padding
+    window.StyleRT = window.StyleRT || {};
+    window.StyleRT.config = window.StyleRT.config || {};
+    window.StyleRT.config.page = window.StyleRT.config.page || {};
+    // 1056px - 96px (padding) = 960px usable. 920px leaves room for the footer.
+    window.StyleRT.config.page.height_limit = 920; 
+
+    // 2. CSS injection for headers, lists, and layout mapped from theme variables
     const style_node = document.createElement("style");
     style_node.innerHTML = `
       rt-article {
         font-family: 'Noto Sans JP', Arial, sans-serif;
         background-color: var(--rt-surface-0);
         color: var(--rt-content-main);
-        padding: 2rem;
+        /* Force width so inline JS doesn't widen the measurement area */
+        max-width: 46.875rem !important; 
+        box-sizing: border-box !important;
       }
+      
+      /* PRE-PAGINATION: Mimic page padding so text line-wraps accurately during measurement */
+      rt-article:not(:has(rt-page)) {
+        padding: 3rem !important; 
+      }
+      
+      /* POST-PAGINATION: Remove article padding so we don't double-pad the generated pages */
+      rt-article:has(rt-page) {
+        padding: 0 !important;
+      }
+
       rt-article rt-page {
         display: block;
         padding: 3rem;
         margin: 1.25rem auto;
-        max-width: 46.875rem;
         background-color: var(--rt-surface-0);
         box-shadow: 0 0 0.625rem var(--rt-brand-primary);
       }
@@ -71,7 +90,7 @@
         font-size: 1.5rem;
         text-align: center;
         color: var(--rt-brand-primary);
-        font-weight: 500; /* Softened from the default heavy bold */
+        font-weight: 500;
         margin-top: 1.5rem;
         line-height: 1.15;
       }
@@ -87,7 +106,7 @@
         color: var(--rt-brand-tertiary);
         text-align: left;
         margin-top: 1.5rem;
-        margin-left: 4ch; /* Indented 4 characters */
+        margin-left: 4ch;
       }
       rt-article h4 {
         font-size: 1.05rem;
@@ -95,7 +114,7 @@
         font-weight: 600;
         text-align: left;
         margin-top: 1.25rem;
-        margin-left: 8ch; /* Indented 8 characters */
+        margin-left: 8ch;
       }
 
       /* --- BODY TEXT (Flush Left) --- */
