@@ -14,11 +14,16 @@ window.StyleRT.debug = {
     ,'selector', 'config', 'error'
     ,'term'
   ]),
-*/
+
   active_tokens: new Set([
     'term'
   ]),
-  
+*/  
+
+  active_tokens: new Set([
+  ]),
+
+
   log: function(token, message) {
     if (this.active_tokens.has(token)) {
       console.log(`[StyleRT:${token}]`, message);

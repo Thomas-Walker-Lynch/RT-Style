@@ -1,7 +1,35 @@
 (function(){
+  console.log("[RT-Scroll] 1. Initializing script.");
+
+  // 1. Intercept native history restoration immediately
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+    console.log("[RT-Scroll] 2. history.scrollRestoration set to manual.");
+  }
+
+  // 2. Read coordinate from memory before any layout shifts occur
+  const raw_target = sessionStorage.getItem('RT_saved_y');
+  const target_y = raw_target !== null ? parseInt(raw_target, 10) : 0;
+  
+  // 3. Determine if the execution is a page reload
+  let is_reload = false;
+  if (window.performance) {
+    const nav_entries = performance.getEntriesByType("navigation");
+    if (nav_entries.length > 0) {
+      is_reload = (nav_entries[0].type === "reload");
+    } else if (performance.navigation) {
+      is_reload = (performance.navigation.type === 1);
+    }
+  }
+
+  console.log(`[RT-Scroll] 3. Target Y: ${target_y} | Is Reload: ${is_reload}`);
+
+  // 4. The Lock
+  let is_layout_locked = true;
+
   const RT = window.StyleRT = window.StyleRT || {};
 
-  // 1. Declare Dependencies
+  // 5. Declare Dependencies
   RT.include('RT/core/utility');
   RT.include('RT/element/math');
   RT.include('RT/element/code');
@@ -13,7 +41,7 @@
   RT.include('RT/layout/page_fixed_glow');
   RT.include('RT/core/body_visibility_visible');
 
-  // 2. The Typography Layout
+  // 6. The Typography Layout
   RT.article = function(){
     RT.config = RT.config || {};
     RT.config.article = {
@@ -54,6 +82,10 @@
 
     const style_node = document.createElement("style");
     style_node.innerHTML = `
+      body, html, rt-article {
+        overflow-anchor: none !important;
+      }
+
       rt-article {
         font-family: 'Noto Sans JP', Arial, sans-serif;
         background-color: var(--rt-surface-0);
@@ -132,21 +164,11 @@
     document.head.appendChild(style_node);
   };
 
-  // 3. The Execution Sequence
-  const run_semantics = function(){
-    // Override browser scroll memory
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
-
-    // Capture the scroll position right before the page unloads
-    window.addEventListener('beforeunload', () => {
-      sessionStorage.setItem('RT_scroll_position', window.scrollY);
-    });
-
+  // 7. The Execution Sequence
+  function run_semantics() {
+    console.log(`[RT-Scroll] 4. run_semantics starting.`);
     if(RT.theme) RT.theme();     
     RT.article(); 
-    
     if(RT.title) RT.title(); 
     if(RT.term) RT.term();
     if(RT.math) RT.math();
@@ -157,35 +179,93 @@
     }else{
       run_layout();
     }
-  };
+  }
 
-  const run_layout = function(){
+  function run_layout() {
+    console.log(`[RT-Scroll] 5. run_layout starting.`);
     if(RT.TOC) RT.TOC();
     if(RT.paginate_by_element) RT.paginate_by_element();
     if(RT.page) RT.page();
     if(RT.body_visibility_visible) RT.body_visibility_visible();
     
-    // Yield to the browser's rendering pipeline.
-    // The DOM has been mutated, but the browser needs a moment to recalculate
-    // the physical geometry before we apply a scroll coordinate.
-    setTimeout(() => {
-      if (window.location.hash) {
-        const target = document.getElementById(window.location.hash.substring(1));
-        if (target) {
-          target.scrollIntoView();
-        }
-      } else {
-        const saved_y = sessionStorage.getItem('RT_scroll_position');
-        if (saved_y !== null) {
-          window.scrollTo(0, parseInt(saved_y, 10));
-        } else {
-          window.scrollTo(0, 0);
-        }
-      }
-    }, 50); 
-  };
+    console.log(`[RT-Scroll] 6. Pagination complete.`);
 
-  // 4. Bind to DOM Ready
+    let final_target = target_y;
+    let use_hash = false;
+
+    // Prioritize the hash only if it is NOT a page reload
+    if (window.location.hash && !is_reload) {
+        const hash_target = document.getElementById(window.location.hash.substring(1));
+        if (hash_target) {
+            use_hash = true;
+        }
+    }
+
+    console.log(`[RT-Scroll] 7. Commencing viewport enforce loop. Mode: ${use_hash ? 'HASH' : 'Y-COORDINATE'}`);
+    enforce_scroll(final_target, use_hash, 0);
+  }
+
+  // 8. The Enforcer Logic
+  function enforce_scroll(target, use_hash, attempts) {
+    if (attempts > 15) {
+      console.log("[RT-Scroll] 8. Scroll enforcement timed out. Unlocking.");
+      is_layout_locked = false;
+      return;
+    }
+
+    if (use_hash) {
+      const hash_target = document.getElementById(window.location.hash.substring(1));
+      if (hash_target) {
+        hash_target.scrollIntoView();
+        console.log(`[RT-Scroll] 8a. Attempt ${attempts}: Scrolled to Hash Target. Y is now ${window.scrollY}`);
+      }
+    } else {
+      window.scrollTo(0, target);
+      console.log(`[RT-Scroll] 8b. Attempt ${attempts}: Scrolled to Y=${target}. Current Y is ${window.scrollY}`);
+    }
+
+    let is_successful = false;
+    if (use_hash) {
+       is_successful = true; 
+    } else {
+       is_successful = (Math.abs(window.scrollY - target) < 5 || target === 0);
+    }
+
+    if (is_successful && document.body.scrollHeight > 1000) { 
+       console.log(`[RT-Scroll] 9. Viewport anchored successfully.`);
+       
+       // Hold the line against native browser hash jumping
+       setTimeout(() => {
+         if (!use_hash && Math.abs(window.scrollY - target) >= 5) {
+             console.log(`[RT-Scroll] 9a. Browser late-stage rebellion detected. Re-enforcing.`);
+             enforce_scroll(target, use_hash, attempts + 1);
+         } else {
+             is_layout_locked = false;
+             console.log("[RT-Scroll] 10. Layout fully unlocked.");
+         }
+       }, 100);
+    } else {
+       setTimeout(() => enforce_scroll(target, use_hash, attempts + 1), 50);
+    }
+  }
+
+  // 9. The Ledger
+  let scroll_timer;
+  window.addEventListener('scroll', () => {
+    if (is_layout_locked) return;
+    clearTimeout(scroll_timer);
+    scroll_timer = setTimeout(() => {
+      sessionStorage.setItem('RT_saved_y', window.scrollY);
+      console.log(`[RT-Scroll] X. User stopped scrolling. Saved Y: ${window.scrollY}`);
+    }, 200);
+  }, { passive: true });
+
+  window.addEventListener('beforeunload', () => {
+    is_layout_locked = true;
+    console.log("[RT-Scroll] Y. Page unloading. Scroll listener locked.");
+  });
+
+  // 10. Bind to DOM Ready
   document.addEventListener( 'DOMContentLoaded' ,run_semantics );
 
 })();
