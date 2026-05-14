@@ -1,7 +1,7 @@
 (function(){
   const RT = window.StyleRT = window.StyleRT || {};
 
-  // 1. Declare Dependencies with updated core/ and layout/ paths
+  // 1. Declare Dependencies
   RT.include('RT/core/utility');
   RT.include('RT/element/math');
   RT.include('RT/element/code');
@@ -13,7 +13,7 @@
   RT.include('RT/layout/page_fixed_glow');
   RT.include('RT/core/body_visibility_visible');
 
-  // 2. The Typography Layout (Adapted from the original)
+  // 2. The Typography Layout
   RT.article = function(){
     RT.config = RT.config || {};
     RT.config.article = {
@@ -47,37 +47,31 @@
       style.color = "var(--rt-content-main)";
     }
 
-    // CSS injection for headers, lists, and layout mapped from theme variables
-    // 1. Adjust paginator capacity to fit the physical page minus padding
     window.StyleRT = window.StyleRT || {};
     window.StyleRT.config = window.StyleRT.config || {};
     window.StyleRT.config.page = window.StyleRT.config.page || {};
-    // 1056px - 96px (padding) = 960px usable. 920px leaves room for the footer.
-    window.StyleRT.config.page.height_limit = 920; 
+    window.StyleRT.config.page.height_limit = 900; 
 
-    // 2. CSS injection for headers, lists, and layout mapped from theme variables
     const style_node = document.createElement("style");
     style_node.innerHTML = `
       rt-article {
         font-family: 'Noto Sans JP', Arial, sans-serif;
         background-color: var(--rt-surface-0);
         color: var(--rt-content-main);
-        /* Force width so inline JS doesn't widen the measurement area */
         max-width: 46.875rem !important; 
         box-sizing: border-box !important;
       }
       
-      /* PRE-PAGINATION: Mimic page padding so text line-wraps accurately during measurement */
       rt-article:not(:has(rt-page)) {
         padding: 3rem !important; 
       }
       
-      /* POST-PAGINATION: Remove article padding so we don't double-pad the generated pages */
       rt-article:has(rt-page) {
         padding: 0 !important;
       }
 
       rt-article rt-page {
+        position: relative;
         display: block;
         padding: 3rem;
         margin: 1.25rem auto;
@@ -85,7 +79,6 @@
         box-shadow: 0 0 0.625rem var(--rt-brand-primary);
       }
       
-      /* --- HEADER CASCADE --- */
       rt-article h1 {
         font-size: 1.5rem;
         text-align: center;
@@ -117,7 +110,6 @@
         margin-left: 8ch;
       }
 
-      /* --- BODY TEXT (Flush Left) --- */
       rt-article p,
       rt-article ul,
       rt-article ol {
@@ -130,7 +122,6 @@
         margin-bottom: 0.5rem;
       }
       
-      /* --- CODE FORMATTING --- */
       rt-article rt-code {
         font-family: 'Courier New', Courier, monospace;
         background-color: var(--rt-surface-code);
@@ -143,16 +134,24 @@
 
   // 3. The Execution Sequence
   const run_semantics = function(){
+    // Override browser scroll memory
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // Capture the scroll position right before the page unloads
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('RT_scroll_position', window.scrollY);
+    });
+
     if(RT.theme) RT.theme();     
     RT.article(); 
     
-    // Call the newly renamed element functions
     if(RT.title) RT.title(); 
     if(RT.term) RT.term();
     if(RT.math) RT.math();
     if(RT.code) RT.code();
 
-    // Check for MathJax typesetting
     if(window.MathJax && MathJax.Hub && MathJax.Hub.Queue){
       MathJax.Hub.Queue( ["Typeset" ,MathJax.Hub] ,run_layout );
     }else{
@@ -165,10 +164,28 @@
     if(RT.paginate_by_element) RT.paginate_by_element();
     if(RT.page) RT.page();
     if(RT.body_visibility_visible) RT.body_visibility_visible();
+    
+    // Yield to the browser's rendering pipeline.
+    // The DOM has been mutated, but the browser needs a moment to recalculate
+    // the physical geometry before we apply a scroll coordinate.
+    setTimeout(() => {
+      if (window.location.hash) {
+        const target = document.getElementById(window.location.hash.substring(1));
+        if (target) {
+          target.scrollIntoView();
+        }
+      } else {
+        const saved_y = sessionStorage.getItem('RT_scroll_position');
+        if (saved_y !== null) {
+          window.scrollTo(0, parseInt(saved_y, 10));
+        } else {
+          window.scrollTo(0, 0);
+        }
+      }
+    }, 50); 
   };
 
   // 4. Bind to DOM Ready
-  // This replaces the need to put a script at the bottom of the HTML body
   document.addEventListener( 'DOMContentLoaded' ,run_semantics );
 
 })();
