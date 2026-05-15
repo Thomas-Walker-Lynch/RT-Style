@@ -1,33 +1,28 @@
 /*
   Page Layout: Fixed Glow
   Standard: Theme 1.0
-  Description: A fixed-height container with a glowing border effect that matches the active theme.
+  Description: A variable-height container with a glowing border effect that matches the active theme.
 */
 (function(){
   const RT = window.StyleRT = window.StyleRT || {};
 
-  // Function name stays generic so the orchestrator can call RT.page() regardless of file choice
   RT.page = function() {
     RT.config = RT.config || {};
     
     // Default Configuration
-    // We use CSS Variables here so the Theme controls the actual colors.
     const defaults = {
        width: "100%"
-      ,height: "1056px"
+      ,min_height: "15rem" // Replaces fixed height
       ,padding: "3rem"
       ,margin: "4rem auto"
       
-      // Dynamic Theme Bindings
-      ,bg_color:     "var(--rt-surface-0)"         // Black (Dark) or Cream (Light)
-      ,border_color: "var(--rt-brand-primary)"     // The Main Accent Color
-      ,text_color:   "var(--rt-brand-primary)"     // Page Number Color
+      ,bg_color:     "var(--rt-surface-0)"         
+      ,border_color: "var(--rt-brand-primary)"     
+      ,text_color:   "var(--rt-brand-primary)"     
       
-      // The Glow: Uses the primary brand color for the shadow
       ,shadow: "drop-shadow(0px 0px 15px var(--rt-brand-primary))" 
     };
 
-    // Merge defaults
     RT.config.page = Object.assign({}, defaults, RT.config.page || {});
 
     const conf = RT.config.page;
@@ -51,7 +46,7 @@
 
           /* Dimensions */
           width: ${conf.width};
-          height: ${conf.height};
+          min-height: ${conf.min_height};
           margin: ${conf.margin};
           padding: ${conf.padding};
           
@@ -79,7 +74,7 @@
           
           color: ${conf.text_color}; 
           opacity: 0.8;
-          pointer-events: none; /* Prevent interference with clicks */
+          pointer-events: none;
         }
       `;
       document.head.appendChild(style_el);

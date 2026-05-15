@@ -1,3 +1,4 @@
+// debug messsages don't work here, because RT/core/utility isn't loaded until after the function runs.
 (function(){
   const RT = window.StyleRT = window.StyleRT || {};
   const debug = RT.debug || { log: function(){} };

@@ -22,9 +22,7 @@ window.StyleRT.debug = {
 */  
 
   active_tokens: new Set([
-    'scroll'
   ]),
-
 
   log: function(token, message) {
     if (this.active_tokens.has(token)) {
