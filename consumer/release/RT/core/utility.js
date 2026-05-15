@@ -13,6 +13,7 @@ window.StyleRT.debug = {
     'style', 'layout', 'pagination'
     ,'selector', 'config', 'error'
     ,'term'
+    ,'scroll'
   ]),
 
   active_tokens: new Set([
@@ -21,6 +22,7 @@ window.StyleRT.debug = {
 */  
 
   active_tokens: new Set([
+    'scroll'
   ]),
 
 
