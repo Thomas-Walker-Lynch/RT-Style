@@ -20,6 +20,7 @@ window.StyleRT.paginate_by_element = function () {
     return (rect.height || 0) + (margin || 0);
   };
 
+  // Create a hidden measurement container that mimics the article's layout
   let measureContainer = null;
   const getMeasureContainer = () => {
     if (measureContainer && measureContainer.parentNode) return measureContainer;
@@ -28,12 +29,13 @@ window.StyleRT.paginate_by_element = function () {
       const temp = document.createElement('div');
       temp.style.visibility = 'hidden';
       temp.style.position = 'absolute';
-      temp.style.width = '100%';
+      temp.style.width = '100%';   // fallback
       document.body.appendChild(temp);
       measureContainer = temp;
       return temp;
     }
     const container = document.createElement('div');
+    // Copy the computed width and font styles from the article
     const articleStyle = window.getComputedStyle(article);
     container.style.visibility = 'hidden';
     container.style.position = 'absolute';
@@ -47,6 +49,7 @@ window.StyleRT.paginate_by_element = function () {
     return container;
   };
 
+  // Measure a fragment by temporarily inserting it into the measurement container
   const measureFragment = (frag) => {
     const container = getMeasureContainer();
     container.appendChild(frag);
@@ -57,35 +60,18 @@ window.StyleRT.paginate_by_element = function () {
 
   const isSplittable = (el) => {
     const tag = el.tagName;
-
-    // Support for custom RT-TOC wrapper
-    if (tag === 'RT-TOC') {
-      const list = el.querySelector('ul, ol');
-      if (!list) return null;
-
-      const items = Array.from(list.children).filter(c => c.tagName === 'LI');
-      if (items.length === 0) return null;
-
-      const itemHeights = items.map(li => get_el_height(li));
-
-      const emptyClone = el.cloneNode(true);
-      const listInClone = emptyClone.querySelector('ul, ol');
-      if (listInClone) listInClone.innerHTML = '';
-      const overhead = get_el_height(emptyClone);
-
-      el._splitInfo = { type: 'toc', itemHeights, overhead, offset: 0 };
-      return makeTOCSplitter(el, el._splitInfo);
-    }
-
     if (tag === 'UL' || tag === 'OL') {
       const items = Array.from(el.children).filter(c => c.tagName === 'LI');
       if (items.length === 0) return null;
 
+      // Measure item heights once (still in DOM)
       const itemHeights = items.map(li => get_el_height(li));
 
+      // Measure empty list overhead
       const emptyClone = el.cloneNode(false);
       const overhead = get_el_height(emptyClone);
 
+      // Store info on the original element (and on rest fragments later)
       el._splitInfo = { type: 'list', itemHeights, overhead, offset: 0 };
       return makeListSplitter(el, el._splitInfo);
     }
@@ -112,85 +98,19 @@ window.StyleRT.paginate_by_element = function () {
       return makeTableSplitter(el, el._splitInfo);
     }
 
-    return null;
+    return null;   // not splittable
   };
-
-  function makeTOCSplitter(el, info) {
-    return (remaining) => {
-      const list = el.querySelector('ul, ol');
-      const children = Array.from(list.children).filter(c => c.tagName === 'LI');
-      const start = info.offset;
-
-      let bestCount = 0;
-      let bestHeight = 0;
-
-      const tempClone = el.cloneNode(true);
-      const tempList = tempClone.querySelector('ul, ol');
-      tempList.innerHTML = '';
-
-      for (let i = 0; i < children.length; i++) {
-        const itemClone = children[i].cloneNode(true);
-        tempList.appendChild(itemClone);
-        const fragHeight = measureFragment(tempClone);
-        if (fragHeight <= remaining) {
-          bestCount = i + 1;
-          bestHeight = fragHeight;
-        } else {
-          tempList.removeChild(itemClone);
-          break;
-        }
-      }
-
-      if (bestCount === 0) {
-        return { first: null, rest: el, firstHeight: 0 };
-      }
-
-      const first = el.cloneNode(true);
-      const firstList = first.querySelector('ul, ol');
-      firstList.innerHTML = '';
-      for (let i = 0; i < bestCount; i++) {
-        firstList.appendChild(children[i].cloneNode(true));
-      }
-
-      const rest = el.cloneNode(true);
-      const restList = rest.querySelector('ul, ol');
-      restList.innerHTML = '';
-      for (let i = bestCount; i < children.length; i++) {
-        restList.appendChild(children[i].cloneNode(true));
-      }
-
-      // Clean up the title heading in the continuation fragment
-      const title = rest.querySelector('h1, h2, h3, h4, h5, h6');
-      if (title) {
-        title.remove();
-      }
-
-      // Recalculate overhead since the title is now gone
-      const emptyRest = rest.cloneNode(true);
-      const emptyRestList = emptyRest.querySelector('ul, ol');
-      if (emptyRestList) {
-        emptyRestList.innerHTML = '';
-      }
-      const restOverhead = measureFragment(emptyRest);
-
-      rest._splitInfo = {
-        type: 'toc',
-        itemHeights: info.itemHeights,
-        overhead: restOverhead,
-        offset: start + bestCount
-      };
-
-      return { first, rest, firstHeight: bestHeight };
-    };
-  }
 
   function makeListSplitter(el, info) {
     return (remaining) => {
       const children = Array.from(el.children).filter(c => c.tagName === 'LI');
       const start = info.offset;
+      const relevantHeights = info.itemHeights.slice(start, start + children.length);
 
+      // Build fragments iteratively and measure them for exact height
       let bestCount = 0;
       let bestHeight = 0;
+      // Try to include as many items as possible
       const tempList = el.cloneNode(false);
       for (let i = 0; i < children.length; i++) {
         const itemClone = children[i].cloneNode(true);
@@ -200,6 +120,7 @@ window.StyleRT.paginate_by_element = function () {
           bestCount = i + 1;
           bestHeight = fragHeight;
         } else {
+          // Remove the last item
           tempList.removeChild(itemClone);
           break;
         }
@@ -209,16 +130,25 @@ window.StyleRT.paginate_by_element = function () {
         return { first: null, rest: el, firstHeight: 0 };
       }
 
+      // Build first fragment (with exactly bestCount items)
       const first = el.cloneNode(false);
       for (let i = 0; i < bestCount; i++) {
         first.appendChild(children[i].cloneNode(true));
       }
 
+      // Build rest fragment
       const rest = el.cloneNode(false);
       for (let i = bestCount; i < children.length; i++) {
         rest.appendChild(children[i].cloneNode(true));
       }
 
+      // Explicitly inject the starting index for ordered lists
+      if (el.tagName === 'OL') {
+        const currentStart = parseInt(el.getAttribute('start'), 10) || 1;
+        rest.setAttribute('start', currentStart + bestCount);
+      }
+
+      // Forward split info
       rest._splitInfo = {
         type: 'list',
         itemHeights: info.itemHeights,
@@ -259,6 +189,7 @@ window.StyleRT.paginate_by_element = function () {
           bestCount = i + 1;
           bestHeight = h;
         } else {
+          // Remove the last row
           tempBody.removeChild(tempBody.lastChild);
           break;
         }
@@ -315,25 +246,32 @@ window.StyleRT.paginate_by_element = function () {
       const el = raw_element_seq[i];
       const splitter = isSplittable(el);
 
+      // --- Splittable element ---
       if (splitter) {
         const remaining = page_height_limit - current_h;
         const { first, rest, firstHeight } = splitter(remaining);
 
         if (first) {
+          // Place the fitting fragment
           current_batch_seq.push(first);
-          current_h += firstHeight;
+          current_h += firstHeight;   // exact measured height
 
+          // Replace original with remainder
           raw_element_seq.splice(i, 1, rest);
+          // Do not increment i - rest will be processed next
         } else {
+          // Not even one item fits on this page
           if (current_batch_seq.length === 0) {
+            // Empty page -> wrap whole element in a scroll frame
             const frame = document.createElement('rt-scroll-frame');
             frame.style.display = 'block';
             frame.style.overflowY = 'auto';
             frame.style.maxHeight = page_height_limit + 'px';
             frame.appendChild(el);
             current_batch_seq.push(frame);
-            i++;
+            i++;   // element consumed
           } else {
+            // Page has content -> start a new page and keep rest for later
             page_seq.push(current_batch_seq);
             current_batch_seq = [];
             current_h = 0;
@@ -343,9 +281,11 @@ window.StyleRT.paginate_by_element = function () {
         continue;
       }
 
+      // --- Ordinary (non-splittable) element ---
       const h = get_el_height(el);
 
       if (current_h + h > page_height_limit && current_batch_seq.length > 0) {
+        // Backtrack widowed headings
         let backtrack_seq = [];
         let backtrack_h = 0;
         while (current_batch_seq.length > 0) {
@@ -376,6 +316,7 @@ window.StyleRT.paginate_by_element = function () {
       page_seq.push(current_batch_seq);
     }
 
+    // Rebuild article with <rt-page> wrappers
     article.innerHTML = '';
     let p = 0;
     while (p < page_seq.length) {
@@ -394,6 +335,7 @@ window.StyleRT.paginate_by_element = function () {
     article_index++;
   }
 
+  // Clean up measurement container
   if (measureContainer && measureContainer.parentNode) {
     measureContainer.remove();
     measureContainer = null;
