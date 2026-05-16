@@ -10,5 +10,6 @@ __pycache__/
 *~
 *.bak
 
-# so that .gitignore is not required in user/release
-/user/release
+# so that .gitignore is not required in /consumer/release
+/consumer/release
+
