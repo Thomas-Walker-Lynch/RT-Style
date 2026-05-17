@@ -3,7 +3,7 @@
   Generates a standard document header block.
   
   Usage: 
-  <RT-title title="..." author="..." date="..."></RT-title>
+  <RT-title title="..." author="..." date="..." copyright="..."></RT-title>
 */
 window.StyleRT = window.StyleRT || {};
 
@@ -14,6 +14,7 @@ window.StyleRT.title = function() {
     const title = el.getAttribute('title') || 'Untitled Document';
     const author = el.getAttribute('author');
     const date = el.getAttribute('date');
+    const copyright = el.getAttribute('copyright');
 
     if (debug.log) debug.log('title', `Generating title block: ${title}`);
 
@@ -52,6 +53,17 @@ window.StyleRT.title = function() {
 
       meta.innerHTML = parts.join(' &nbsp;&mdash;&nbsp; ');
       container.appendChild(meta);
+    }
+
+    // Copyright Row
+    if (copyright) {
+      const copy_div = document.createElement('div');
+      copy_div.style.color = 'var(--rt-content-muted)';
+      copy_div.style.fontSize = '0.9em';
+      copy_div.style.marginTop = '0.5rem';
+      // Automatically injects the copyright symbol
+      copy_div.innerHTML = `&copy; ${copyright}`; 
+      container.appendChild(copy_div);
     }
 
     // Replace the raw tag with the generated block

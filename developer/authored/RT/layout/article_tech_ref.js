@@ -162,6 +162,14 @@
         padding: 0.125rem 0.25rem;
         color: var(--rt-content-main);
       }
+
+      rt-article img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1.5rem auto; /* Centers the image */
+      }
+
     `;
     document.head.appendChild(style_node);
   };
