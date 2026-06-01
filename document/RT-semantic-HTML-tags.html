@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>The RT semantic HTML tags</title>
+    <title>RT semantic HTML tags</title>
     <script src="setup.js"></script>
     <script>
       window.StyleRT.include('RT/theme');
@@ -12,7 +12,7 @@
   <body>
 
     <RT-article>
-      <RT-title author="Thomas Walker Lynch" date="2026-06-01 09:28 UTC" title="The RT semantic HTML tags"></RT-title>
+      <RT-title author="Thomas Walker Lynch" date="2026-06-01 21:05 UTC" title="RT semantic HTML tags"></RT-title>
 
       <RT-TOC level="1-2"></RT-TOC>
 
@@ -101,6 +101,11 @@
           <tr>
             <td><RT-code>&lt;RT-endnotes&gt;</RT-code></td>
             <td>Container for extracted citations.</td>
+          </tr>
+
+          <tr>
+            <td><RT-code>&lt;RT-footnote&gt;</RT-code></td>
+            <td>Inline footnote generator.</td>
           </tr>
 
           <tr>
@@ -243,9 +248,9 @@
         Use <RT-code>&lt;RT-crossref&gt;</RT-code> for internal structural linking between sections. This tag provides context-aware linking, managing anchor states to jump across soft-limit boundaries seamlessly.
       </p>
 
-      <h2>Citations and endnotes</h2>
+      <h2>Citations, endnotes, and footnotes</h2>
       <p>
-        The system manages academic and technical references through a paired tag approach, ensuring citations are extracted and formatted before the layout engine calculates page boundaries.
+        The system manages academic and technical references through a paired tag approach, ensuring citations are extracted and formatted before the layout engine calculates page boundaries. It also supports dynamically expanding footnotes.
       </p>
       
       <h3>Inline citations</h3>
@@ -257,6 +262,15 @@
       <p>
         The <RT-code>&lt;RT-endnotes&gt;</RT-code> container functions as the destination for all extracted citations. If an author places this tag at the bottom of the article, the engine populates it with an ordered list of references. Should the author omit the tag, the semantic parser will dynamically generate and append it as a top-level child of the article.
       </p>
+
+      <h3>Footnotes</h3>
+      <p>
+        An author places <RT-code>&lt;RT-footnote&gt;Note text&lt;/RT-footnote&gt;</RT-code> inline within the prose. The engine operates in three phases: it strips the tag to prevent layout disruption, paginates the raw text blindly, and finally expands the completed page to append the extracted footnote block at the bottom. This ensures perfect spatial routing across soft limits.
+      </p>
+
+      <RT-code>
+        The core architecture operates at 5GHz.<RT-footnote>Assuming optimal thermal conditions.</RT-footnote>
+      </RT-code>
 
       <h1>Navigation and layout</h1>
 
@@ -301,7 +315,7 @@
         <RT-title 
           title="The RT semantic HTML tags" 
           author="Thomas Walker Lynch" 
-          date="2026-06-01 09:28 UTC"
+          date="2026-06-01 21:05 UTC"
           copyright="2026 Reasoning Technology">
         </RT-title>
       </RT-code>
@@ -440,3 +454,4 @@
     </RT-article>
   </body>
 </html>
+
