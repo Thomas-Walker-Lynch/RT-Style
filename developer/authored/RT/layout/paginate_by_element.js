@@ -136,29 +136,35 @@ window.StyleRT.paginate_by_element = function () {
         first.appendChild(children[i].cloneNode(true));
       }
 
-      // Build rest fragment
-      const rest = el.cloneNode(false);
-      for (let i = bestCount; i < children.length; i++) {
-        rest.appendChild(children[i].cloneNode(true));
-      }
 
-      // Explicitly inject the starting index for ordered lists
-      if (el.tagName === 'OL') {
-        const currentStart = parseInt(el.getAttribute('start'), 10) || 1;
-        rest.setAttribute('start', currentStart + bestCount);
-      }
+      // Build rest fragment only if there are remaining items
+      let rest = null;
+      if (bestCount < children.length) {
+        rest = el.cloneNode(false);
+        for (let i = bestCount; i < children.length; i++) {
+          rest.appendChild(children[i].cloneNode(true));
+        }
 
-      // Forward split info
-      rest._splitInfo = {
-        type: 'list',
-        itemHeights: info.itemHeights,
-        overhead: info.overhead,
-        offset: start + bestCount
-      };
+        // Explicitly inject the starting index for ordered lists
+        if (el.tagName === 'OL') {
+          const currentStart = parseInt(el.getAttribute('start'), 10) || 1;
+          rest.setAttribute('start', currentStart + bestCount);
+        }
+
+        // Forward split info
+        rest._splitInfo = {
+          type: 'list',
+          itemHeights: info.itemHeights,
+          overhead: info.overhead,
+          offset: start + bestCount
+        };
+      }
 
       return { first, rest, firstHeight: bestHeight };
     };
   }
+
+
 
   function makeTableSplitter(el, info) {
     const thead = el.querySelector('thead');
@@ -205,19 +211,22 @@ window.StyleRT.paginate_by_element = function () {
         firstBody.appendChild(relevantRows[i].cloneNode(true));
       }
 
-      const rest = createShell();
-      const restBody = rest.querySelector('tbody');
-      for (let i = bestCount; i < relevantRows.length; i++) {
-        restBody.appendChild(relevantRows[i].cloneNode(true));
-      }
+      let rest = null;
+      if (bestCount < relevantRows.length) {
+        rest = createShell();
+        const restBody = rest.querySelector('tbody');
+        for (let i = bestCount; i < relevantRows.length; i++) {
+          restBody.appendChild(relevantRows[i].cloneNode(true));
+        }
 
-      rest._splitInfo = {
-        type: 'table',
-        rowHeights: info.rowHeights,
-        overhead: info.overhead,
-        theadHeight: info.theadHeight,
-        offset: start + bestCount
-      };
+        rest._splitInfo = {
+          type: 'table',
+          rowHeights: info.rowHeights,
+          overhead: info.overhead,
+          theadHeight: info.theadHeight,
+          offset: start + bestCount
+        };
+      }
 
       return { first, rest, firstHeight: bestHeight };
     };
@@ -256,9 +265,14 @@ window.StyleRT.paginate_by_element = function () {
           current_batch_seq.push(first);
           current_h += firstHeight;   // exact measured height
 
-          // Replace original with remainder
-          raw_element_seq.splice(i, 1, rest);
-          // Do not increment i - rest will be processed next
+          if (rest) {
+            // Replace original with remainder
+            raw_element_seq.splice(i, 1, rest);
+          } else {
+            // Element is completely consumed
+            raw_element_seq.splice(i, 1);
+          }
+          // Do not increment i - the next element is now at index i
         } else {
           // Not even one item fits on this page
           if (current_batch_seq.length === 0) {
