@@ -32,6 +32,7 @@
   let is_layout_locked = true;
 
   // 5. Declare Dependencies
+  RT.include('RT/element/citation');
   RT.include('RT/core/utility');
   RT.include('RT/element/math');
   RT.include('RT/element/code');
@@ -39,9 +40,17 @@
   RT.include('RT/element/TOC');
   RT.include('RT/element/title');
   RT.include('RT/element/theme_selector');
+  RT.include('RT/element/symbol');
+  RT.include('RT/element/constraint');
+  RT.include('RT/element/crossref');
+
+
   RT.include('RT/layout/paginate_by_element');
   RT.include('RT/layout/page_fixed_glow');
+  RT.include('RT/layout/paginate_by_element');
+
   RT.include('RT/core/body_visibility_visible');
+
 
   // 6. The Typography Layout
   RT.article = function(){
@@ -175,16 +184,20 @@
   };
 
   // 7. The Execution Sequence
-  function run_semantics() {
-    debug.log('scroll', `4. run_semantics starting.`);
+  function run_semantics(){
+    debug.log('scroll' ,`4. run_semantics starting.`);
     if(RT.theme) RT.theme();     
+    if(RT.citation) RT.citation();
     RT.article(); 
     if(RT.title) RT.title(); 
     if(RT.term) RT.term();
     if(RT.math) RT.math();
     if(RT.code) RT.code();
+    if(RT.symbol) RT.symbol();
+    if(RT.constraint) RT.constraint();
+    if(RT.crossref) RT.crossref();
 
-    if(window.MathJax && MathJax.Hub && MathJax.Hub.Queue){
+    if( window.MathJax && MathJax.Hub && MathJax.Hub.Queue ){
       MathJax.Hub.Queue( ["Typeset" ,MathJax.Hub] ,run_layout );
     }else{
       run_layout();
