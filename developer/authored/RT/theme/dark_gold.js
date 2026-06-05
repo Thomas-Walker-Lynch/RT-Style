@@ -69,6 +69,7 @@
       s.setProperty(`--rt-${key.replace(/_/g, '-')}`, value);
     }
     
+
     // 3. Global Overrides
     const style_id = 'rt-global-overrides';
     if (!document.getElementById(style_id)) {
@@ -86,7 +87,27 @@
            border-radius: 8px; 
         }
         ::-webkit-scrollbar-thumb:hover { background: var(--rt-brand-secondary); }
+
+        /* --- Citation & Endnote Styling --- */
+        rt-cite a, .rt-inline-cite a, rt-endnotes a {
+          color: var(--rt-brand-link);
+          text-decoration: none;
+        }
+        rt-cite a:hover, .rt-inline-cite a:hover, rt-endnotes a:hover {
+          text-decoration: underline;
+        }
+        rt-cite, .rt-inline-cite {
+          font-size: 1em;
+          vertical-align: baseline;
+          padding: 0 0.15em;
+        }
+
+        /* --- Image Inversion for Diagrams --- */
+        img.rt-diagram {
+          filter: invert(1) hue-rotate(180deg);
+        }
       `;
+
       document.head.appendChild(style);
     }
   };

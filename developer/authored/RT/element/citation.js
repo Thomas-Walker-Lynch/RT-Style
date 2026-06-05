@@ -35,8 +35,7 @@ window.StyleRT.citation = function(){
     const refNum = index + 1;
     const refText = cite.getAttribute('ref') || cite.innerHTML;
     
-    // Transform the inline tag into a superscript link
-    cite.innerHTML = `<sup><a href="#note-${refNum}" id="cite-${refNum}">[${refNum}]</a></sup>`;
+    cite.innerHTML = `<a href="#note-${refNum}" id="cite-${refNum}">[${refNum}]</a>`;
     cite.style.cursor = 'pointer';
     cite.style.color = 'var(--rt-brand-link)';
     cite.style.textDecoration = 'none';
