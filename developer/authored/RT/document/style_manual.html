@@ -12,7 +12,7 @@
   <body>
 
     <RT-article>
-      <RT-title author="Gemini" date="2026-06-17 15:13:00Z" title="RT Style System: Reference Manual"></RT-title>
+      <RT-title author="Gemini" date="2026-06-17 15:19:00Z" title="RT Style System: Reference Manual"></RT-title>
 
       <RT-TOC level="1"></RT-TOC>
 
@@ -46,6 +46,11 @@
           </tr>
 
           <tr>
+            <td><RT-code>&lt;RT-index&gt;</RT-code></td>
+            <td>Compiles an alphabetical glossary of defined terms.</td>
+          </tr>
+
+          <tr>
             <td><RT-code>&lt;RT-term&gt;</RT-code></td>
             <td>Conventional term.</td>
           </tr>
@@ -76,8 +81,23 @@
           </tr>
 
           <tr>
+            <td><RT-code>&lt;RT-footnote&gt;</RT-code></td>
+            <td>Inline text to be extracted and rendered at the bottom of the page.</td>
+          </tr>
+
+          <tr>
+            <td><RT-code>&lt;RT-cite&gt;</RT-code></td>
+            <td>Bibliographic citation marker.</td>
+          </tr>
+
+          <tr>
+            <td><RT-code>&lt;RT-ref&gt;</RT-code></td>
+            <td>Dynamic cross reference to another element in the document.</td>
+          </tr>
+
+          <tr>
             <td><RT-code>&lt;RT-page&gt;</RT-code></td>
-            <td>Automatically inserted pagination tag.</td>
+            <td>Automatically inserted pagination container.</td>
           </tr>
 
           <tr>
@@ -198,6 +218,31 @@
         f(x) = \sum_{i=0}^{n} x_i
       </RT-math>
 
+      <h2>References, citations, and indexing</h2>
+
+      <h3>Footnotes</h3>
+      <p>
+        Use <RT-code>&lt;RT-footnote&gt;</RT-code> to author footnote content directly inline with the text it references. During the layout phase, the pagination engine extracts the text, replaces the element with an invisible structural marker, and compiles a formatted footnote container at the bottom of the active <RT-code>&lt;RT-page&gt;</RT-code>.
+      </p>
+
+      <h3>Citations</h3>
+      <p>
+        Use <RT-code>&lt;RT-cite&gt;</RT-code> with the <RT-code>ref</RT-code> attribute to insert bibliographic citations. This ensures formatting remains consistent and separates citation data from standard prose.
+      </p>
+      <RT-code>
+        ... formalized as Basic Law V <RT-cite ref="Gottlob Frege, Grundgesetze, 1903"></RT-cite>.
+      </RT-code>
+
+      <h3>Dynamic cross referencing</h3>
+      <p>
+        A person authoring a technical document frequently refers back to tables, equations, or previous sections. Use <RT-code>&lt;RT-ref target="element-id"&gt;</RT-code> to link to specific content. This tag dynamically retrieves the numbering or caption of the target element, maintaining correct references even if preceding elements shift during editing.
+      </p>
+
+      <h3>Glossary indexing</h3>
+      <p>
+        Use <RT-code>&lt;RT-index&gt;</RT-code> at the end of the document to compile a glossary. Similar to the TOC compiler, this tag scans the DOM for automatic definition anchors produced by the term module and generates an alphabetized list of defined terms and neologisms.
+      </p>
+
       <h1>Navigation and layout</h1>
 
       <h2>Automatic table of contents</h2>
@@ -239,7 +284,7 @@
         <RT-title 
           title="RT Style System: Reference Manual" 
           author="Gemini" 
-          date="2026-06-17 15:13:00Z">
+          date="2026-06-17 15:19:00Z">
         </RT-title>
       </RT-code>
 
