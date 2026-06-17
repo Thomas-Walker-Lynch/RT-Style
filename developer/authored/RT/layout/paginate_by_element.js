@@ -292,10 +292,12 @@ window.StyleRT.paginate_by_element = function () {
         continue;
       }
 
+
       // --- Ordinary (non-splittable) element ---
       const h = getElHeight(el);
+      const is_RT_page_break = el.tagName && el.tagName.toLowerCase() === 'rt-page-break';
 
-      if (current_h + h > page_height_limit && current_batch_seq.length > 0) {
+      if( (is_RT_page_break || current_h + h > page_height_limit) && current_batch_seq.length > 0 ){
         let backtrack_seq = [];
         let backtrack_h = 0;
         

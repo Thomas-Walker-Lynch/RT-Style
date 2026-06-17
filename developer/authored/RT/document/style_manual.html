@@ -12,13 +12,13 @@
   <body>
 
     <RT-article>
-      <RT-title author="Gemini" date="2026-01-14" title="RT Style System: Reference Manual"></RT-title>
+      <RT-title author="Gemini" date="2026-06-17 15:13:00Z" title="RT Style System: Reference Manual"></RT-title>
 
       <RT-TOC level="1"></RT-TOC>
 
-      <h1> Table of Custom Tags </h1>
+      <h1>Table of custom tags</h1>
 
-      <h2>Style Tag Reference</h2>
+      <h2>Style tag reference</h2>
 
       <table>
         <thead>
@@ -42,7 +42,7 @@
 
           <tr>
             <td><RT-code>&lt;RT-TOC&gt;</RT-code></td>
-            <td>Generates TOC.</td>
+            <td>Compiles TOC.</td>
           </tr>
 
           <tr>
@@ -79,10 +79,20 @@
             <td><RT-code>&lt;RT-page&gt;</RT-code></td>
             <td>Automatically inserted pagination tag.</td>
           </tr>
+
+          <tr>
+            <td><RT-code>&lt;RT-chapter&gt;</RT-code></td>
+            <td>Chapter heading with implied page break.</td>
+          </tr>
+
+          <tr>
+            <td><RT-code>&lt;RT-page-break&gt;</RT-code></td>
+            <td>Explicit page break directive. Must be explicitly closed.</td>
+          </tr>
         </tbody>
       </table>
 
-      <h1>Architecture Overview</h1>
+      <h1>Architecture overview</h1>
       <p>
         The <RT-term>RT Style System</RT-term> is a client-side, JavaScript-driven publishing framework designed to turn raw HTML into high-readability technical documentation. Unlike standard CSS frameworks, RT uses JavaScript to handle complex layout tasks like <RT-neologism>ink-ratio balancing</RT-neologism> and dynamic pagination.
       </p>
@@ -92,14 +102,14 @@
         `setup.js` points at the style files and is installation specific.</p>
         
 
-      <h1>Semantic Tags</h1>
+      <h1>Semantic tags</h1>
       <p>
-        The system relies on a specific set of custom tags in the <RT-code>RT-</RT-code> namespace to separate structure from presentation.
+        The system relies on a specific set of custom tags in the <RT-code>RT-</RT-code> namespace to separate meaning from presentation.
       </p>
 
       <h2>Terminology</h2>
 
-      <h3>Conventional Terms</h3>
+      <h3>Conventional terms</h3>
       <p>
         Use <RT-code>&lt;RT-term&gt;</RT-code> for standard, industry accepted technical terms. The system decorates only the first occurrence of each unique term so that the first appearance functions as a definition point, and later appearances do not overload the page with styling.
       </p>
@@ -114,7 +124,7 @@
 
       <h3>Neologisms</h3>
       <p>
-        Use <RT-code>&lt;RT-neologism&gt;</RT-code> for terms invented specifically for the current document or project. Neologisms are styled more strongly than conventional terms, visually distinguishing "jargon you should know" from "jargon we just made up."
+        Use <RT-code>&lt;RT-neologism&gt;</RT-code> for terms invented specifically for the current document or project. Neologisms are styled more strongly than conventional terms, visually distinguishing "jargon you should know" from "jargon we invented."
       </p>
 
       <RT-code>
@@ -125,7 +135,7 @@
         <em>Renders as:</em> We define the <RT-neologism>Hyper Tape</RT-neologism> as a construct...
       </p>
 
-      <h3>First Occurrence Rule</h3>
+      <h3>First occurrence rule</h3>
       <p>
         The term system is intentionally conservative. For the tags <RT-code>&lt;RT-term&gt;</RT-code> and <RT-code>&lt;RT-neologism&gt;</RT-code>, only the first occurrence of a unique term is decorated. Subsequent mentions are rendered as normal prose.
       </p>
@@ -134,7 +144,7 @@
         Uniqueness is tracked by normalizing the term text (trimmed, then lowercased). This means that <RT-code>Symbol</RT-code> and <RT-code>symbol</RT-code> count as the same term.
       </p>
 
-      <h3>Forced Emphasis Variants</h3>
+      <h3>Forced emphasis variants</h3>
       <p>
         Sometimes a later mention of a term should be emphasized again. For that purpose, the system provides explicit emphasis tags:
       </p>
@@ -148,9 +158,9 @@
         These variants are always decorated, even if the term appeared earlier.
       </p>
 
-      <h3>Automatic Definition Anchors</h3>
+      <h3>Automatic definition anchors</h3>
       <p>
-        For first occurrences, the term module automatically assigns an <RT-code>id</RT-code> attribute if one does not already exist. This creates stable anchors for future indexing and linking.
+        For first occurrences, the term module automatically assigns an <RT-code>id</RT-code> attribute if one does not already exist. This establishes stable anchors for future indexing and linking.
       </p>
 
       <RT-code>
@@ -161,7 +171,7 @@
         The first occurrence will be given an id similar to <RT-code>def-symbol</RT-code>. For neologisms, an additional marker is used, for example <RT-code>def-neo-hyper-tape</RT-code>.
       </p>
 
-      <h2>Technical Content</h2>
+      <h2>Technical content</h2>
 
       <h3>Code</h3>
       <p>
@@ -188,14 +198,14 @@
         f(x) = \sum_{i=0}^{n} x_i
       </RT-math>
 
-      <h1>Navigation & Layout</h1>
+      <h1>Navigation and layout</h1>
 
-      <h2>Automatic Table of Contents</h2>
+      <h2>Automatic table of contents</h2>
       <p>
-        Use <RT-code>&lt;RT-TOC&gt;</RT-code> to insert a generated table of contents. The tag scans the document <em>forward</em> from its current position to collect headings.
+        Use <RT-code>&lt;RT-TOC&gt;</RT-code> to insert a compiled table of contents. The tag scans the document <em>forward</em> from its current position to collect headings.
       </p>
 
-      <h3>Explicit Mode</h3>
+      <h3>Explicit mode</h3>
       <p>
         Use the <RT-code>level="N"</RT-code> attribute to target a specific heading depth.
       </p>
@@ -204,7 +214,7 @@
         <li><RT-code>&lt;RT-TOC level="2"&gt;</RT-code>: Collects all <RT-code>&lt;h2&gt;</RT-code> elements until it encounters the next <RT-code>&lt;h1&gt;</RT-code>. Best for chapter summaries.</li>
       </ul>
 
-      <h3>Implicit Mode</h3>
+      <h3>Implicit mode</h3>
       <p>
         If no level is specified, the TOC scans backwards to find the nearest heading (for example H1) and assumes you want to collect children one level deeper (for example H2).
       </p>
@@ -212,9 +222,9 @@
         <em>Note: Implicit mode can fail if placed before the first heading of a section. Use explicit levels for robust results.</em>
       </p>
 
-      <h2>The Title Block</h2>
+      <h2>The title block</h2>
       <p>
-        Use <RT-code>&lt;RT-title&gt;</RT-code> as the first element in your <RT-code>&lt;body&gt;</RT-code> (before the article container). This tag generates a standardized, styled header block with the document title and metadata.
+        Use <RT-code>&lt;RT-title&gt;</RT-code> as the first element in your <RT-code>&lt;body&gt;</RT-code> (before the article container). This tag produces a standardized, styled header block with the document title and metadata.
       </p>
 
       <h3>Attributes</h3>
@@ -229,7 +239,7 @@
         <RT-title 
           title="RT Style System: Reference Manual" 
           author="Gemini" 
-          date="2026-01-14">
+          date="2026-06-17 15:13:00Z">
         </RT-title>
       </RT-code>
 
@@ -237,7 +247,7 @@
         <em>Renders as:</em> A centered, high contrast H1 followed by a serif styled metadata row containing the author and date.
       </p>
 
-      <h2>The Article Container</h2>
+      <h2>The article container</h2>
       <p>
         The root element must be <RT-code>&lt;RT-article&gt;</RT-code>. This is the boundary for the pagination logic.
       </p>
@@ -250,9 +260,17 @@
         <RT-neologism>Soft Limit Pagination</RT-neologism>: The system attempts to keep headers with their following paragraphs. It will break a page early rather than stranding a header at the bottom.
       </p>
 
+      <h2>Manual page breaks and chapters</h2>
+      <p>
+        A person can assert explicit control over the layout engine using the <RT-code>&lt;RT-page-break&gt;&lt;/RT-page-break&gt;</RT-code> tag. This tag forces the engine to close the current page and push all subsequent content to the top of the next page. Standard HTML5 parsing requires this custom tag to be explicitly closed; self-closing syntax will fail.
+      </p>
+      <p>
+        For major document divisions, use <RT-code>&lt;RT-chapter&gt;</RT-code>. The semantic processor translates this tag into an <RT-code>&lt;RT-page-break&gt;</RT-code> followed by an <RT-code>&lt;h1 class="RT-chapter"&gt;</RT-code>. This ensures the chapter starts on a new page, inherits standard typography, and is automatically indexed by the TOC engine.
+      </p>
+
       <h1>Debugging</h1>
 
-      <h2>Debug Tokens</h2>
+      <h2>Debug tokens</h2>
       <p>
         RT provides a lightweight debug logging system in <RT-code>utility.js</RT-code>. Logging is controlled by a set of active debug tokens. Each log message is assigned a token, and the message prints only if that token is enabled.
       </p>
@@ -261,7 +279,7 @@
         Examples of common tokens include <RT-code>style</RT-code>, <RT-code>layout</RT-code>, <RT-code>pagination</RT-code>, <RT-code>selector</RT-code>, <RT-code>config</RT-code>, and <RT-code>term</RT-code>.
       </p>
 
-      <h2>How Logging is Gated</h2>
+      <h2>How logging is gated</h2>
       <p>
         Normal log and warning output are gated. The methods <RT-code>debug.log(token,message)</RT-code> and <RT-code>debug.warn(token,message)</RT-code> will print only when the token exists in <RT-code>debug.active_tokens</RT-code>.
       </p>
@@ -270,14 +288,14 @@
         This prevents the console from being flooded during normal use, while still allowing deep visibility during development.
       </p>
 
-      <h2>Errors are Always Printed</h2>
+      <h2>Errors are always printed</h2>
       <p>
         Errors are treated differently. The method <RT-code>debug.error(token,message)</RT-code> always prints, regardless of token state. These messages represent failures that require attention.
       </p>
 
-      <h2>Enabling and Disabling Tokens</h2>
+      <h2>Enabling and disabling tokens</h2>
       <p>
-        Tokens may be enabled or disabled in two ways: by editing the <RT-code>active_tokens</RT-code> set in <RT-code>utility.js</RT-code>, or at runtime by calling:
+        Tokens are enabled or disabled in two ways: by editing the <RT-code>active_tokens</RT-code> set in <RT-code>utility.js</RT-code>, or at runtime by calling:
       </p>
 
       <RT-code>
@@ -316,7 +334,7 @@
         window.StyleRT.style_orchestrator();
       </script>
 
-      <h1>RT Conventions</h1>
+      <h1>RT conventions</h1>
       <p> Headings are first letter capitalized. Remaining words are as they would be in English prose.</p>
 
       <h1>Exercises</h1>
@@ -324,27 +342,27 @@
       <ol>
         <li>
           <p>
-            <strong>Term Occurrences:</strong> If an author tags a word with <RT-code>&lt;RT-term&gt;</RT-code> five times in a document, how many times will the term be visually decorated by the styling engine? How does a person force the engine to decorate a later occurrence?
+            <strong>Term occurrences:</strong> If an author tags a word with <RT-code>&lt;RT-term&gt;</RT-code> five times in a document, how many times will the term be visually decorated by the styling engine? How does a person force the engine to decorate a later occurrence?
           </p>
         </li>
         <li>
           <p>
-            <strong>Term Normalization:</strong> A person writes <RT-code>&lt;RT-term&gt;Parse Tree&lt;/RT-term&gt;</RT-code> in paragraph one, and <RT-code>&lt;RT-term&gt;parse tree&lt;/RT-term&gt;</RT-code> in paragraph two. Will the system assign a definition anchor to the second occurrence?
+            <strong>Term normalization:</strong> A person writes <RT-code>&lt;RT-term&gt;Parse Tree&lt;/RT-term&gt;</RT-code> in paragraph one, and <RT-code>&lt;RT-term&gt;parse tree&lt;/RT-term&gt;</RT-code> in paragraph two. Will the system assign a definition anchor to the second occurrence?
           </p>
         </li>
         <li>
           <p>
-            <strong>TOC Generation:</strong> What happens if one places an <RT-code>&lt;RT-TOC&gt;</RT-code> tag without a level attribute before the first heading of a section?
+            <strong>TOC compilation:</strong> What happens if a person places an <RT-code>&lt;RT-TOC&gt;</RT-code> tag without a level attribute before the first heading of a section?
           </p>
         </li>
         <li>
           <p>
-            <strong>Code and Math Formatting:</strong> How does the RT system determine whether to render an <RT-code>&lt;RT-code&gt;</RT-code> or <RT-code>&lt;RT-math&gt;</RT-code> element inline with the text versus as a standalone block?
+            <strong>Code and math formatting:</strong> How does the RT system determine whether to render an <RT-code>&lt;RT-code&gt;</RT-code> or <RT-code>&lt;RT-math&gt;</RT-code> element inline with the text versus as a standalone block?
           </p>
         </li>
         <li>
           <p>
-            <strong>Pagination Logic:</strong> When the script bundles elements into an <RT-code>&lt;RT-page&gt;</RT-code> container, how does the soft limit pagination handle a heading that falls at the very bottom of the page capacity?
+            <strong>Pagination logic:</strong> When the script bundles elements into an <RT-code>&lt;RT-page&gt;</RT-code> container, how does the soft limit pagination handle a heading that falls at the very bottom of the page capacity?
           </p>
         </li>
       </ol>

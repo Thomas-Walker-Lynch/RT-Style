@@ -32,6 +32,7 @@
   let is_layout_locked = true;
 
   // 5. Declare Dependencies
+  RT.include('RT/element/chapter');
   RT.include('RT/element/citation');
   RT.include('RT/core/utility');
   RT.include('RT/element/math');
@@ -206,6 +207,8 @@
 
   function run_layout() {
     debug.log('scroll', `5. run_layout starting.`);
+
+    if(RT.chapter) RT.chapter();
     if(RT.TOC) RT.TOC();
     if(RT.paginate_by_element) RT.paginate_by_element();
     if(RT.page) RT.page();
