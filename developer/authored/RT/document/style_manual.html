@@ -3,14 +3,11 @@
   <head>
     <meta charset="UTF-8">
     <title>RT Style System: Reference Manual</title>
-    
+
     <script>
       window.RT = window.RT || {};
-
-      // !! document author !!  This must point, relative to the document directory, to the RT library:
-      window.RT.dirpr_library = "../consumer/release/RT";
-
-      document.write('<script src="' + window.RT.dirpr_library + '/core/loader.js"><\\/script>');
+      window.RT.dirpr_library = "RT";
+      document.write('<script src="' + window.RT.dirpr_library + '/core/loader.js"></' + 'script>');
     </script>
     <script>
       window.RT.load('core/utility');
@@ -374,7 +371,6 @@
 
       <RT-chapter>Manifest</RT-chapter>
       <RT-code>
-        1. style_orchestrator.js    (Example/default footer script)
         2. utility.js               (Math/Color physics)
         3. article_tech_ref.js      (Typography and CSS injection)
         4. RT_code.js               (Code block logic)
@@ -384,11 +380,6 @@
         8. paginate_by_element.js   (Page splitter)
         9. page_fixed_glow.js       (Visual page container)
       </RT-code>
-
-      <script src="style/style_orchestrator.js"></script>
-      <script>
-        window.RT.style_orchestrator();
-      </script>
 
       <RT-chapter>RT conventions</RT-chapter>
       <p> Headings are first letter capitalized. Remaining words are as they would be in English prose.</p>
