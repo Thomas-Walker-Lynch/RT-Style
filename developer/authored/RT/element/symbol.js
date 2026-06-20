@@ -1,7 +1,7 @@
 // developer/authored/RT/element/symbol.js
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.symbol = function(){
+window.RT.symbol = function(){
   document.querySelectorAll('rt-symbol').forEach( (el) => {
     el.style.fontFamily = '"Courier New", Courier, monospace';
     el.style.fontWeight = '600';

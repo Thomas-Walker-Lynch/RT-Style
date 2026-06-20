@@ -1,6 +1,6 @@
-// debug messsages don't work here, because RT/core/utility isn't loaded until after the function runs.
+// debug messages don't work here, because core/utility isn't loaded until after the function runs.
 (function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
   const debug = RT.debug || { log: function(){} };
 
   debug.log('scroll', "1. Initializing script.");
@@ -31,27 +31,29 @@
   // 4. The Lock
   let is_layout_locked = true;
 
+  // Helper to ensure we only signal completion once
+  function unlock_layout() {
+    if (!is_layout_locked) return;
+    is_layout_locked = false;
+    debug.log('scroll', "10. Layout fully unlocked. Emitting completion signal.");
+    document.dispatchEvent(new Event("RT_layout_complete"));
+  }
+
   // 5. Declare Dependencies
-  RT.include('RT/element/chapter');
-  RT.include('RT/element/citation');
-  RT.include('RT/core/utility');
-  RT.include('RT/element/math');
-  RT.include('RT/element/code');
-  RT.include('RT/element/term');
-  RT.include('RT/element/TOC');
-  RT.include('RT/element/title');
-  RT.include('RT/element/theme_selector');
-  RT.include('RT/element/symbol');
-  RT.include('RT/element/constraint');
-  RT.include('RT/element/crossref');
+  RT.load('element/chapter');
+  RT.load('element/endnote');
+  RT.load('element/math');
+  RT.load('element/code');
+  RT.load('element/term');
+  RT.load('element/TOC');
+  RT.load('element/title');
+  RT.load('element/theme_selector');
+  RT.load('element/symbol');
+  RT.load('element/constraint');
+  RT.load('element/crossref');
 
-
-  RT.include('RT/layout/paginate_by_element');
-  RT.include('RT/layout/page_fixed_glow');
-  RT.include('RT/layout/paginate_by_element');
-
-  RT.include('RT/core/body_visibility_visible');
-
+  RT.load('layout/paginate_by_element');
+  RT.load('layout/page_fixed_glow');
 
   // 6. The Typography Layout
   RT.article = function(){
@@ -87,10 +89,10 @@
       style.color = "var(--rt-content-main)";
     }
 
-    window.StyleRT = window.StyleRT || {};
-    window.StyleRT.config = window.StyleRT.config || {};
-    window.StyleRT.config.page = window.StyleRT.config.page || {};
-    window.StyleRT.config.page.height_limit = 900; 
+    window.RT = window.RT || {};
+    window.RT.config = window.RT.config || {};
+    window.RT.config.page = window.RT.config.page || {};
+    window.RT.config.page.height_limit = 900; 
 
     const style_node = document.createElement("style");
     style_node.innerHTML = `
@@ -177,9 +179,8 @@
         max-width: 100%;
         height: auto;
         display: block;
-        margin: 1.5rem auto; /* Centers the image */
+        margin: 1.5rem auto;
       }
-
     `;
     document.head.appendChild(style_node);
   };
@@ -188,7 +189,7 @@
   function run_semantics(){
     debug.log('scroll' ,`4. run_semantics starting.`);
     if(RT.theme) RT.theme();     
-    if(RT.citation) RT.citation();
+    if(RT.endnote) RT.endnote();
     RT.article(); 
     if(RT.title) RT.title(); 
     if(RT.term) RT.term();
@@ -212,7 +213,6 @@
     if(RT.TOC) RT.TOC();
     if(RT.paginate_by_element) RT.paginate_by_element();
     if(RT.page) RT.page();
-    if(RT.body_visibility_visible) RT.body_visibility_visible();
     
     debug.log('scroll', `6. Pagination complete.`);
 
@@ -234,7 +234,7 @@
   function enforce_scroll(target, use_hash, attempts) {
     if (attempts > 15) {
       debug.log('scroll', "8. Scroll enforcement timed out. Unlocking.");
-      is_layout_locked = false;
+      unlock_layout();
       return;
     }
 
@@ -264,8 +264,7 @@
              debug.log('scroll', `9a. Browser late-stage rebellion detected. Re-enforcing.`);
              enforce_scroll(target, use_hash, attempts + 1);
          } else {
-             is_layout_locked = false;
-             debug.log('scroll', "10. Layout fully unlocked.");
+             unlock_layout();
          }
        }, 100);
     } else {
@@ -290,6 +289,7 @@
   });
 
   // 10. Bind to DOM Ready
-  document.addEventListener( 'DOMContentLoaded' ,run_semantics );
+  document.addEventListener('DOMContentLoaded', run_semantics);
 
 })();
+

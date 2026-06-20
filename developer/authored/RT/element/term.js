@@ -5,10 +5,10 @@
   - Automatically generates IDs for first occurrences for future indexing.
 */
 
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.term = function() {
-  const RT = window.StyleRT;
+window.RT.term = function() {
+  const RT = window.RT;
 
   const debug = RT.debug || {
     log: function() {}

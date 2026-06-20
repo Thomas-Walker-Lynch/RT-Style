@@ -1,11 +1,11 @@
 /*
-  General utilities for the StyleRT library.
+  General utilities for the RT Style library.
 */
 
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
 // --- DEBUG SYSTEM ---
-window.StyleRT.debug = {
+window.RT.debug = {
 
   // all debug messages enabled
 /*
@@ -26,19 +26,18 @@ window.StyleRT.debug = {
 
   log: function(token, message) {
     if (this.active_tokens.has(token)) {
-      console.log(`[StyleRT:${token}]`, message);
+      console.log(`[RT:${token}]`, message);
     }
   },
 
   warn: function(token, message) {
     if (this.active_tokens.has(token)) {
-      console.warn(`[StyleRT:${token}]`, message);
+      console.warn(`[RT:${token}]`, message);
     }
   },
   
-  // New: Always log errors regardless of token, but tag them
   error: function(token, message) {
-    console.error(`[StyleRT:${token}] CRITICAL:`, message);
+    console.error(`[RT:${token}] CRITICAL:`, message);
   },
   
   enable: function(token) { this.active_tokens.add(token); console.log(`Enabled: ${token}`); },
@@ -46,10 +45,10 @@ window.StyleRT.debug = {
 };
 
 // --- UTILITIES ---
-window.StyleRT.utility = {
+window.RT.utility = {
   // --- FONT PHYSICS ---
   measure_ink_ratio: function(target_font, ref_font = null) {
-    const debug = window.StyleRT.debug;
+    const debug = window.RT.debug;
     debug.log('layout', `Measuring ink ratio for ${target_font}`);
 
     const canvas = document.createElement('canvas');
@@ -73,7 +72,6 @@ window.StyleRT.utility = {
     const target_m = get_metrics(target_font);
     
     const ratio = ref_m.ascent / target_m.ascent;
-    // debug.log('layout', `Ink Ratio calculated: ${ratio.toFixed(3)}`);
 
     return { 
       ratio: ratio,
@@ -83,8 +81,6 @@ window.StyleRT.utility = {
 
   // --- COLOR PHYSICS ---
   is_color_light: function(color_string) {
-    const debug = window.StyleRT.debug;
-    
     // 1. HSL Check
     if (color_string.startsWith('hsl')) {
       const numbers = color_string.match(/\d+/g);
@@ -97,7 +93,6 @@ window.StyleRT.utility = {
     // 2. RGB Check
     const rgb = color_string.match(/\d+/g);
     if (!rgb) {
-      // debug.warn('color_layout', `Failed to parse color: "${color_string}". Defaulting to Light.`);
       return true; 
     }
 

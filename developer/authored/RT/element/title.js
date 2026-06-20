@@ -5,10 +5,10 @@
   Usage: 
   <RT-title title="..." author="..." date="..." copyright="..."></RT-title>
 */
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.title = function() {
-  const debug = window.StyleRT.debug || { log: function(){} };
+window.RT.title = function() {
+  const debug = window.RT.debug || { log: function(){} };
   
   document.querySelectorAll('rt-title').forEach(el => {
     const title = el.getAttribute('title') || 'Untitled Document';

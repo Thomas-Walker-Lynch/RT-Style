@@ -31,5 +31,5 @@ function math(){
   document.head.appendChild(script);
 }
 
-window.StyleRT = window.StyleRT || {};
-window.StyleRT.math = math;
+window.RT = window.RT || {};
+window.RT.math = math;

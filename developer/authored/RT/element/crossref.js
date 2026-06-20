@@ -1,7 +1,7 @@
 // developer/authored/RT/element/crossref.js
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.crossref = function(){
+window.RT.crossref = function(){
   document.querySelectorAll('rt-crossref').forEach( (el) => {
     el.style.color = 'var(--rt-brand-link)';
     el.style.textDecoration = 'underline';

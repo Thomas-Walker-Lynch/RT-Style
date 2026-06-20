@@ -5,7 +5,7 @@
   Removes common indent from lines of code.
 */
 function code() {
-  const RT = window.StyleRT;
+  const RT = window.RT;
   const U = RT.utility;
   const debug = RT.debug;
 
@@ -125,5 +125,5 @@ function code() {
   debug.log('code', 'Render cycle complete.');
 }
 
-window.StyleRT = window.StyleRT || {};
-window.StyleRT.code = code;
+window.RT = window.RT || {};
+window.RT.code = code;

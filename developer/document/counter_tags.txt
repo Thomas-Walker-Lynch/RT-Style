@@ -1,0 +1,6 @@
+
+1.
+
+<RT-counter name="figure" style="Natural" initial="1" separator=".">
+
+name can be any string

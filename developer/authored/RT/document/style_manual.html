@@ -3,12 +3,23 @@
   <head>
     <meta charset="UTF-8">
     <title>RT Style System: Reference Manual</title>
-    <script src="setup.js"></script>
+    
     <script>
-      window.StyleRT.include('RT/theme');
-      window.StyleRT.include('RT/layout/article_tech_ref');
+      window.RT = window.RT || {};
+
+      // !! document author !!  This must point, relative to the document directory, to the RT library:
+      window.RT.dirpr_library = "../consumer/release/RT";
+
+      document.write('<script src="' + window.RT.dirpr_library + '/core/loader.js"><\\/script>');
+    </script>
+    <script>
+      window.RT.load('core/utility');
+      window.RT.load('core/block_visibility_during_layout');
+      window.RT.load('theme');
+      window.RT.load('layout/article_tech_ref');
     </script>
   </head>
+
   <body>
 
     <RT-article>
@@ -16,7 +27,7 @@
 
       <RT-TOC level="1"></RT-TOC>
 
-      <h1>Table of custom tags</h1>
+      <RT-chapter>Table of custom tags</RT-chapter>
 
       <h2>Style tag reference</h2>
 
@@ -112,7 +123,7 @@
         </tbody>
       </table>
 
-      <h1>Architecture overview</h1>
+      <RT-chapter>Architecture overview</RT-chapter>
       <p>
         The <RT-term>RT Style System</RT-term> is a client-side, JavaScript-driven publishing framework designed to turn raw HTML into high-readability technical documentation. Unlike standard CSS frameworks, RT uses JavaScript to handle complex layout tasks like <RT-neologism>ink-ratio balancing</RT-neologism> and dynamic pagination.
       </p>
@@ -122,7 +133,7 @@
         `setup.js` points at the style files and is installation specific.</p>
         
 
-      <h1>Semantic tags</h1>
+      <RT-chapter>Semantic tags</RT-chapter>
       <p>
         The system relies on a specific set of custom tags in the <RT-code>RT-</RT-code> namespace to separate meaning from presentation.
       </p>
@@ -230,7 +241,7 @@
         Use <RT-code>&lt;RT-cite&gt;</RT-code> with the <RT-code>ref</RT-code> attribute to insert bibliographic citations. This ensures formatting remains consistent and separates citation data from standard prose.
       </p>
       <RT-code>
-        ... formalized as Basic Law V <RT-cite ref="Gottlob Frege, Grundgesetze, 1903"></RT-cite>.
+        ... formalized as Basic Law V <RT-endnote ref="Gottlob Frege, Grundgesetze, 1903"></RT-endnote>.
       </RT-code>
 
       <h3>Dynamic cross referencing</h3>
@@ -243,7 +254,7 @@
         Use <RT-code>&lt;RT-index&gt;</RT-code> at the end of the document to compile a glossary. Similar to the TOC compiler, this tag scans the DOM for automatic definition anchors produced by the term module and generates an alphabetized list of defined terms and neologisms.
       </p>
 
-      <h1>Navigation and layout</h1>
+      <RT-chapter>Navigation and layout</RT-chapter>
 
       <h2>Automatic table of contents</h2>
       <p>
@@ -313,7 +324,7 @@
         For major document divisions, use <RT-code>&lt;RT-chapter&gt;</RT-code>. The semantic processor translates this tag into an <RT-code>&lt;RT-page-break&gt;</RT-code> followed by an <RT-code>&lt;h1 class="RT-chapter"&gt;</RT-code>. This ensures the chapter starts on a new page, inherits standard typography, and is automatically indexed by the TOC engine.
       </p>
 
-      <h1>Debugging</h1>
+      <RT-chapter>Debugging</RT-chapter>
 
       <h2>Debug tokens</h2>
       <p>
@@ -352,7 +363,7 @@
         For example, the term system (<RT-code>RT_term.js</RT-code>) uses the <RT-code>term</RT-code> token. When that token is enabled, the module will print messages describing how terms were detected and which term definitions were assigned IDs.
       </p>
 
-      <h1>Themes</h1>
+      <RT-chapter>Themes</RT-chapter>
       <p>
         The system supports hot swapping themes by changing the script import in the head.
       </p>
@@ -361,7 +372,7 @@
         <li><strong>Light:</strong> <RT-code>style/theme_light_gold.js</RT-code></li>
       </ul>
 
-      <h1>Manifest</h1>
+      <RT-chapter>Manifest</RT-chapter>
       <RT-code>
         1. style_orchestrator.js    (Example/default footer script)
         2. utility.js               (Math/Color physics)
@@ -379,10 +390,10 @@
         window.StyleRT.style_orchestrator();
       </script>
 
-      <h1>RT conventions</h1>
+      <RT-chapter>RT conventions</RT-chapter>
       <p> Headings are first letter capitalized. Remaining words are as they would be in English prose.</p>
 
-      <h1>Exercises</h1>
+      <RT-chapter>Exercises</RT-chapter>
 
       <ol>
         <li>

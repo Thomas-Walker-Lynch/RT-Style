@@ -1,7 +1,7 @@
 // developer/authored/RT/element/constraint.js
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.constraint = function(){
+window.RT.constraint = function(){
   document.querySelectorAll('rt-constraint').forEach( (el) => {
     el.style.display = 'block';
     el.style.borderLeft = '4px solid var(--rt-state-warning)';

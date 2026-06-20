@@ -1,6 +1,6 @@
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.citation = function(){
+window.RT.end_note = function(){
   const citations = document.querySelectorAll('rt-cite');
   if(citations.length === 0) return;
 

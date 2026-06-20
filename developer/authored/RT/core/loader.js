@@ -1,27 +1,22 @@
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.include = function(path_identifier){
-  let parts_seq = path_identifier.split('/');
-  let namespace = parts_seq[0];
-  
-  let module_path = parts_seq.slice(1).join('/');
+window.RT.load = function(module_path){
+  let target_module = module_path;
 
-  if(module_path === 'theme'){
+  if(target_module === 'theme'){
     let saved_theme = localStorage.getItem('RT_theme_preference');
     if(!saved_theme){
       saved_theme = 'dark_gold';
-      localStorage.setItem('RT_theme_preference' ,saved_theme);
+      localStorage.setItem('RT_theme_preference', saved_theme);
     }
-    module_path = 'theme/' + saved_theme;
+    target_module = 'theme/' + saved_theme;
   }
 
-  let base_path = window.StyleRT_namespaces[namespace];
-  if(!base_path){
-    console.error("Namespace not found: " + namespace);
-    return;
+  let resolved_path = window.RT.dirpr_library + '/' + target_module;
+
+  if(!resolved_path.endsWith('.js')){
+    resolved_path = resolved_path + '.js';
   }
 
-  let full_path = base_path + '/' + module_path + '.js';
-  // FIXED: No backslashes in the closing script tag
-  document.write('<script src="' + full_path + '"></script>');
+  document.write('<script src="' + resolved_path + '"></script>');
 };

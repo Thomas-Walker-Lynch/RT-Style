@@ -2,10 +2,10 @@
   Processes <RT-chapter> tags.
   Transforms the tag into an <RT-page-break> followed by an <h1> with the RT-chapter class.
 */
-window.StyleRT = window.StyleRT || {};
+window.RT = window.RT || {};
 
-window.StyleRT.chapter = function(){
-  const debug = window.StyleRT.debug || { log: function(){} };
+window.RT.chapter = function(){
+  const debug = window.RT.debug || { log: function(){} };
 
   document.querySelectorAll('RT-chapter').forEach( (el ,index) => {
     if(debug.log) debug.log('chapter' ,`Processing chapter ${index + 1}`);
