@@ -1,7 +1,7 @@
 /*
   <head>
     <script>
-      window.StyleRT.include('RT/layout/memo_state_dept');
+      window.RT.load('layout/memo_state_dept');
     </script>
   </head>
   <body>
@@ -11,14 +11,14 @@
 */
 
 (function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
 
   // 1. Declare Dependencies
-  RT.include('RT/core/utility');
-  RT.include('RT/element/title');
-  RT.include('RT/element/term');
-  RT.include('RT/element/TOC');
-  RT.include('RT/core/body_visibility_visible');
+  RT.load('core/utility');
+  RT.load('element/title');
+  RT.load('element/term');
+  RT.load('element/TOC');
+  RT.load('core/body_visibility_visible');
 
   // 2. The Typography Layout
   RT.memo_state_dept = function(){

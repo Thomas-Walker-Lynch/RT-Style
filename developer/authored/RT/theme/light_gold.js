@@ -5,7 +5,7 @@
   Description: Light Parchment background with Oxblood Red ink.
 */
 ( function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
   
   RT.theme = function(){
     RT.config = RT.config || {};

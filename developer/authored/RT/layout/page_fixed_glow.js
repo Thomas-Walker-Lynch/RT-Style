@@ -4,7 +4,7 @@
   Description: A variable-height container with a glowing border effect that matches the active theme.
 */
 (function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
 
   RT.page = function() {
     RT.config = RT.config || {};

@@ -4,7 +4,7 @@
   Description: High contrast Amber on Deep Charcoal.
 */
 ( function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
   
   RT.theme = function(){
     RT.config = RT.config || {};

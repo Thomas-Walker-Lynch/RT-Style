@@ -1,5 +1,5 @@
-window.StyleRT.paginate_by_element = function () {
-  const RT = window.StyleRT;
+window.RT.paginate_by_element = function () {
+  const RT = window.RT;
   const debug = RT.debug || { log: function(){}, error: function(){} };
   const page_conf = (RT.config && RT.config.page) ? RT.config.page : {};
   const page_height_limit = page_conf.height_limit || 1000;

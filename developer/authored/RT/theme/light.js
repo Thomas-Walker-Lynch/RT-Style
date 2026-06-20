@@ -4,7 +4,7 @@
   Description: Warm paper tones with Burnt Orange accents.
 */
 ( function(){
-  const RT = window.StyleRT = window.StyleRT || {};
+  const RT = window.RT = window.RT || {};
   
   RT.theme_light = function(){
     RT.config = RT.config || {};
