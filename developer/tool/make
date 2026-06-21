@@ -1,21 +1,114 @@
-#!/usr/bin/env bash
-script_afp=$(realpath "${BASH_SOURCE[0]}")
+#!/usr/bin/env python3
+# -*- mode: python; coding: utf-8; python-indent-offset: 2; indent-tabs-mode: nil -*-
+"""
+developer/tool/make - Build Orchestrator Wrapper
 
-# input guards
+This script acts as the primary entry point for compiling the project.
+It parses colon-separated arguments mapping specific namespace patterns
+(including file globs) to their intended build commands.
 
-  setup_must_be="developer/tool/setup"
-  if [ "$SETUP" != "$setup_must_be" ]; then
-    echo "$(script_fp):: error: must be run in the $setup_must_be environment"
-    exit 1
-  fi
+A program developer can modify this script to add custom pre-build checks,
+custom argument parsing, or project-specific routing logic.
+"""
 
-set -e
-set -x
+import sys ,os ,subprocess ,fnmatch
+from typing import List
 
-  cd "$REPO_HOME"/developer || exit 1
-  # /bin/make -f tool/makefile $@
+def check_environment() -> None:
+  setup_must_be = "developer/tool/setup"
+  current_setup = os.environ.get("SETUP" ,"")
+  if( current_setup != setup_must_be ):
+    print(f"developer/tool/make:: error: must be run in the {setup_must_be} environment" ,file=sys.stderr)
+    sys.exit(1)
 
-  mkdir -p scratchpad/stage && cp -au authored/RT scratchpad/stage/
+def get_namespaces() -> List[str]:
+  authored_dir = os.path.join(os.environ.get("REPO_HOME" ,".") ,"developer" ,"authored")
+  if( not os.path.isdir(authored_dir) ):
+    return []
+  
+  namespaces = []
+  for TM_name in os.listdir(authored_dir):
+    path = os.path.join(authored_dir ,TM_name)
+    if( os.path.isdir(path) and not TM_name.startswith(".") ):
+      namespaces.append(TM_name)
+  namespaces.sort()
+  return namespaces
 
-set +x
-echo "$(script_fn) done."
+def print_usage() -> None:
+  print("Usage: make [<namespace_pattern>[:<command>]*]*\n")
+  print("Commands:")
+  print("  all          Build library, CLI, and kmod (Default)")
+  print("  library      Build only the library archives")
+  print("  CLI          Build only the CLI executables")
+  print("  kmod         Build kernel modules")
+  print("  clean        Remove build artifacts")
+  print("  information  Display build environment variables\n")
+  
+  print("Available namespaces:")
+  namespaces = get_namespaces()
+  if( namespaces ):
+    for TM_ns in namespaces:
+      print(f"  {TM_ns}")
+  else:
+    print("  (No namespaces currently found in authored/)")
+  
+  print("\nExamples:")
+  print("  make                                      (Displays this usage message)")
+  print("  make ExampleGreet                         (Builds 'all' for ExampleGreet)")
+  print("  make Ex*:library G*:all:information       (Builds 'library' for Ex*, 'all' and 'information' for G*)")
+  print("  make \"*:clean\"                            (Cleans all namespaces. Quotes prevent Bash expansion)")
+
+def run_make(cmd: str ,namespace: str) -> None:
+  env = os.environ.copy()
+  env["NAMESPACE"] = namespace
+  
+  make_cmd = ["/bin/make" ,"-f" ,"tool/makefile" ,cmd]
+  
+  try:
+    subprocess.run(make_cmd ,env=env ,check=True)
+  except subprocess.CalledProcessError as e:
+    print(f"make failed for namespace '{namespace}' with exit code {e.returncode}" ,file=sys.stderr)
+    sys.exit(e.returncode)
+
+def CLI() -> None:
+  check_environment()
+  
+  repo_home = os.environ.get("REPO_HOME" ,".")
+  dev_dir = os.path.join(repo_home ,"developer")
+  os.chdir(dev_dir)
+  
+  args = sys.argv[1:]
+  
+  if( not args or args[0] in ["usage" ,"help" ,"-h" ,"--help"] ):
+    print_usage()
+    sys.exit(0)
+    
+  namespaces = get_namespaces()
+  matched_any = False
+
+  for TM_arg in args:
+    parts = TM_arg.split(":")
+    pattern = parts[0]
+    commands = parts[1:]
+    
+    if( not commands ):
+      commands = ["all"]
+      
+    matches = fnmatch.filter(namespaces ,pattern)
+
+    if( not matches ):
+      print(f"(warning) Pattern '{pattern}' matched no namespaces." ,file=sys.stderr)
+      continue
+
+    matched_any = True
+    for TM_ns in matches:
+      for TM_cmd in commands:
+        run_make(TM_cmd ,TM_ns)
+  
+  if( not matched_any ):
+    sys.exit(1)
+
+  print("make done.")
+
+if __name__ == "__main__":
+  CLI()

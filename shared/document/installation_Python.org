@@ -7,10 +7,8 @@
 This document describes how to install a project-local Python environment under:
 
 #+begin_src bash
-shared/third_party/Python
+shared/linked-project/Python
 #+end_src
-
-This environment is shared across the =developer= and =tester= roles and is automatically activated through their respective =env_<role>= scripts.
 
 * Precondition
 
@@ -29,12 +27,12 @@ Ensure the following:
 
 2. Create the virtual environment:
    #+begin_src bash
-   python3 -m venv "$REPO_HOME/shared/third_party/Python"
+   python3 -m venv "$REPO_HOME/shared/linked-project/Python"
    #+end_src
 
 3. Activate it temporarily to install required packages:
    #+begin_src bash
-   source "$REPO_HOME/shared/third_party/Python/bin/activate"
+   source "$REPO_HOME/shared/linked-project/Python/bin/activate"
    pip install --upgrade pip
    pip install pytest  # Add any shared packages here
    deactivate
@@ -45,15 +43,15 @@ Ensure the following:
 
    Disable the default scripts by renaming them:
    #+begin_src bash
-   mv "$REPO_HOME/shared/third_party/Python/bin/activate" \
-      "$REPO_HOME/shared/third_party/Python/bin/activate_deprecated"
+   mv "$REPO_HOME/shared/linked-project/Python/bin/activate" \
+      "$REPO_HOME/shared/linked-project/Python/bin/activate_deprecated"
    #+end_src
 
    This ensures that accidental sourcing of Python’s =activate= script won't override Harmony's environment setup.
 
 5. Verify installation:
    #+begin_src bash
-   ls "$REPO_HOME/shared/third_party/Python/bin/python3"
+   ls "$REPO_HOME/shared/linked-project/Python/bin/python3"
    #+end_src
 
    The binary should exist and report a working Python interpreter when run.

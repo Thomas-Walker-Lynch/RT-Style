@@ -1,7 +1,7 @@
 
 This is the generic install.org doc that comes with the skeleton.
 
-1. $REPO_HOME/shared/third_party/.gitignore:
+1. $REPO_HOME/shared/linked-project/.gitignore:
 
     * 
     !/.gitignore
@@ -18,7 +18,7 @@ This is the generic install.org doc that comes with the skeleton.
 
 3. for the base install
 
-     cd $REPO_HOME/shared/third_party
+     cd $REPO_HOME/shared/linked-project
      do whatever it takes to install tool, as examples:
        git clone <tool_path>
        tar -xzf ../upstream/tar
@@ -43,7 +43,7 @@ This is the generic install.org doc that comes with the skeleton.
 
     # example tool names: 'RT_gcc' 'RT-project share`  etc.
      tool=<tool-name>  
-     tool_dpath="$REPO_HOME/shared/third_party/$tool"
+     tool_dpath="$REPO_HOME/shared/linked-project/$tool"
      patch_dpath="$REPO_HOME/shared/patch/"
 
 

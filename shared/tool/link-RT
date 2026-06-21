@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+import os
+import sys
+import shutil
+from pathlib import Path
+
+def run():
+    repo_home_env = os.environ.get('REPO_HOME')
+    if not repo_home_env:
+        print("Error: REPO_HOME environment variable is missing.", file=sys.stderr)
+        sys.exit(1)
+
+    repo_home = Path(repo_home_env)
+    
+    # Define the canonical target location
+    target_src = repo_home / 'shared' / 'linked-project' / 'RT-style-JS_public' / 'consumer' / 'release' / 'RT'
+
+    # Determine the destination directory
+    if len(sys.argv) > 1:
+        dest_dir = Path(sys.argv[1]).resolve()
+    else:
+        dest_dir = Path.cwd()
+
+    if not dest_dir.is_dir():
+        print(f"Error: Directory '{dest_dir}' does not exist.", file=sys.stderr)
+        sys.exit(1)
+
+    link_dest = dest_dir / 'RT'
+
+    # Clobber existing file, link, or directory named 'RT'
+    if link_dest.is_symlink() or link_dest.is_file():
+        link_dest.unlink()
+    elif link_dest.is_dir():
+        shutil.rmtree(link_dest)
+
+    # Establish the new symbolic link
+    try:
+        link_dest.symlink_to(target_src)
+        print(f"Established link: {link_dest} -> {target_src}")
+    except OSError as e:
+        print(f"Failed to establish link: {e}", file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    run()

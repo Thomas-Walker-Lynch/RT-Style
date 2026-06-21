@@ -36,18 +36,9 @@ fi
 
 # setup the project
 #
-  source shared/authored/setup
-
-# setup tools
-#
-  export PYTHON_HOME="${REPO_HOME}/shared/third_party/Python"
-  if [[ ":${PATH}:" != *":${PYTHON_HOME}/bin:"* ]]; then
-    export PATH="${PYTHON_HOME}/bin:${PATH}"
-  fi
-
-  RT_gcc="${REPO_HOME}/shared/third_party/RT_gcc/release"
-  if [[ ":${PATH}:" != *":${RT_gcc}:"* ]]; then
-    export PATH="${RT_gcc}:${PATH}"
+  source shared/tool/setup
+  if [[ -f "shared/authored/setup" ]]; then
+    source shared/authored/setup
   fi
 
 # setup the role
