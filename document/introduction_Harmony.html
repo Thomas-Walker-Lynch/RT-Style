@@ -3,10 +3,16 @@
   <head>
     <meta charset="UTF-8">
     <title>Introduction to Harmony</title>
-    <script src="setup.js"></script>
     <script>
-      window.StyleRT.include('RT/theme');
-      window.StyleRT.include('RT/layout/article_tech_ref');
+      window.RT = window.RT || {};
+      window.RT.dirpr_library = "RT";
+      document.write('<script src="' + window.RT.dirpr_library + '/core/loader.js"></' + 'script>');
+    </script>
+    <script>
+      window.RT.load('core/utility');
+      window.RT.load('core/block_visibility_during_layout');
+      window.RT.load('theme');
+      window.RT.load('layout/article_tech_ref');
     </script>
   </head>
   <body>
@@ -262,7 +268,7 @@
       </p>
 
       <p>
-        Currently, our developers write documents directly in HTML using the RT semantic tags. See the <RT-code>RT-style-JS_public</RT-code> project and the documentation there. A common approach is to copy another document and the <RT-code>setup.js</RT-code> file, then to type over the top of that other document. Only one <RT-code>setup.js</RT-code> file is used per directory. Be sure to edit the relative root path found at the top of <RT-code>setup.js</RT-code>. Plain text, emacs org, and mark down have all been used in prior versions of Harmony.
+        Currently, our developers write documents directly in HTML using the RT semantic tags. See the <RT-code>RT-style</RT-code> project and the documentation there. A common approach is to copy another document and the <RT-code>setup.js</RT-code> file, then to type over the top of that other document. Only one <RT-code>setup.js</RT-code> file is used per directory. Be sure to edit the relative root path found at the top of <RT-code>setup.js</RT-code>. Plain text, emacs org, and mark down have all been used in prior versions of Harmony.
       </p>
 
       <h2>Untracked directories</h2>
@@ -348,7 +354,7 @@
       │ ├── made
       │ ├── dictionary_style-directory.js
       │ ├── third_party
-      │ │ ├── RT-style-JS_public -> ../../../RT-style-JS_public/
+      │ │ ├── RT-style -> ../../../RT-style/
       │ │ └── upstream
       │ └── tool
       │   ├── scratchpad

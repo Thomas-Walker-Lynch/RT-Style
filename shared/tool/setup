@@ -77,41 +77,6 @@ umask 0077
 
   export PATH
 
-#--------------------------------------------------------------------------------
-# used by release scripts
-#
-  install_file() {
-    if [ "$#" -lt 3 ]; then
-      echo "env::install_file usage: install_file <source1> <source2> ... <target_dir> <permissions>"
-      return 1
-    fi
-
-    perms="${@: -1}"         # Last argument is permissions
-    target_dp="${@: -2:1}"   # Second-to-last argument is the target directory
-    sources=("${@:1:$#-2}")  # All other arguments are source files
-
-    if [ ! -d "$target_dp" ]; then
-      echo "env::install_file no install done: target directory '$target_dp' does not exist."
-      return 1
-    fi
-
-    for source_fp in "${sources[@]}"; do
-      if [ ! -f "$source_fp" ]; then
-        echo "env::install_file: source file '$source_fp' does not exist."
-        return 1
-      fi
-
-      target_file="$target_dp/$(basename "$source_fp")"
-
-      if ! install -m "$perms" "$source_fp" "$target_file"; then
-        echo "env::install_file: Failed to install $(basename "$source_fp") to $target_dp"
-        return 1
-      fi
-    done
-  }
-
-  export -f install_file
-
 # --------------------------------------------------------------------------------
 # closing
 #

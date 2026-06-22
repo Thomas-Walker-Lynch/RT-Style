@@ -1,12 +1,12 @@
-The `Harmony` skeletong is setup to use `RT-style-JS_public`, it only requires that the `RT-style-JS_public` be installed to the side, at the same directory level, as the `Harmony` project.
+The `Harmony` skeletong is setup to use `RT-style`, it only requires that the `RT-style` be installed to the side, at the same directory level, as the `Harmony` project.
 
-`RT-style-JS_public` can be used with a standalone html document
+`RT-style` can be used with a standalone html document
 
 1. cd to the directory with the standalone document
 
-2. install RT-style-JS_public
-   1.1 git clone https://github.com/Thomas-Walker-Lynch/RT-style-JS_public.git
-   1.2 enter RT-style-JS:
+2. install RT-style
+   1.1 git clone https://github.com/Thomas-Walker-Lynch/RT-style.git
+   1.2 enter RT-style:
         > bash
         > . setup developer
         > make
@@ -21,15 +21,15 @@ The `Harmony` skeletong is setup to use `RT-style-JS_public`, it only requires t
 
    window.RT_REPO_ROOT = "../";
    document.write('<script src="' + 'dictionary_style-directory.js"></script>');
-   document.write('<script src="' + 'RT-style-JS_public/consumer/release/RT/core/loader.js"></script>');
-   document.write('<script src="' + 'RT-style-JS_public/consumer/release/RT/core/body_visibility_hidden.js"></script>');
+   document.write('<script src="' + 'RT-style/consumer/release/RT/core/loader.js"></script>');
+   document.write('<script src="' + 'RT-style/consumer/release/RT/core/body_visibility_hidden.js"></script>');
 
 
    --------------------------------------------------------------------------------
    dictionary_style-directory.js 2026-05-20T06:49:14Z
 
    window.StyleRT_namespaces = {
-     "RT": "RT-style-JS_public/consumer/release/RT"
+     "RT": "RT-style/consumer/release/RT"
      ,"Project": "style"
    };
 

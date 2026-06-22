@@ -1,4 +1,4 @@
-# RT-style-JS_public
+# RT-style
 
 A JavaScript based layout, themes, and semantic elements for HTML documents. Used for documents on RT projects.
 
@@ -77,7 +77,7 @@ With the bootstrap script in place alongside the HTML file, the document authori
 
       <h1>Introduction</h1>
       <p>
-        This is a demonstration of the <RT-term>RT-style-JS_public</RT-term> engine in action.
+        This is a demonstration of the <RT-term>RT-style</RT-term> engine in action.
       </p>
     </RT-article>
   </body>
@@ -89,7 +89,7 @@ With the bootstrap script in place alongside the HTML file, the document authori
 If the project utilizes the **Harmony** skeleton, these paths map directly to standard locations:
 
 * `<path_0>` is `shared/`.
-* `<path_1>` is `shared/third_party/RT-style-JS_public`.
+* `<path_1>` is `shared/third_party/RT-style`.
 * The `setup.js` script is placed in the role-specific document folder (e.g., `administrator/document/setup.js`).
 * `<relative_path_to_root>` is `../../` (stepping up out of `document/` and `administrator/` back to the root).
 

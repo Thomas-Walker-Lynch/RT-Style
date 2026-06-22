@@ -1,14 +1,8 @@
-# developer/tool/makefile - Orchestrator (Hybrid)
+# developer/tool/build_component/makefile
 .SUFFIXES:
 .EXPORT_ALL_VARIABLES:
 
 RT_MAKEFILE_DP := $(REPO_HOME)/shared/tool/makefile
-
-# If a namespace is provided, update the source directory
-ifneq ($(NAMESPACE),)
-  C_SOURCE_DIR := authored/$(NAMESPACE)
-  export C_SOURCE_DIR
-endif
 
 .PHONY: usage 
 usage:

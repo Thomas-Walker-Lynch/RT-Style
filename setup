@@ -44,8 +44,10 @@ fi
 # setup the role
 #
   export ROLE="${1}"
+  export ROLE_HOME="$REPO_HOME/$ROLE"
+  echo ROLE_HOME "$ROLE_HOME"
 
-  tool="${REPO_HOME}/${ROLE}/tool"
+  tool="${ROLE_HOME}/tool"
   if [[ ":${PATH}:" != *":${tool}:"* ]]; then
     export PATH="${tool}:${PATH}"
   fi

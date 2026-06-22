@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# developer/tool/copy
+
+set -euo pipefail
+CMD="${1:-all}"
+
+if [ "$CMD" = "clean" ]; then
+  rm -rf "scratchpad/made/$NAMESPACE"
+  echo "copy: Cleaned scratchpad/made/$NAMESPACE"
+elif [ "$CMD" = "all" ]; then
+  mkdir -p "scratchpad/made"
+  cp -au "authored/$NAMESPACE_DIR" "scratchpad/made/$NAMESPACE"
+  echo "copy: Staged $NAMESPACE_DIR -> scratchpad/made/$NAMESPACE"
+else
+  echo "copy: Unrecognized command '$CMD'"
+  exit 1
+fi

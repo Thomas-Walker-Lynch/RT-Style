@@ -13,7 +13,7 @@ def run():
     repo_home = Path(repo_home_env)
     
     # Define the canonical target location
-    target_src = repo_home / 'shared' / 'linked-project' / 'RT-style-JS_public' / 'consumer' / 'release' / 'RT'
+    target_src = repo_home / 'shared' / 'linked-project' / 'RT-style' / 'consumer' / 'release' / 'RT'
 
     # Determine the destination directory
     if len(sys.argv) > 1:

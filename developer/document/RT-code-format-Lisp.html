@@ -3,10 +3,16 @@
   <head>
     <meta charset="UTF-8">
     <title>RT Code Format: Lisp Addendum</title>
-    <script src="setup.js"></script>
     <script>
-      window.StyleRT.include('RT/theme');
-      window.StyleRT.include('RT/layout/article_tech_ref');
+      window.RT = window.RT || {};
+      window.RT.dirpr_library = "RT";
+      document.write('<script src="' + window.RT.dirpr_library + '/core/loader.js"></' + 'script>');
+    </script>
+    <script>
+      window.RT.load('core/utility');
+      window.RT.load('core/block_visibility_during_layout');
+      window.RT.load('theme');
+      window.RT.load('layout/article_tech_ref');
     </script>
   </head>
   <body>
