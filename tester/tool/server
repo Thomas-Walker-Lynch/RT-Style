@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# developer/tool/build_component/serve
+
+set -euo pipefail
+
+# Bind the Python server to the root of the project to match the paths expected by the HTML documents
+echo "Serving project locally at http://localhost:8000"
+echo "Press Ctrl+C to stop."
+
+cd "$REPO_HOME"
+python3 -m http.server 8000

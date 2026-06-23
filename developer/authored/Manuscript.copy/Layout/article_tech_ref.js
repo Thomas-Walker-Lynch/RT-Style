@@ -40,20 +40,19 @@
   }
 
   // 5. Declare Dependencies
-  RT.load('element/chapter');
-  RT.load('element/endnote');
-  RT.load('element/math');
-  RT.load('element/code');
-  RT.load('element/term');
-  RT.load('element/TOC');
-  RT.load('element/title');
-  RT.load('element/theme_selector');
-  RT.load('element/symbol');
-  RT.load('element/constraint');
-  RT.load('element/crossref');
+  RT.load('Element/chapter');
+  RT.load('Element/endnote');
+  RT.load('Element/math');
+  RT.load('Element/code');
+  RT.load('Element/term');
+  RT.load('Element/TOC');
+  RT.load('Element/title');
+  RT.load('Element/symbol');
+  RT.load('Element/constraint');
+  RT.load('Element/crossref');
 
-  RT.load('layout/paginate_by_element');
-  RT.load('layout/page_fixed_glow');
+  RT.load('Layout/paginate_by_element');
+  RT.load('Layout/page_fixed_glow');
 
   // 6. The Typography Layout
   RT.article = function(){
