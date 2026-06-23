@@ -1,8 +1,17 @@
-// RT-style.js (Internal RT-style project router)
+/*
+  We have four scenarios
+
+  immediate - used in the RT-style distribution itself (authored, consummer, staged)
+  direct - used in the RT-style project itself, but not in the distribution
+  indirect - the version all Harmony projects use
+  URL_only - always pulls style through a URL, a webserver must be present
+  
+*/
+
 window.RT = window.RT || {};
 
 (function() {
-  const project_name = "RT-style"; 
+  const project_name = "RT-Style"; 
   const path = window.location.pathname;
   const project_root_index = path.indexOf('/' + project_name + '/');
   
