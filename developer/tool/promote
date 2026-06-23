@@ -4,9 +4,9 @@
 import os ,sys ,shutil ,stat ,pwd ,grp ,glob ,tempfile ,filecmp
 
 HELP = """usage: promote {write|clean|ls|diff|help|dry write}
-  write       Writes promoted files from scratchpad/made into consumer/made. Only updates newer files.
-  clean       Remove all contents of the consumer/made directory.
-  ls          List consumer/made as an indented tree: PERMS  OWNER  NAME.
+  write       Writes promoted files from scratchpad/made into consumer. Only updates newer files.
+  clean       Remove all contents of the consumer directory (preserves .gitignore).
+  ls          List consumer as an indented tree: PERMS  OWNER  NAME.
   diff        List missing, orphaned, or out-of-sync files between scratchpad and consumer.
   help        Show this message.
   dry write   Preview what write would do without modifying the filesystem.
@@ -47,7 +47,6 @@ def cpath(*parts):
   return os.path.join(
     repo_home()
     ,"consumer"
-    ,"made"
     ,*parts
   )
 
@@ -72,7 +71,7 @@ def _display_dst(p_abs: str) -> str:
       ,consumer_root()
     )
     rel = "" if rel == "." else rel
-    return "$REPO_HOME/consumer/made" + ("/" + rel if rel else "")
+    return "$REPO_HOME/consumer" + ("/" + rel if rel else "")
   except Exception:
     return p_abs
 
@@ -141,7 +140,7 @@ def list_tree(root_dp):
     if( len(TM_ownergrp) > ogw ):
       ogw = len(TM_ownergrp)
 
-  print("consumer/made/")
+  print("consumer/")
   for TM_isdir ,TM_depth ,TM_perms ,TM_ownergrp ,TM_name in entries:
     indent = "  " * TM_depth
     print(f"{TM_perms}  {TM_ownergrp:<{ogw}}  {indent}{TM_name}")
@@ -243,10 +242,10 @@ def cmd_diff():
 
   for TM_rel in all_files:
     if( TM_rel not in dst_files ):
-      print(f"Pending promotion (missing in consumer made): {TM_rel}")
+      print(f"Pending promotion (missing in consumer): {TM_rel}")
       found_diff = True
     elif( TM_rel not in src_files ):
-      print(f"Orphaned in consumer made (missing in scratchpad): {TM_rel}")
+      print(f"Orphaned in consumer (missing in scratchpad): {TM_rel}")
       found_diff = True
     else:
       src_abs = os.path.join(src_root ,TM_rel)
@@ -261,12 +260,11 @@ def cmd_diff():
         if( src_mtime > dst_mtime ):
           print(f"Pending update (contents differ, newer in scratchpad): {TM_rel}")
         else:
-          print(f"Contents differ (locally modified in consumer made): {TM_rel}")
+          print(f"Contents differ (locally modified in consumer): {TM_rel}")
         found_diff = True
 
   if( not found_diff ):
-    print("No differences found. Consumer made matches developer scratchpad made.")
-
+    print("No differences found. Consumer matches developer scratchpad made.")
 
 def cmd_clean():
   assert_setup()
@@ -274,6 +272,8 @@ def cmd_clean():
   if( not os.path.isdir(consumer_root_dir) ):
     return
   for TM_name in os.listdir(consumer_root_dir):
+    if( TM_name == ".gitignore" ):
+      continue
     p = os.path.join(consumer_root_dir ,TM_name)
     if( os.path.isdir(p) and not os.path.islink(p) ):
       shutil.rmtree(p ,ignore_errors=True)
