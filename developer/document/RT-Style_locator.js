@@ -1,4 +1,7 @@
 /*
+  direct.js
+
+
   We have four scenarios
 
   immediate - used in the RT-style distribution itself (authored, consummer, staged)
@@ -18,7 +21,7 @@ window.RT = window.RT || {};
   if (project_root_index !== -1) {
     // substring(0, x) excludes the trailing slash. We must prepend it to the payload.
     const absolute_project_root = path.substring(0, project_root_index + project_name.length + 1);
-    window.RT.dirpr_library = absolute_project_root + "/consumer/made/Manuscript";
+    window.RT.dirpr_library = absolute_project_root + "/consumer/Manuscript";
   } else {
     // Fallback for when served via local Python HTTP daemon from the project root
     window.RT.dirpr_library = "../consumer/made/Manuscript";

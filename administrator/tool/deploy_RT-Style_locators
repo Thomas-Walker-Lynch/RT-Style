@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+import sys
+import os
+import stat
+import shutil
+from pathlib import Path
+
+def deploy_RT_Style_locators(locator_dir_path):
+    locator_dir = Path(locator_dir_path)
+    if not locator_dir.is_dir():
+        print(f"Error: Locator directory not found at {locator_dir_path}")
+        sys.exit(1)
+
+    immediate_js = locator_dir / "immediate.js"
+    direct_js = locator_dir / "direct.js"
+
+    if not immediate_js.exists() or not direct_js.exists():
+        print("Error: Required locator source files missing in the specified directory.")
+        sys.exit(1)
+
+    repo_home = Path(os.environ.get("REPO_HOME", "."))
+    IGNORED_DIRS = {".git"}
+    updated_dirs = set()
+
+    for root, dirs, files in os.walk(repo_home):
+        # Prune ignored directories in place
+        dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
+        current_path = Path(root)
+
+        # Skip if the directory has already received a locator during this run
+        if current_path in updated_dirs:
+            continue
+
+        needs_locator = False
+        for file_name in files:
+            if file_name.endswith(".html"):
+                file_path = current_path / file_name
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        if "RT-Style_locator.js" in content:
+                            needs_locator = True
+                            break
+                except Exception as e:
+                    print(f"Warning: Could not read {file_path}: {e}")
+
+        if needs_locator:
+            target_file = current_path / "RT-Style_locator.js"
+            
+            # Evaluate the physical location to select the proper locator
+            is_release_candidate = "Manuscript" in current_path.parts or "Manuscript.copy" in current_path.parts
+            source_js = immediate_js if is_release_candidate else direct_js
+            
+            # Eliminate permission denial on read-only artifacts
+            if target_file.exists():
+                target_file.chmod(target_file.stat().st_mode | stat.S_IWUSR)
+            
+            shutil.copyfile(source_js, target_file)
+            print(f"Copied {source_js.name} -> {target_file}")
+            
+            updated_dirs.add(current_path)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: deploy_RT-Style_locators <path_to_Locator_directory>")
+        sys.exit(1)
+        
+    deploy_RT_Style_locators(sys.argv[1])

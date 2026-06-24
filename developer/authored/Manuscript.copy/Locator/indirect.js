@@ -1,4 +1,6 @@
 /*
+  indirect.js
+
   We have four scenarios
 
   immediate - used in the RT-Style distribution itself (authored, consumer, staged)

@@ -1,6 +1,39 @@
 
-1.
+1. The tags
 
-<RT-counter name="figure" style="Natural" initial="1" separator=".">
 
-name can be any string
+  1.1.declares a counter
+
+    declare: <RT-counter_init name="figure" style="Natural" initial="1" separator="." separator-placement="embeded-only">
+    increment: <RT-counter_inc name="figure">
+    scoped indent:  <RT-counter_indent name="figure"> ... </RT-counter-indent>
+
+
+  scoped indent can be nested, it adds a level to the counting based on the separator.
+
+    style: "Natural"  "roman"  "roman-outline"
+    separator_placement: embedded, embedded-after   (1  1.1  1.1.1  vs   1. 1.1.  1.1.1.)
+
+  1.2.
+
+    <RT-counter_label  name="figure"  label="a cute figure">
+    <RT-counter-read  label="a cute figure" key="count">
+
+    `label` puts in a dictionary, keyed by label, the value being a pair, a reference to the counter object associated with the name, and the count at the given point in the code
+    `reference` 
+
+    `read` is given either a name or a label, and returns the keyed value. The key "count" is set by the layout elements of 1.1 of course. Other keys include 'name' 'label' 'style', 'initial', 'separator', 'separator-placement'.  read replaces its innerHTML with the read value.
+
+
+2. The algorithm
+
+  The counter uses layout tags that come before paginate. Each receive the entire DOM and do their work to completion before returning
+
+  counter_do_count() : finds the counter tags, in order, and sets the count values
+
+  counter_do_label() : builds the label dictionary
+
+  counter_do_read() : finds all the read tags, and sets the innerHTML
+
+
+

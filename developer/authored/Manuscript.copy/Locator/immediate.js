@@ -1,4 +1,6 @@
 /*
+  immediate.js
+
   We have four scenarios
 
   immediate - used in the RT-style distribution itself (authored, consummer, staged)

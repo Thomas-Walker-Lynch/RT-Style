@@ -1,48 +1,34 @@
 /*
+  direct.js
+
+
   We have four scenarios
 
-  immediate - used in the RT-Style distribution itself (authored, consumer, staged)
-  direct - used in the RT-Style project itself, but not in the distribution
+  immediate - used in the RT-style distribution itself (authored, consummer, staged)
+  direct - used in the RT-style project itself, but not in the distribution
   indirect - the version all Harmony projects use
-  URL-only - always pulls style through a URL, a webserver must be present
+  URL_only - always pulls style through a URL, a webserver must be present
   
 */
 
 window.RT = window.RT || {};
 
-// --- Configuration ---
-// Define the consumer project name to allow dynamic local file:// calculation.
-window.RT.project_name = "Harmony"; 
-
-// Fallback URL when served over a network where the project root is not in the URI.
-window.RT.server_url = "http://localhost:8000/shared/linked-project/RT-Style/Manuscript";
-
 (function() {
-  let style_path = window.RT.server_url;
-
-  if (window.RT.project_name) {
-    const path = window.location.pathname;
-    const project_root_index = path.indexOf('/' + window.RT.project_name + '/');
-    
-    if (project_root_index !== -1) {
-      // substring(0, stop) extracts up to the project name, leaving off the trailing slash.
-      // We append the explicit forward slash before navigating into the shared boundary.
-      const absolute_project_root = path.substring(0, project_root_index + window.RT.project_name.length + 1);
-      
-      // The symlink 'RT-Style' already drops us inside the 'consumer/' directory, 
-      // so we proceed directly to 'Manuscript'.
-      style_path = absolute_project_root + "/shared/linked-project/RT-Style/Manuscript";
-    } else {
-      console.warn("RT-Style: Cannot locate project root '/" + window.RT.project_name + "/' in URI. Falling back to server_url.");
-    }
+  const project_name = "RT-Style"; 
+  const path = window.location.pathname;
+  const project_root_index = path.indexOf('/' + project_name + '/');
+  
+  if (project_root_index !== -1) {
+    // substring(0, x) excludes the trailing slash. We must prepend it to the payload.
+    const absolute_project_root = path.substring(0, project_root_index + project_name.length + 1);
+    window.RT.dirpr_library = absolute_project_root + "/consumer/Manuscript";
+  } else {
+    // Fallback for when served via local Python HTTP daemon from the project root
+    window.RT.dirpr_library = "../consumer/made/Manuscript";
   }
   
-  window.RT.dirpr_library = style_path;
-  
-  // 1. Inject the loader script
   document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
   
-  // 2. Inject the secondary script block for core dependencies
   document.write(
     '<script>' +
     'window.RT.load("Core/utility");' +
