@@ -69,11 +69,12 @@ umask 0077
   }
   clean_path
 
-  # Sourcing is wrapped in a conditional guard to prevent failure on initial bootstrapping
-  installed_tool_sh="$REPO_HOME/$(script_dp)/PATH.sh"
-  if [[ -f "$installed_tool_sh" ]]; then
-    source "$installed_tool_sh"
-  fi
+  # Plugin Sourcing: Dynamically load all the linked project configurations
+  for init_file in "$REPO_HOME/shared/linked-project/"*.init; do
+    if [[ -f "$init_file" ]]; then
+      source "$init_file"
+    fi
+  done
 
   export PATH
 

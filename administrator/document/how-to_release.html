@@ -12,7 +12,7 @@
     <RT-article>
       <RT-title 
         author="Thomas Walker Lynch" 
-        date="2026-03-10" 
+        date="2026-06-24" 
         title="How to release a project">
       </RT-title>
 
@@ -20,10 +20,10 @@
 
       <h1>Prerequisites</h1>
       <p>
-        A release requires a tested promotion candidate. The developer compiles the code and promotes it to the <RT-code>consumer/made</RT-code> directory. The tester validates the candidate. The product manager gives the order to release.
+        A developer works in the developer branch of the project, and makes use of the <RT-code>build</RT-code> and <RT-code>promote</RT-code> tools to stage release candidates into the <RT-code>$REPO_HOME/consumer</RT-code> directory. The <RT-code>tester</RT-code> then validates the release candidate. This constitutes a cycle of work, developing, promoting candidates, testing, and then further developing. Once the project manager agrees this cycle is complete, the release flow moves to the next step.
       </p>
 
-      <h1>Create the release branch</h1>
+      <h1>Make the release branch</h1>
       <p>
         The <RT-term>administrator</RT-term> executes the release. Open a terminal. Enter the project workspace.
       </p>
@@ -35,12 +35,12 @@
         Switch to the core development branch. Ensure the local repository is current.
       </p>
       <RT-code>
-        > git checkout core_developer_branch
+        > git checkout core-developer_branch
         > git pull
       </RT-code>
 
       <p>
-        Create a new branch for the release. Use the major version number.
+        Make a new branch for the release. Use the major version number.
       </p>
       <RT-code>
         > git checkout -b release_v&lt;major&gt;
@@ -57,7 +57,7 @@
         The administrator tags the new commit with the full version number, such as <RT-code>v&lt;major&gt;.&lt;minor&gt;</RT-code>. Minor versions are edits on the major release branch. They are visible to a person by running the version command.
       </p>
       <p>
-        The developer must ensure the fix is also ported to the <RT-code>core_developer_branch</RT-code>. This prevents the defect from reappearing in future major releases.
+        The developer must ensure the fix is also ported to the <RT-code>core-developer_branch</RT-code>. This prevents the defect from reappearing in future major releases.
       </p>
 
       <h1>Tag and push</h1>

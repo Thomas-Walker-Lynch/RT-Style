@@ -1,10 +1,10 @@
 /*
   We have four scenarios
 
-  immediate - used in the RT-Style distribution itself (authored, consummer, staged)
+  immediate - used in the RT-Style distribution itself (authored, consumer, staged)
   direct - used in the RT-Style project itself, but not in the distribution
   indirect - the version all Harmony projects use
-  URL_only - always pulls style through a URL, a webserver must be present
+  URL-only - always pulls style through a URL, a webserver must be present
   
 */
 
@@ -15,7 +15,7 @@ window.RT = window.RT || {};
 window.RT.project_name = "Harmony"; 
 
 // Fallback URL when served over a network where the project root is not in the URI.
-window.RT.server_url = "http://localhost:8000/shared/linked-project/RT-Style/made/Manuscript";
+window.RT.server_url = "http://localhost:8000/shared/linked-project/RT-Style/Manuscript";
 
 (function() {
   let style_path = window.RT.server_url;
@@ -30,8 +30,8 @@ window.RT.server_url = "http://localhost:8000/shared/linked-project/RT-Style/mad
       const absolute_project_root = path.substring(0, project_root_index + window.RT.project_name.length + 1);
       
       // The symlink 'RT-Style' already drops us inside the 'consumer/' directory, 
-      // so we proceed directly to 'made/Manuscript'.
-      style_path = absolute_project_root + "/shared/linked-project/RT-Style/made/Manuscript";
+      // so we proceed directly to 'Manuscript'.
+      style_path = absolute_project_root + "/shared/linked-project/RT-Style/Manuscript";
     } else {
       console.warn("RT-Style: Cannot locate project root '/" + window.RT.project_name + "/' in URI. Falling back to server_url.");
     }

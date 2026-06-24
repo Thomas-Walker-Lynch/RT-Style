@@ -1,4 +1,0 @@
-2026-03-26 03:41:44
-
-when making a skeleton from Harmony, set skeleton docs and other files not to be edited to read only
-

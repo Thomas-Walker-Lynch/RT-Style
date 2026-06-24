@@ -1,0 +1,21 @@
+#+TITLE: Generic Third-Party Installation Guide
+#+AUTHOR: Project Administrator
+
+This project utilizes the Harmony skeleton's `.init` architecture for managing external dependencies. Third-party tools and projects are maintained outside the main repository boundary and linked into the workspace.
+
+* 1. The Neighbor Directory
+Download, clone, or extract the external tool into the same parent directory that contains this project workspace. It must sit as a sibling directory to your current project.
+
+* 2. The Symlink
+Navigate to the `$REPO_HOME/shared/linked-project` directory. You will notice a pre-existing symlink named `project` that points to the parent directory of this project. Use that to create a clean symlink to the external tool.
+
+#+begin_src bash
+cd shared/linked-project
+ln -s project/<external_tool_directory> <link_name>
+#+end_src
+
+* 3. The Initialization File
+Create a configuration file named `<link_name>.init` inside the `$REPO_HOME/shared/linked-project/` directory. This file is automatically sourced when a project participate enters their role environment using `. setup <role>` as part of the project setup.  Use this file to  update the `PATH` or export necessary environment variables needed for using the linked project.
+
+Review existing `.init` files in the directory for structural examples.
+

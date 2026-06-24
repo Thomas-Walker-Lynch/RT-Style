@@ -1,0 +1,15 @@
+# -*- mode: sh; sh-shell: bash; -*-
+# init files are bash script
+
+# RT-Style.init
+# --------------------------------------------------------------------------------
+# Establishes aliases and environment variables for the semantic layout engine.
+# The user must establish the RT-Style -> ../../../RT-Style/consumer symlink.
+
+# If the RT-Style project provides command-line tools (e.g., in a 'tool' directory), 
+# they would be prepended here. Otherwise, this serves as documentation.
+export RT_STYLE_HOME="$REPO_HOME/shared/linked-project/RT-Style"
+
+if [[ ! -d "$RT_STYLE_HOME/Manuscript" && "$ROLE" == "administrator" ]]; then
+    echo "Notice: RT-Style layout engine is not linked or built. HTML styling will fail."
+fi

@@ -2,8 +2,6 @@
 **/scratchpad/*
 !**/scratchpad/.gitignore
 
-# so that .gitignore is not required in consumer/release
-/consumer/made
 
 # Python
 __pycache__/
