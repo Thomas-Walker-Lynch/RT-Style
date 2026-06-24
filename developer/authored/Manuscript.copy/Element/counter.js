@@ -1,6 +1,4 @@
 window.RT = window.RT || {};
-
-// Dictionary for cross-referencing, strictly within the RT namespace.
 window.RT.dict_label = {};
 
 window.RT.counter_do_count = function (root_node) {
@@ -20,11 +18,11 @@ window.RT.counter_do_count = function (root_node) {
                     initial_val = 1;
                 }
                 
-                // We start one integer below the initial value so the 
-                // first increment lands precisely on the initial value.
                 counters_state[name] = {
                     stack: [initial_val - 1], 
                     separator: node.getAttribute('separator') || '.',
+                    style: node.getAttribute('style') || 'Natural',
+                    initial: initial_val,
                     current_count_str: ''
                 };
             }
@@ -41,26 +39,27 @@ window.RT.counter_do_count = function (root_node) {
                 state.stack[state.stack.length - 1] += 1;
                 state.current_count_str = state.stack.join(state.separator);
                 
-                // Stamp the count onto the increment node for immediate layout
                 node.setAttribute('data-count', state.current_count_str);
                 node.innerHTML = state.current_count_str; 
             }
         } else if (tag === 'rt-counter-label') {
             const name = node.getAttribute('name');
             if (name && counters_state[name]) {
-                // Stamp the most recent count onto the label node for the next pass
-                node.setAttribute('data-count', counters_state[name].current_count_str);
+                const state = counters_state[name];
+                // Stamp all relevant metadata for the labeling phase
+                node.setAttribute('data-count', state.current_count_str);
+                node.setAttribute('data-style', state.style);
+                node.setAttribute('data-separator', state.separator);
+                node.setAttribute('data-initial', state.initial);
             }
         }
 
-        // Evaluate children sequentially
         let child = node.firstElementChild;
         while (child) {
             walk(child);
             child = child.nextElementSibling;
         }
 
-        // Retreat up the hierarchy
         if (pushed_name) {
             counters_state[pushed_name].stack.pop();
         }
@@ -74,9 +73,15 @@ window.RT.counter_do_label = function (root_node) {
     const labels = root_node.querySelectorAll('rt-counter-label');
     for (let i = 0; i < labels.length; i++) {
         const lbl = labels[i].getAttribute('label');
-        const count = labels[i].getAttribute('data-count');
-        if (lbl && count !== null) {
-            window.RT.dict_label[lbl] = count;
+        if (lbl) {
+            // Store a complete property object instead of just a string
+            window.RT.dict_label[lbl] = {
+                count: labels[i].getAttribute('data-count'),
+                name: labels[i].getAttribute('name'),
+                style: labels[i].getAttribute('data-style'),
+                separator: labels[i].getAttribute('data-separator'),
+                initial: labels[i].getAttribute('data-initial')
+            };
         }
     }
 };
@@ -85,8 +90,16 @@ window.RT.counter_do_read = function (root_node) {
     const reads = root_node.querySelectorAll('rt-counter-read');
     for (let i = 0; i < reads.length; i++) {
         const label = reads[i].getAttribute('label');
+        // Default to 'count' if no key is provided
+        const key = reads[i].getAttribute('key') || 'count'; 
+        
         if (label && window.RT.dict_label[label]) {
-            reads[i].innerHTML = window.RT.dict_label[label];
+            const value = window.RT.dict_label[label][key];
+            if (value !== undefined && value !== null) {
+                reads[i].innerHTML = value;
+            } else {
+                reads[i].innerHTML = `[Missing key: ${key}]`;
+            }
         }
     }
 };
