@@ -1,66 +1,60 @@
 <!-- differs from test0.html only in that many arguments are left to default -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
-    <title>Manuscript Counter Test Bench</title>
+    <title>Manuscript Counter Test Bench 1</title>
     <script src="RT-Style_locator.js"></script>
     <script>
       window.RT.load('Layout/article_tech_ref');
     </script>
-</head>
-<body>
+  </head>
+  <body>
+    <RT-article>
 
-    <rt-counter-init name="figure"></rt-counter-init>
-    
-    <h1>Primary Analysis</h1>
-    <p>
-        Observe the data in Figure <rt-counter-inc name="figure"></rt-counter-inc>.
-    </p>
-    <rt-counter-label name="figure" label="fig-primary"></rt-counter-label>
+      <RT-counter_make counter="figure"></RT-counter_make>
+      
+      <h1>Primary Analysis</h1>
+      <p>
+        Observe the data in Figure 
+        <RT-counter_step counter="figure"></RT-counter_step>
+        <RT-counter_snapshot counter="figure" snapshot="fig-primary"></RT-counter_snapshot>
+        <RT-counter_read snapshot="fig-primary" key="count"></RT-counter_read>.
+      </p>
 
-    <rt-counter-indent name="figure">
+      <RT-counter_indent counter="figure">
         <p>
-            Detail view of the left quadrant: Figure <rt-counter-inc name="figure"></rt-counter-inc>.
+          Detail view of the left quadrant: Figure 
+          <RT-counter_step counter="figure"></RT-counter_step>
+          <RT-counter_snapshot counter="figure" snapshot="fig-sub-left"></RT-counter_snapshot>
+          <RT-counter_read snapshot="fig-sub-left" key="count"></RT-counter_read>.
         </p>
-        <rt-counter-label name="figure" label="fig-sub-left"></rt-counter-label>
         
         <p>
-            Detail view of the right quadrant: Figure <rt-counter-inc name="figure"></rt-counter-inc>.
+          Detail view of the right quadrant: Figure 
+          <RT-counter_step counter="figure"></RT-counter_step>
+          <RT-counter_snapshot counter="figure" snapshot="fig-sub-right"></RT-counter_snapshot>
+          <RT-counter_read snapshot="fig-sub-right" key="count"></RT-counter_read>.
         </p>
-        <rt-counter-label name="figure" label="fig-sub-right"></rt-counter-label>
         
-        <rt-counter-indent name="figure">
-            <p>
-                Microscopic inspection: Figure <rt-counter-inc name="figure"></rt-counter-inc>.
-            </p>
-            <rt-counter-label name="figure" label="fig-micro"></rt-counter-label>
-        </rt-counter-indent>
-    </rt-counter-indent>
+        <RT-counter_indent counter="figure">
+          <p>
+            Microscopic inspection: Figure 
+            <RT-counter_step counter="figure"></RT-counter_step>
+            <RT-counter_snapshot counter="figure" snapshot="fig-micro"></RT-counter_snapshot>
+            <RT-counter_read snapshot="fig-micro" key="count"></RT-counter_read>.
+          </p>
+        </RT-counter_indent>
+      </RT-counter_indent>
 
-    <h1>Secondary Analysis</h1>
-    <p>
-        Proceeding to the next major component, shown in Figure <rt-counter-inc name="figure"></rt-counter-inc>.
-    </p>
+      <h1>Secondary Analysis</h1>
+      <p>
+        Proceeding to the next major component, shown in Figure 
+        <RT-counter_step counter="figure"></RT-counter_step>
+        <RT-counter_snapshot counter="figure" snapshot="fig-secondary"></RT-counter_snapshot>
+        <RT-counter_read snapshot="fig-secondary" key="count"></RT-counter_read>.
+      </p>
 
-    <div class="reference-box">
-        <h2>Forward Reference Validation</h2>
-        <p>This text proves we can accurately call back to earlier elements.</p>
-        <ul>
-            <li>The primary analysis was Figure <rt-counter-read label="fig-primary"></rt-counter-read>.</li>
-            <li>The left quadrant was Figure <rt-counter-read label="fig-sub-left"></rt-counter-read>.</li>
-            <li>The microscopic view was Figure <rt-counter-read label="fig-micro"></rt-counter-read>.</li>
-        </ul>
-    </div>
-
-    <script>
-        // Insert the three layout functions here
-        // ... (counter_do_count, counter_do_label, counter_do_read) ...
-
-        // Execute the layout pipeline
-        window.RT.counter_do_count(document.body);
-        window.RT.counter_do_label(document.body);
-        window.RT.counter_do_read(document.body);
-    </script>
-</body>
+    </RT-article>
+  </body>
 </html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Manuscript Counter Test Bench 5</title>
+    <script src="RT-Style_locator.js"></script>
+    <script>
+      window.RT.load('Layout/article_tech_ref');
+    </script>
+  </head>
+  <body>
+    <RT-article>
+
+      <RT-counter_make counter="diagram" style="alpha" on-first-step="d" separator=":"></RT-counter_make>
+
+      <div>
+        <h2>Metadata Validation</h2>
+        <p>
+          Querying the final snapshot dictionary for parameters assigned at initialization:
+        </p>
+        <ul>
+          <li>Counter name parameter: <RT-counter_read snapshot="diag-final" key="counter"></RT-counter_read></li>
+          <li>Style parameter: <RT-counter_read snapshot="diag-final" key="style"></RT-counter_read></li>
+          <li>Separator parameter: <RT-counter_read snapshot="diag-final" key="separator"></RT-counter_read></li>
+          <li>first step leads to: <RT-counter_read snapshot="diag-final" key="on-first-step"></RT-counter_read></li>
+        </ul>
+      </div>
+
+      <h1>Content</h1>
+      
+      <p>
+        First diagram: 
+
+        <!-- this generates an error, as the counter object is empty until the first step, besides, what count would it snapshot? -->
+        <RT-counter_snapshot counter="diagram" snapshot="diag-base"></RT-counter_snapshot>
+
+        <RT-counter_step counter="diagram"></RT-counter_step>
+        <RT-counter_snapshot counter="diagram" snapshot="diag-base"></RT-counter_snapshot>
+        <RT-counter_read snapshot="diag-base" key="count"></RT-counter_read>.
+      </p>
+
+      <p>
+        Final diagram: 
+        <RT-counter_step counter="diagram"></RT-counter_step>
+        <RT-counter_snapshot counter="diagram" snapshot="diag-final"></RT-counter_snapshot>
+        <RT-counter_read snapshot="diag-final" key="count"></RT-counter_read>.
+      </p>
+
+    </RT-article>
+  </body>
+</html>

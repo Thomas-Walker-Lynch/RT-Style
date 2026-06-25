@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import sys
+import os
+import re
+
+def migrate_rt_tags(file_path):
+  if not os.path.isfile(file_path):
+    print(f"Error: File '{file_path}' not found.")
+    sys.exit(1)
+
+  with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+  # 1. Migrate legacy tag terminology to current vocabulary
+  content = re.sub(r'<(/?)(RT)-index(\b|/|>)', r'<\g<1>\g<2>⋅term-index\g<3>', content)
+  content = re.sub(r'<(/?)(RT-counter)[_-]init(\b|/|>)', r'<\g<1>\g<2>⋅make\g<3>', content)
+  content = re.sub(r'<(/?)(RT-counter)[_-]inc(\b|/|>)', r'<\g<1>\g<2>⋅step\g<3>', content)
+  content = re.sub(r'<(/?)(RT-counter)[_-]label(\b|/|>)', r'<\g<1>\g<2>⋅snapshot\g<3>', content)
+
+  # 2. Migrate the primary RT namespace separator
+  rt_tags = [
+    "article", "memo", "book", "title", "TOC", "term-index", 
+    "endnotes", "term", "term-em", "neologism", "neologism-em", 
+    "code", "math", "symbol", "constraint", "crossref", "ref", 
+    "cite", "footnote", "page", "page-break", "chapter", "theme-selector"
+  ]
+  rt_pattern = "|".join(rt_tags)
+  content = re.sub(rf'<(/?)(RT)-({rt_pattern})(\b|/|>)', r'<\g<1>\g<2>⋅\g<3>\g<4>', content)
+
+  # 3. Migrate the secondary RT-counter namespace separator
+  counter_tags = ["make", "step", "indent", "snapshot", "read"]
+  counter_pattern = "|".join(counter_tags)
+  content = re.sub(rf'<(/?)(RT-counter)[_-]({counter_pattern})(\b|/|>)', r'<\g<1>\g<2>⋅\g<3>\g<4>', content)
+
+  # 4. Migrate the 'initial' parameter to 'on-first-step' within make tags
+  content = re.sub(r'(<RT-counter⋅make[^>]+)initial=', r'\g<1>on-first-step=', content)
+  
+  # 5. Migrate 'key="initial"' to 'key="on-first-step"' within read tags
+  content = re.sub(r'(<RT-counter⋅read[^>]+key=[\'"])initial([\'"])', r'\g<1>on-first-step\g<2>', content)
+
+  backup_path = file_path + '.v2.bak'
+  os.rename(file_path, backup_path)
+
+  with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+  print(f"Migration complete: {file_path}")
+  print(f"Original file backed up to: {backup_path}")
+
+if __name__ == "__main__":
+  if len(sys.argv) != 2:
+    print("Usage: python3 migrate_rt_v3.py <file_path>")
+    sys.exit(1)
+    
+  migrate_rt_tags(sys.argv[1])

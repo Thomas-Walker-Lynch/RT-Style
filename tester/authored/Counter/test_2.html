@@ -1,70 +1,59 @@
 <!-- shows forward referencing and read of other keys -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <title>Manuscript Counter Test Bench 2</title>
     <script src="RT-Style_locator.js"></script>
     <script>
       window.RT.load('Layout/article_tech_ref');
     </script>
-    <style>
-        /* Test specific styles for visibility */
-        rt-counter-inc { font-weight: bold; color: #0056b3; }
-        rt-counter-read { font-weight: bold; color: #d9534f; }
-        .executive-summary { border: 2px solid #333; padding: 15px; margin-bottom: 30px; background: #fafafa;}
-    </style>
-</head>
-<body>
+  </head>
+  <body>
+    <RT-article>
 
-    <rt-counter-init name="equation" style="roman" initial="1" separator="-"></rt-counter-init>
+      <RT-counter_make counter="equation" style="Natural" on-first-step="1" separator="-"></RT-counter_make>
 
-    <div class="executive-summary">
+      <div>
         <h2>Executive Summary (Forward References)</h2>
         <p>
-            This section appears before any counting occurs in the DOM. 
-            The final equation in this document is Equation <rt-counter-read label="eq-final" key="count"></rt-counter-read>.
+          This section appears before any counting occurs in the DOM. 
+          The final equation in this document is Equation <RT-counter_read snapshot="eq-final" key="count"></RT-counter_read>.
         </p>
-        <p>
-            <strong>Metadata Verification for label "eq-final":</strong>
-            <ul>
-                <li>Name parameter: <rt-counter-read label="eq-final" key="name"></rt-counter-read></li>
-                <li>Style parameter: <rt-counter-read label="eq-final" key="style"></rt-counter-read></li>
-                <li>Separator parameter: <rt-counter-read label="eq-final" key="separator"></rt-counter-read></li>
-                <li>Initial parameter: <rt-counter-read label="eq-final" key="initial"></rt-counter-read></li>
-            </ul>
-        </p>
-    </div>
+      </div>
 
-    <h1>Mathematical Proofs</h1>
-    
-    <p>
-        The base formulation is defined in Equation <rt-counter-inc name="equation"></rt-counter-inc>.
-    </p>
-    <rt-counter-label name="equation" label="eq-base"></rt-counter-label>
+      <h1>Mathematical Proofs</h1>
+      
+      <p>
+        The base formulation is defined in Equation 
+        <RT-counter_step counter="equation"></RT-counter_step>
+        <RT-counter_snapshot counter="equation" snapshot="eq-base"></RT-counter_snapshot>
+        <RT-counter_read snapshot="eq-base" key="count"></RT-counter_read>.
+      </p>
 
-    <rt-counter-indent name="equation">
+      <RT-counter_indent counter="equation">
         <p>
-            Derivation step A: Equation <rt-counter-inc name="equation"></rt-counter-inc>.
+          Derivation step A: Equation 
+          <RT-counter_step counter="equation"></RT-counter_step>
+          <RT-counter_snapshot counter="equation" snapshot="eq-deriv-a"></RT-counter_snapshot>
+          <RT-counter_read snapshot="eq-deriv-a" key="count"></RT-counter_read>.
         </p>
-        <rt-counter-label name="equation" label="eq-deriv-a"></rt-counter-label>
         
         <p>
-            Derivation step B: Equation <rt-counter-inc name="equation"></rt-counter-inc>.
+          Derivation step B: Equation 
+          <RT-counter_step counter="equation"></RT-counter_step>
+          <RT-counter_snapshot counter="equation" snapshot="eq-deriv-b"></RT-counter_snapshot>
+          <RT-counter_read snapshot="eq-deriv-b" key="count"></RT-counter_read>.
         </p>
-        <rt-counter-label name="equation" label="eq-deriv-b"></rt-counter-label>
-    </rt-counter-indent>
+      </RT-counter_indent>
 
-    <p>
-        The concluding formulation is established in Equation <rt-counter-inc name="equation"></rt-counter-inc>.
-    </p>
-    <rt-counter-label name="equation" label="eq-final"></rt-counter-label>
+      <p>
+        The concluding formulation is established in Equation 
+        <RT-counter_step counter="equation"></RT-counter_step>
+        <RT-counter_snapshot counter="equation" snapshot="eq-final"></RT-counter_snapshot>
+        <RT-counter_read snapshot="eq-final" key="count"></RT-counter_read>.
+      </p>
 
-    <script>
-        // Assuming Element/counter.js has been upgraded with the new functions
-        window.RT.counter_do_count(document.body);
-        window.RT.counter_do_label(document.body);
-        window.RT.counter_do_read(document.body);
-    </script>
-</body>
+    </RT-article>
+  </body>
 </html>

@@ -193,10 +193,8 @@
     RT.article(); 
     if(RT.counter_do_count){
       RT.counter_do_count(document.body);
-      if(RT.counter_do_label){
-        RT.counter_do_label(document.body);
-        if(RT.counter_do_read) RT.counter_do_read(document.body);
-      }}
+      if(RT.counter_do_read) RT.counter_do_read(document.body);
+    }
     if(RT.title) RT.title(); 
     if(RT.term) RT.term();
     if(RT.math) RT.math();

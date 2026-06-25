@@ -1,105 +1,202 @@
 window.RT = window.RT || {};
-window.RT.dict_label = {};
+
+window.RT.dict_counter = {};
+window.RT.dict_snapshot = {};
+
+function clone_counter_state(state) {
+  return {
+    counter: state.counter,
+    stack: [...state.stack], 
+    empty: [...state.empty], 
+    separator: state.separator,
+    'separator-placement': state['separator-placement'],
+    style: state.style,
+    'on-first-step': state['on-first-step'], // The literal string authored
+    count: state.count 
+  };
+}
 
 window.RT.counter_do_count = function (root_node) {
-    let counters_state = {};
+  window.RT.dict_counter = {}; 
+  window.RT.dict_snapshot = {}; 
 
-    function walk(node) {
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
+  function to_roman(num) {
+    if (num < 1) return num.toString();
+    const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
+    let roman = '';
+    for (let i in lookup) {
+      while (num >= lookup[i]) {
+        roman += i;
+        num -= lookup[i];
+      }
+    }
+    return roman;
+  }
 
-        const tag = node.tagName.toLowerCase();
-        let pushed_name = null;
+  function parse_first_step(val_str, style, counter_name) {
+    if (!val_str) return 1;
 
-        if (tag === 'rt-counter-init') {
-            const name = node.getAttribute('name');
-            if (name) {
-                let initial_val = parseInt(node.getAttribute('initial'), 10);
-                if (isNaN(initial_val)) {
-                    initial_val = 1;
-                }
-                
-                counters_state[name] = {
-                    stack: [initial_val - 1], 
-                    separator: node.getAttribute('separator') || '.',
-                    style: node.getAttribute('style') || 'Natural',
-                    initial: initial_val,
-                    current_count_str: ''
-                };
-            }
-        } else if (tag === 'rt-counter-indent') {
-            const name = node.getAttribute('name');
-            if (name && counters_state[name]) {
-                counters_state[name].stack.push(0);
-                pushed_name = name;
-            }
-        } else if (tag === 'rt-counter-inc') {
-            const name = node.getAttribute('name');
-            if (name && counters_state[name]) {
-                const state = counters_state[name];
-                state.stack[state.stack.length - 1] += 1;
-                state.current_count_str = state.stack.join(state.separator);
-                
-                node.setAttribute('data-count', state.current_count_str);
-                node.innerHTML = state.current_count_str; 
-            }
-        } else if (tag === 'rt-counter-label') {
-            const name = node.getAttribute('name');
-            if (name && counters_state[name]) {
-                const state = counters_state[name];
-                // Stamp all relevant metadata for the labeling phase
-                node.setAttribute('data-count', state.current_count_str);
-                node.setAttribute('data-style', state.style);
-                node.setAttribute('data-separator', state.separator);
-                node.setAttribute('data-initial', state.initial);
-            }
+    let num = NaN;
+
+    if (style === 'alpha') {
+      if (/^[a-z]$/.test(val_str)) {
+        num = val_str.charCodeAt(0) - 96;
+      }
+    } else if (style === 'Alpha') {
+      if (/^[A-Z]$/.test(val_str)) {
+        num = val_str.charCodeAt(0) - 64;
+      }
+    } else if (style === 'roman' || style === 'Roman' || style === 'roman-outline') {
+      let is_upper = (style === 'Roman' || style === 'roman-outline');
+      let regex = is_upper ? /^M*(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/ : /^m*(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$/;
+
+      if (regex.test(val_str)) {
+        const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
+        let temp = val_str.toUpperCase();
+        num = 0;
+        let i = 0;
+        while (i < temp.length) {
+          if (i + 1 < temp.length && lookup[temp.substring(i, i + 2)]) {
+            num += lookup[temp.substring(i, i + 2)];
+            i += 2;
+          } else {
+            num += lookup[temp[i]];
+            i++;
+          }
         }
-
-        let child = node.firstElementChild;
-        while (child) {
-            walk(child);
-            child = child.nextElementSibling;
-        }
-
-        if (pushed_name) {
-            counters_state[pushed_name].stack.pop();
-        }
+      }
+    } else {
+      if (/^\d+$/.test(val_str)) {
+        num = parseInt(val_str, 10);
+      }
     }
 
-    walk(root_node);
+    if (isNaN(num) || num < 1) {
+      console.error(`RT-Style Layout Error: Type mismatch. Invalid 'on-first-step' value '${val_str}' for style '${style}' in counter '${counter_name}'.`);
+      return 1;
+    }
+    return num;
+  }
+
+  function format_count(num, style, depth) {
+    if (style === 'roman') return to_roman(num).toLowerCase();
+    if (style === 'Roman') return to_roman(num);
+    if (style === 'Alpha') return String.fromCharCode(64 + num); 
+    if (style === 'alpha') return String.fromCharCode(96 + num);
+    
+    if (style === 'roman-outline') {
+      const levels = ['Roman', 'Alpha', 'Natural', 'alpha', 'roman'];
+      const current_style = levels[depth % levels.length];
+      return format_count(num, current_style, 0); 
+    }
+    
+    return num.toString();
+  }
+
+  function walk(node) {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.tagName.toLowerCase();
+    let pushed_name = null;
+
+    if (tag === 'rt-counter_make') {
+      const name = node.getAttribute('counter');
+      if (name) {
+        const style = node.getAttribute('style') || 'Natural';
+        const on_first_step_str = node.getAttribute('on-first-step');
+        
+        let first_step_int = parse_first_step(on_first_step_str, style, name);
+        
+        window.RT.dict_counter[name] = {
+          counter: name,
+          stack: [0], 
+          empty: [true], 
+          separator: node.getAttribute('separator') || '.',
+          'separator-placement': node.getAttribute('separator-placement') || 'embedded',
+          style: style,
+          'on-first-step': on_first_step_str || '1', 
+          on_first_step_int: first_step_int, // Stored internally for execution
+          count: ''
+        };
+      }
+    } else if (tag === 'rt-counter_indent') {
+      const name = node.getAttribute('counter');
+      if (name && window.RT.dict_counter[name]) {
+        window.RT.dict_counter[name].stack.push(0);
+        window.RT.dict_counter[name].empty.push(true);
+        pushed_name = name;
+      }
+    } else if (tag === 'rt-counter_step') {
+      const name = node.getAttribute('counter');
+      if (name && window.RT.dict_counter[name]) {
+        const state = window.RT.dict_counter[name];
+        const depth = state.stack.length - 1;
+        
+        if (state.empty[depth]) {
+            state.stack[depth] = (depth === 0) ? state.on_first_step_int : 1;
+            state.empty[depth] = false;
+        } else {
+            state.stack[depth] += 1;
+        }
+        
+        const formatted_stack = state.stack.map((val, index) => 
+          format_count(val, state.style, index)
+        );
+        
+        let count_str = formatted_stack.join(state.separator);
+        if (state['separator-placement'] === 'embedded-after') {
+          count_str += state.separator;
+        }
+        
+        state.count = count_str;
+      }
+    } else if (tag === 'rt-counter_snapshot') {
+      const counter_name = node.getAttribute('counter');
+      const snapshot_name = node.getAttribute('snapshot');
+      
+      if (counter_name && snapshot_name && window.RT.dict_counter[counter_name]) {
+        const state = window.RT.dict_counter[counter_name];
+        const depth = state.stack.length - 1;
+
+        if (state.empty[depth]) {
+             console.error(`RT-Style Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT-counter_step> before taking a snapshot.`);
+        } else {
+             window.RT.dict_snapshot[snapshot_name] = clone_counter_state(state);
+        }
+      }
+    }
+
+    let child = node.firstElementChild;
+    while (child) {
+      walk(child);
+      child = child.nextElementSibling;
+    }
+
+    if (pushed_name) {
+      window.RT.dict_counter[pushed_name].stack.pop();
+      window.RT.dict_counter[pushed_name].empty.pop();
+    }
+  }
+
+  walk(root_node);
 };
 
-window.RT.counter_do_label = function (root_node) {
-    window.RT.dict_label = {};
-    const labels = root_node.querySelectorAll('rt-counter-label');
-    for (let i = 0; i < labels.length; i++) {
-        const lbl = labels[i].getAttribute('label');
-        if (lbl) {
-            // Store a complete property object instead of just a string
-            window.RT.dict_label[lbl] = {
-                count: labels[i].getAttribute('data-count'),
-                name: labels[i].getAttribute('name'),
-                style: labels[i].getAttribute('data-style'),
-                separator: labels[i].getAttribute('data-separator'),
-                initial: labels[i].getAttribute('data-initial')
-            };
-        }
-    }
+window.RT.counter_do_snapshot = function (root_node) {
+  return;
 };
 
 window.RT.counter_do_read = function (root_node) {
-    const reads = root_node.querySelectorAll('rt-counter-read');
-    for (let i = 0; i < reads.length; i++) {
-        const label = reads[i].getAttribute('label');
-        // Default to 'count' if no key is provided
-        const key = reads[i].getAttribute('key') || 'count'; 
-        
-        if (label && window.RT.dict_label[label]) {
-            const value = window.RT.dict_label[label][key];
-            if (value !== undefined && value !== null) {
-                reads[i].innerHTML = value;
-            } else {
-                reads[i].innerHTML = `[Missing key: ${key}]`;
-            }
-        }
+  const reads = root_node.querySelectorAll('rt-counter_read');
+  for (let i = 0; i < reads.length; i++) {
+    const snapshot_name = reads[i].getAttribute('snapshot');
+    const key = reads[i].getAttribute('key') || 'count'; 
+    
+    if (snapshot_name && window.RT.dict_snapshot[snapshot_name]) {
+      const value = window.RT.dict_snapshot[snapshot_name][key];
+      reads[i].innerHTML = (value !== undefined) ? value : `[Missing key: ${key}]`;
+    } else {
+      reads[i].innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
+      console.error(`RT-Style Layout Error: <RT-counter_read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
     }
+  }
 };

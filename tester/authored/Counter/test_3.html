@@ -1,0 +1,76 @@
+<!-- demonstrates mixed outline numbering -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Manuscript Counter Test Bench 3</title>
+    <script src="RT-Style_locator.js"></script>
+    <script>
+      window.RT.load('Layout/article_tech_ref');
+    </script>
+  </head>
+  <body>
+    <RT-article>
+        
+      <RT-counter_make counter="rule" style="roman" separator="." separator-placement="embedded-after"></RT-counter_make>
+      <RT-counter_make counter="section" style="roman-outline" separator="-"></RT-counter_make>
+
+      <h1>Regulatory Formatting</h1>
+      <p>
+        The embedded-after placement requires a trailing separator. <br>
+        Observe Rule 
+        <RT-counter_step counter="rule"></RT-counter_step>
+        <RT-counter_snapshot counter="rule" snapshot="rule_1"></RT-counter_snapshot>
+        <RT-counter_read snapshot="rule_1" key="count"></RT-counter_read>
+      </p>
+      <RT-counter_indent counter="rule">
+        <p>
+          Subset rule 
+          <RT-counter_step counter="rule"></RT-counter_step>
+          <RT-counter_snapshot counter="rule" snapshot="rule_1_1"></RT-counter_snapshot>
+          <RT-counter_read snapshot="rule_1_1" key="count"></RT-counter_read>
+        </p>
+        <p>
+          Subset rule 
+          <RT-counter_step counter="rule"></RT-counter_step>
+          <RT-counter_snapshot counter="rule" snapshot="rule_1_2"></RT-counter_snapshot>
+          <RT-counter_read snapshot="rule_1_2" key="count"></RT-counter_read>
+        </p>
+      </RT-counter_indent>
+
+      <h1>Outline Hierarchy</h1>
+      <p>
+        The outline format automatically cycles styles by depth. <br>
+        Level 0 evaluates to Section 
+        <RT-counter_step counter="section"></RT-counter_step>
+        <RT-counter_snapshot counter="section" snapshot="sec_1"></RT-counter_snapshot>
+        <RT-counter_read snapshot="sec_1" key="count"></RT-counter_read>.
+      </p>
+
+      <RT-counter_indent counter="section">
+        <p>
+          Level 1 evaluates to Section 
+          <RT-counter_step counter="section"></RT-counter_step>
+          <RT-counter_snapshot counter="section" snapshot="sec_1_1"></RT-counter_snapshot>
+          <RT-counter_read snapshot="sec_1_1" key="count"></RT-counter_read>.
+        </p>
+        
+        <RT-counter_indent counter="section">
+          <p>
+            Level 2 evaluates to Section 
+            <RT-counter_step counter="section"></RT-counter_step>
+            <RT-counter_snapshot counter="section" snapshot="sec_1_1_1"></RT-counter_snapshot>
+            <RT-counter_read snapshot="sec_1_1_1" key="count"></RT-counter_read>.
+          </p>
+          <p>
+            Level 2 continues at Section 
+            <RT-counter_step counter="section"></RT-counter_step>
+            <RT-counter_snapshot counter="section" snapshot="sec_1_1_2"></RT-counter_snapshot>
+            <RT-counter_read snapshot="sec_1_1_2" key="count"></RT-counter_read>.
+          </p>
+        </RT-counter_indent>
+      </RT-counter_indent>
+        
+    </RT-article>
+  </body>
+</html>
