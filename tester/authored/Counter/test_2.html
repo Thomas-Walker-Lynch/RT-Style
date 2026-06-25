@@ -10,15 +10,15 @@
     </script>
   </head>
   <body>
-    <RT-article>
+    <RT·article>
 
-      <RT-counter_make counter="equation" style="Natural" on-first-step="1" separator="-"></RT-counter_make>
+      <RT·Counter·make counter="equation" style="Natural" on-first-step="1" separator="-"></RT·Counter·make>
 
       <div>
         <h2>Executive Summary (Forward References)</h2>
         <p>
           This section appears before any counting occurs in the DOM. 
-          The final equation in this document is Equation <RT-counter_read snapshot="eq-final" key="count"></RT-counter_read>.
+          The final equation in this document is Equation <RT·Counter·read snapshot="eq-final" key="count"></RT·Counter·read>.
         </p>
       </div>
 
@@ -26,34 +26,34 @@
       
       <p>
         The base formulation is defined in Equation 
-        <RT-counter_step counter="equation"></RT-counter_step>
-        <RT-counter_snapshot counter="equation" snapshot="eq-base"></RT-counter_snapshot>
-        <RT-counter_read snapshot="eq-base" key="count"></RT-counter_read>.
+        <RT·Counter·step counter="equation"></RT·Counter·step>
+        <RT·Counter·snapshot counter="equation" snapshot="eq-base"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="eq-base" key="count"></RT·Counter·read>.
       </p>
 
-      <RT-counter_indent counter="equation">
+      <RT·Counter·indent counter="equation">
         <p>
           Derivation step A: Equation 
-          <RT-counter_step counter="equation"></RT-counter_step>
-          <RT-counter_snapshot counter="equation" snapshot="eq-deriv-a"></RT-counter_snapshot>
-          <RT-counter_read snapshot="eq-deriv-a" key="count"></RT-counter_read>.
+          <RT·Counter·step counter="equation"></RT·Counter·step>
+          <RT·Counter·snapshot counter="equation" snapshot="eq-deriv-a"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="eq-deriv-a" key="count"></RT·Counter·read>.
         </p>
         
         <p>
           Derivation step B: Equation 
-          <RT-counter_step counter="equation"></RT-counter_step>
-          <RT-counter_snapshot counter="equation" snapshot="eq-deriv-b"></RT-counter_snapshot>
-          <RT-counter_read snapshot="eq-deriv-b" key="count"></RT-counter_read>.
+          <RT·Counter·step counter="equation"></RT·Counter·step>
+          <RT·Counter·snapshot counter="equation" snapshot="eq-deriv-b"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="eq-deriv-b" key="count"></RT·Counter·read>.
         </p>
-      </RT-counter_indent>
+      </RT·Counter·indent>
 
       <p>
         The concluding formulation is established in Equation 
-        <RT-counter_step counter="equation"></RT-counter_step>
-        <RT-counter_snapshot counter="equation" snapshot="eq-final"></RT-counter_snapshot>
-        <RT-counter_read snapshot="eq-final" key="count"></RT-counter_read>.
+        <RT·Counter·step counter="equation"></RT·Counter·step>
+        <RT·Counter·snapshot counter="equation" snapshot="eq-final"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="eq-final" key="count"></RT·Counter·read>.
       </p>
 
-    </RT-article>
+    </RT·article>
   </body>
 </html>

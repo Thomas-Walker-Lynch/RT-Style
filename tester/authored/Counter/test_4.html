@@ -9,15 +9,15 @@
   </script>
 </head>
 <body>
-  <RT-article>
+  <RT·article>
     
-    <RT-title 
+    <RT·title 
       author="Test Bench" 
       date="2026-06-25" 
       title="Test 4: Counters and Outdents">
-    </RT-title>
+    </RT·title>
 
-    <RT-counter_make counter="sec" style="Natural" separator="."></RT-counter_make>
+    <RT·Counter·make counter="sec" style="Natural" separator="."></RT·Counter·make>
 
     <div>
       <h2>Executive Summary</h2>
@@ -25,9 +25,9 @@
         This summary proves the snapshot dictionary is populated before the reading phase executes.
       </p>
       <ul>
-        <li>The first major section is <RT-counter_read snapshot="snap_1"></RT-counter_read>.</li>
-        <li>The deepest nested section is <RT-counter_read snapshot="snap_2_1_1"></RT-counter_read>.</li>
-        <li>The final section, proving successful outdenting, is <RT-counter_read snapshot="snap_3"></RT-counter_read>.</li>
+        <li>The first major section is <RT·Counter·read snapshot="snap_1"></RT·Counter·read>.</li>
+        <li>The deepest nested section is <RT·Counter·read snapshot="snap_2_1_1"></RT·Counter·read>.</li>
+        <li>The final section, proving successful outdenting, is <RT·Counter·read snapshot="snap_3"></RT·Counter·read>.</li>
       </ul>
     </div>
 
@@ -35,65 +35,65 @@
     
     <p>
       Beginning the primary sequence: Section 
-      <RT-counter_step counter="sec"></RT-counter_step>
-      <RT-counter_snapshot counter="sec" snapshot="snap_1"></RT-counter_snapshot>
-      <RT-counter_read snapshot="snap_1"></RT-counter_read>.
+      <RT·Counter·step counter="sec"></RT·Counter·step>
+      <RT·Counter·snapshot counter="sec" snapshot="snap_1"></RT·Counter·snapshot>
+      <RT·Counter·read snapshot="snap_1"></RT·Counter·read>.
     </p>
 
-    <RT-counter_indent counter="sec">
+    <RT·Counter·indent counter="sec">
       <p>
         First nested item: Section 
-        <RT-counter_step counter="sec"></RT-counter_step>
-        <RT-counter_snapshot counter="sec" snapshot="snap_1_1"></RT-counter_snapshot>
-        <RT-counter_read snapshot="snap_1_1"></RT-counter_read>.
+        <RT·Counter·step counter="sec"></RT·Counter·step>
+        <RT·Counter·snapshot counter="sec" snapshot="snap_1_1"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="snap_1_1"></RT·Counter·read>.
       </p>
       <p>
         Second nested item: Section 
-        <RT-counter_step counter="sec"></RT-counter_step>
-        <RT-counter_snapshot counter="sec" snapshot="snap_1_2"></RT-counter_snapshot>
-        <RT-counter_read snapshot="snap_1_2"></RT-counter_read>.
+        <RT·Counter·step counter="sec"></RT·Counter·step>
+        <RT·Counter·snapshot counter="sec" snapshot="snap_1_2"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="snap_1_2"></RT·Counter·read>.
       </p>
-    </RT-counter_indent>
+    </RT·Counter·indent>
 
     <p>
       Outdented back to the primary sequence: Section 
-      <RT-counter_step counter="sec"></RT-counter_step>
-      <RT-counter_snapshot counter="sec" snapshot="snap_2"></RT-counter_snapshot>
-      <RT-counter_read snapshot="snap_2"></RT-counter_read>.
+      <RT·Counter·step counter="sec"></RT·Counter·step>
+      <RT·Counter·snapshot counter="sec" snapshot="snap_2"></RT·Counter·snapshot>
+      <RT·Counter·read snapshot="snap_2"></RT·Counter·read>.
     </p>
 
-    <RT-counter_indent counter="sec">
+    <RT·Counter·indent counter="sec">
       <p>
         First nested item of the second sequence: Section 
-        <RT-counter_step counter="sec"></RT-counter_step>
-        <RT-counter_snapshot counter="sec" snapshot="snap_2_1"></RT-counter_snapshot>
-        <RT-counter_read snapshot="snap_2_1"></RT-counter_read>.
+        <RT·Counter·step counter="sec"></RT·Counter·step>
+        <RT·Counter·snapshot counter="sec" snapshot="snap_2_1"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="snap_2_1"></RT·Counter·read>.
       </p>
       
-      <RT-counter_indent counter="sec">
+      <RT·Counter·indent counter="sec">
         <p>
           Double nested item: Section 
-          <RT-counter_step counter="sec"></RT-counter_step>
-          <RT-counter_snapshot counter="sec" snapshot="snap_2_1_1"></RT-counter_snapshot>
-          <RT-counter_read snapshot="snap_2_1_1"></RT-counter_read>.
+          <RT·Counter·step counter="sec"></RT·Counter·step>
+          <RT·Counter·snapshot counter="sec" snapshot="snap_2_1_1"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="snap_2_1_1"></RT·Counter·read>.
         </p>
-      </RT-counter_indent>
+      </RT·Counter·indent>
       
       <p>
         Outdented to level one: Section 
-        <RT-counter_step counter="sec"></RT-counter_step>
-        <RT-counter_snapshot counter="sec" snapshot="snap_2_2"></RT-counter_snapshot>
-        <RT-counter_read snapshot="snap_2_2"></RT-counter_read>.
+        <RT·Counter·step counter="sec"></RT·Counter·step>
+        <RT·Counter·snapshot counter="sec" snapshot="snap_2_2"></RT·Counter·snapshot>
+        <RT·Counter·read snapshot="snap_2_2"></RT·Counter·read>.
       </p>
-    </RT-counter_indent>
+    </RT·Counter·indent>
 
     <p>
       Double outdented back to root level: Section 
-      <RT-counter_step counter="sec"></RT-counter_step>
-      <RT-counter_snapshot counter="sec" snapshot="snap_3"></RT-counter_snapshot>
-      <RT-counter_read snapshot="snap_3"></RT-counter_read>.
+      <RT·Counter·step counter="sec"></RT·Counter·step>
+      <RT·Counter·snapshot counter="sec" snapshot="snap_3"></RT·Counter·snapshot>
+      <RT·Counter·read snapshot="snap_3"></RT·Counter·read>.
     </p>
 
-  </RT-article>
+  </RT·article>
 </body>
 </html>
