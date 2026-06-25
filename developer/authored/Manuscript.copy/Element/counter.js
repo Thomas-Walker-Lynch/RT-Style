@@ -1,9 +1,10 @@
 window.RT = window.RT || {};
+window.RT.Counter = window.RT.Counter || {};
 
-window.RT.dict_counter = {};
+window.RT.dict_instance = {};
 window.RT.dict_snapshot = {};
 
-function clone_counter_state(state) {
+function clone_state(state) {
   return {
     counter: state.counter,
     stack: [...state.stack], 
@@ -16,8 +17,8 @@ function clone_counter_state(state) {
   };
 }
 
-window.RT.counter_do_count = function (root_node) {
-  window.RT.dict_counter = {}; 
+window.RT.Counter.parse_and_count = function (root_node) {
+  window.RT.dict_instance = {}; 
   window.RT.dict_snapshot = {}; 
 
   function to_roman(num) {
@@ -99,7 +100,7 @@ window.RT.counter_do_count = function (root_node) {
     const tag = node.tagName.toLowerCase();
     let pushed_name = null;
 
-    if (tag === 'RT·Counter··make') {
+    if (tag === 'RT·Counter·make'.toLowerCase()) {
       const name = node.getAttribute('counter');
       if (name) {
         const style = node.getAttribute('style') || 'Natural';
@@ -107,7 +108,7 @@ window.RT.counter_do_count = function (root_node) {
         
         let first_step_int = parse_first_step(on_first_step_str, style, name);
         
-        window.RT.dict_counter[name] = {
+        window.RT.dict_instance[name] = {
           counter: name,
           stack: [0], 
           empty: [true], 
@@ -119,17 +120,17 @@ window.RT.counter_do_count = function (root_node) {
           count: ''
         };
       }
-    } else if (tag === 'RT·Counter··indent') {
+    } else if (tag === 'RT·Counter·indent'.toLowerCase()) {
       const name = node.getAttribute('counter');
-      if (name && window.RT.dict_counter[name]) {
-        window.RT.dict_counter[name].stack.push(0);
-        window.RT.dict_counter[name].empty.push(true);
+      if (name && window.RT.dict_instance[name]) {
+        window.RT.dict_instance[name].stack.push(0);
+        window.RT.dict_instance[name].empty.push(true);
         pushed_name = name;
       }
-    } else if (tag === 'RT·Counter··step') {
+    } else if (tag === 'RT·Counter·step'.toLowerCase()) {
       const name = node.getAttribute('counter');
-      if (name && window.RT.dict_counter[name]) {
-        const state = window.RT.dict_counter[name];
+      if (name && window.RT.dict_instance[name]) {
+        const state = window.RT.dict_instance[name];
         const depth = state.stack.length - 1;
         
         if (state.empty[depth]) {
@@ -150,18 +151,18 @@ window.RT.counter_do_count = function (root_node) {
         
         state.count = count_str;
       }
-    } else if (tag === 'RT·Counter··snapshot') {
+    } else if (tag === 'RT·Counter·snapshot'.toLowerCase()) {
       const counter_name = node.getAttribute('counter');
       const snapshot_name = node.getAttribute('snapshot');
       
-      if (counter_name && snapshot_name && window.RT.dict_counter[counter_name]) {
-        const state = window.RT.dict_counter[counter_name];
+      if (counter_name && snapshot_name && window.RT.dict_instance[counter_name]) {
+        const state = window.RT.dict_instance[counter_name];
         const depth = state.stack.length - 1;
 
         if (state.empty[depth]) {
-             console.error(`RT-Style Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT·Counter··step> before taking a snapshot.`);
+             console.error(`RT-Style Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT·Counter·step> before taking a snapshot.`);
         } else {
-             window.RT.dict_snapshot[snapshot_name] = clone_counter_state(state);
+             window.RT.dict_snapshot[snapshot_name] = clone_state(state);
         }
       }
     }
@@ -173,20 +174,20 @@ window.RT.counter_do_count = function (root_node) {
     }
 
     if (pushed_name) {
-      window.RT.dict_counter[pushed_name].stack.pop();
-      window.RT.dict_counter[pushed_name].empty.pop();
+      window.RT.dict_instance[pushed_name].stack.pop();
+      window.RT.dict_instance[pushed_name].empty.pop();
     }
   }
 
   walk(root_node);
 };
 
-window.RT.counter_do_snapshot = function (root_node) {
+window.RT.Counter.do_snapshot = function (root_node) {
   return;
 };
 
-window.RT.counter_do_read = function (root_node) {
-  const reads = root_node.querySelectorAll('RT·Counter··read');
+window.RT.Counter.read = function (root_node) {
+  const reads = root_node.querySelectorAll('RT·Counter·read');
   for (let i = 0; i < reads.length; i++) {
     const snapshot_name = reads[i].getAttribute('snapshot');
     const key = reads[i].getAttribute('key') || 'count'; 
@@ -196,7 +197,7 @@ window.RT.counter_do_read = function (root_node) {
       reads[i].innerHTML = (value !== undefined) ? value : `[Missing key: ${key}]`;
     } else {
       reads[i].innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
-      console.error(`RT-Style Layout Error: <RT·Counter··read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
+      console.error(`RT-Style Layout Error: <RT·Counter·read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
     }
   }
 };

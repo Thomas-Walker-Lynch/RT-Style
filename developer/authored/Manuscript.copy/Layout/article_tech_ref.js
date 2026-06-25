@@ -133,9 +133,9 @@ apply_style_rule('body, html, RT·article' ,{ overflowAnchor: "none !important" 
     if(RT.theme) RT.theme();     
     if(RT.endnote) RT.endnote();
     
-    if(RT.counter_do_count){
-      RT.counter_do_count(document.body);
-      if(RT.counter_do_read) RT.counter_do_read(document.body);
+    if(RT.Counter.parse_and_count){
+      RT.Counter.parse_and_count(document.body);
+      if(RT.Counter.read) RT.Counter.read(document.body);
     }
     
     if(RT.title) RT.title(); 

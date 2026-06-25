@@ -22,6 +22,7 @@ window.RT.debug = {
 */  
 
   active_tokens: new Set([
+    'scroll'
   ]),
 
   log: function(token, message) {
