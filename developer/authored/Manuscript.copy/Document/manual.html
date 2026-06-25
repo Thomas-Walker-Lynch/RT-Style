@@ -25,7 +25,7 @@
 
       <h1>Layout Environments</h1>
       <p>
-        The RT tags are available to be used inside of layout environments. They are:
+        These are the current top level semantic tag environments.
       </p>
       
       <table>
@@ -67,19 +67,19 @@
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·title&gt;</RT·code></td>
-            <td>Constructs the standardized title block and metadata header.</td>
+            <td>Title block.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·TOC&gt;</RT·code></td>
-            <td>Compiles an automatic table of contents by scanning heading depths.</td>
+            <td>Table of contents.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·term-index&gt;</RT·code></td>
-            <td>Compiles an alphabetized glossary of terms defined within the document.</td>
+            <td>Inserts list of the terms used in the paper and the pages they occur on.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·endnotes&gt;</RT·code></td>
-            <td>Container for extracted bibliographic citations.</td>
+            <td>Inserts a list of the endnotes.</td>
           </tr>
         </tbody>
       </table>
@@ -95,7 +95,7 @@
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·term&gt;</RT·code></td>
-            <td>Standard technical term. Decorates first occurrence and establishes an anchor.</td>
+            <td>Standard technical term. Decorates first occurrence. Author should mark all occurrences of the term.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·term-em&gt;</RT·code></td>
@@ -147,20 +147,20 @@
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·indent&gt;</RT·code></td>
-            <td>Pushes a new structural depth onto the tracking stack.</td>
+            <td>Scope within tag pairs counts at a new structural depth.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·snapshot&gt;</RT·code></td>
-            <td>Deep copies the active count and styling parameters to a dictionary key.</td>
+            <td>Takes a snapshot of the counter state.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·read&gt;</RT·code></td>
-            <td>Recalls a saved count or format parameter from the snapshot dictionary.</td>
+            <td>Read a field from a snapshot as innerHTML. Snapshot can come from anywhere in the document.</td>
           </tr>
         </tbody>
       </table>
 
-      <h3>References and Citations</h3>
+      <h3>Notation</h3>
       <table>
         <thead>
           <tr>
@@ -174,16 +174,12 @@
             <td>Context aware internal anchor link.</td>
           </tr>
           <tr>
-            <td><RT·code>&lt;RT·ref&gt;</RT·code></td>
-            <td>Dynamic reference evaluating to a structural target.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·cite&gt;</RT·code></td>
-            <td>Bibliographic citation marker mapping to the endnotes block.</td>
+            <td><RT·code>&lt;RT·endnote&gt;</RT·code></td>
+            <td>Tag pair contents added as an item to the endnote list.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·footnote&gt;</RT·code></td>
-            <td>Inline text extracted and appended to the bottom of the active page.</td>
+            <td>Tag pair contents put at the bottom of the page.</td>
           </tr>
         </tbody>
       </table>
