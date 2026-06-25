@@ -2,12 +2,12 @@
 window.RT = window.RT || {};
 
 window.RT.constraint = function(){
-  document.querySelectorAll('rt-constraint').forEach( (el) => {
+  document.querySelectorAll('rt·constraint').forEach( (el) => {
     el.style.display = 'block';
-    el.style.borderLeft = '4px solid var(--rt-state-warning)';
-    el.style.backgroundColor = 'var(--rt-surface-1)';
+    el.style.borderLeft = '4px solid var(--RT·state-warning)';
+    el.style.backgroundColor = 'var(--RT·surface-1)';
     el.style.padding = '1rem';
     el.style.margin = '1.5rem 0';
-    el.style.color = 'var(--rt-content-main)';
+    el.style.color = 'var(--RT·content-main)';
   });
 };

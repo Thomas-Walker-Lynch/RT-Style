@@ -1,5 +1,5 @@
 /*
-  Processes <RT-CODE> tags.
+  Processes <RT·code> tags.
   Uses the central config or CSS variables from the theme.
 
   Removes common indent from lines of code.
@@ -13,11 +13,11 @@ function code() {
 
   const metrics = U.measure_ink_ratio('monospace');
   
-  document.querySelectorAll('rt-code').forEach((el) => {
+  document.querySelectorAll('rt·code').forEach((el) => {
     el.style.fontFamily = 'monospace';
     
     const computed = window.getComputedStyle(el);
-    const accent = computed.getPropertyValue('--rt-accent').trim() || 'gold';
+    const accent = computed.getPropertyValue('--RT·accent').trim() || 'gold';
     
     const is_block = U.is_block_content(el);
     const parentColor = computed.color;

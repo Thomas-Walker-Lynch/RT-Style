@@ -5,8 +5,8 @@
     </script>
   </head>
   <body>
-    <RT-memo>
-       </RT-memo>
+    <RT·memo>
+       </RT·memo>
   </body>
 */
 
@@ -31,7 +31,7 @@
     body.style.color = "black";
 
     // Target the new semantic tag
-    const memo_seq = document.querySelectorAll("RT-memo");
+    const memo_seq = document.querySelectorAll("RT·memo");
     if(memo_seq.length === 0) return;
 
     for(let i = 0; i < memo_seq.length; i++){

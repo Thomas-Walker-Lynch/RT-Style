@@ -8,10 +8,10 @@ window.RT.load = function(module_path){
 
   // Strict enforcement of the PascalCase namespace
   if (target_module === 'Theme') {
-    let saved_theme = localStorage.getItem('RT_theme_preference');
+    let saved_theme = localStorage.getItem('RT·theme_preference');
     if (!saved_theme) {
       saved_theme = 'dark_gold';
-      localStorage.setItem('RT_theme_preference', saved_theme);
+      localStorage.setItem('RT·theme_preference', saved_theme);
     }
     target_module = 'Theme/' + saved_theme;
   }

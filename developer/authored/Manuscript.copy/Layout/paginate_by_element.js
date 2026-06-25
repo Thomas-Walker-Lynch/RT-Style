@@ -21,7 +21,7 @@ window.RT.paginate_by_element = function () {
 
   function getMeasureContainer() {
     if (measureContainer && measureContainer.parentNode) return measureContainer;
-    const article = document.querySelector('RT-article');
+    const article = document.querySelector('RT·article');
     if (!article) {
       const temp = document.createElement('div');
       temp.style.visibility = 'hidden';
@@ -56,9 +56,9 @@ window.RT.paginate_by_element = function () {
   // =========================================================
   // STEP 1: PREPARE FOOTNOTES (Strip and tag)
   // =========================================================
-  const article_seq = document.querySelectorAll('RT-article');
+  const article_seq = document.querySelectorAll('RT·article');
   if (article_seq.length === 0) {
-    debug.error('pagination', 'No <RT-article> elements found. Pagination aborted.');
+    debug.error('pagination', 'No <RT·article> elements found. Pagination aborted.');
     return;
   }
 
@@ -68,7 +68,7 @@ window.RT.paginate_by_element = function () {
   Array.from(article_seq).forEach(article => {
     // Bulletproof extraction: immune to XML/HTML case-sensitivity parsing quirks
     const all_nodes = Array.from(article.querySelectorAll('*'));
-    const raw_footnotes = all_nodes.filter(node => node.tagName.toLowerCase() === 'rt-footnote');
+    const raw_footnotes = all_nodes.filter(node => node.tagName.toLowerCase() === 'RT·footnote');
     
     raw_footnotes.forEach(fn => {
       const id = footnote_counter++;
@@ -81,7 +81,7 @@ window.RT.paginate_by_element = function () {
       }
 
       // Replace with a zero-height marker that rides along with the text
-      const marker = document.createElement('rt-fn-marker');
+      const marker = document.createElement('RT·fn-marker');
       marker.setAttribute('data-id', id);
       
       if (fn.parentNode) {
@@ -246,7 +246,7 @@ window.RT.paginate_by_element = function () {
   // =========================================================
   function paginateArticle(article) {
     const raw_element_seq = Array.from(article.children).filter(el =>
-      !['SCRIPT', 'STYLE', 'RT-PAGE'].includes(el.tagName)
+      !['SCRIPT', 'STYLE', 'RT·PAGE'].includes(el.tagName)
     );
 
     if (raw_element_seq.length === 0) return;
@@ -275,7 +275,7 @@ window.RT.paginate_by_element = function () {
           }
         } else {
           if (current_batch_seq.length === 0) {
-            const frame = document.createElement('rt-scroll-frame');
+            const frame = document.createElement('RT·scroll-frame');
             frame.style.display = 'block';
             frame.style.overflowY = 'auto';
             frame.style.maxHeight = page_height_limit + 'px';
@@ -295,7 +295,7 @@ window.RT.paginate_by_element = function () {
 
       // --- Ordinary (non-splittable) element ---
       const h = getElHeight(el);
-      const is_RT_page_break = el.tagName && el.tagName.toLowerCase() === 'rt-page-break';
+      const is_RT_page_break = el.tagName && el.tagName.toLowerCase() === 'RT·page-break';
 
       if( (is_RT_page_break || current_h + h > page_height_limit) && current_batch_seq.length > 0 ){
         let backtrack_seq = [];
@@ -329,12 +329,12 @@ window.RT.paginate_by_element = function () {
       page_seq.push(current_batch_seq);
     }
 
-    // Rebuild article with <rt-page> wrappers
+    // Rebuild article with <RT·page> wrappers
     article.innerHTML = '';
     let p = 0;
     while (p < page_seq.length) {
       const batch = page_seq[p];
-      const page_el = document.createElement('rt-page');
+      const page_el = document.createElement('RT·page');
       page_el.id = `page-${p + 1}`;
       batch.forEach(item => page_el.appendChild(item));
       article.appendChild(page_el);
@@ -349,19 +349,19 @@ window.RT.paginate_by_element = function () {
   // STEP 3: RESOLVE FOOTNOTES & EXPAND PAGES
   // =========================================================
   Array.from(article_seq).forEach(article => {
-    const rendered_pages = article.querySelectorAll('rt-page');
+    const rendered_pages = article.querySelectorAll('RT·page');
     
     Array.from(rendered_pages).forEach(page => {
       // Bulletproof extraction for the markers
       const all_page_nodes = Array.from(page.querySelectorAll('*'));
-      const markers = all_page_nodes.filter(node => node.tagName.toLowerCase() === 'rt-fn-marker');
+      const markers = all_page_nodes.filter(node => node.tagName.toLowerCase() === 'RT·fn-marker');
       
       if (markers.length === 0) return;
 
       // Construct the footer block for this page
       const fn_container = document.createElement('div');
-      fn_container.className = 'rt-footnote-container';
-      fn_container.style.borderTop = '1px solid var(--rt-border-default)';
+      fn_container.className = 'RT·footnote-container';
+      fn_container.style.borderTop = '1px solid var(--RT·border-default)';
       fn_container.style.marginTop = '2rem';
       fn_container.style.paddingTop = '1rem';
       fn_container.style.fontSize = '0.9em';
@@ -372,7 +372,7 @@ window.RT.paginate_by_element = function () {
 
         // Replace the invisible marker with the visible naked superscript link
         const sup = document.createElement('sup');
-        sup.innerHTML = `<a href="#fn-${id}" id="fn-ref-${id}" style="color: var(--rt-brand-link); text-decoration: none;">${id}</a>`;
+        sup.innerHTML = `<a href="#fn-${id}" id="fn-ref-${id}" style="color: var(--RT·brand-link); text-decoration: none;">${id}</a>`;
         
         if (marker.parentNode) {
           marker.parentNode.replaceChild(sup, marker);

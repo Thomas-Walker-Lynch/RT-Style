@@ -10,18 +10,18 @@
     </script>
   </head>
   <body>
-    <RT⋅theme-selector></RT⋅theme-selector>
+    <RT·theme-selector></RT·theme-selector>
 
-    <RT⋅article>
+    <RT·article>
 
-      <RT⋅title 
+      <RT·title 
         author="Thomas Walker Lynch" 
         date="2026-06-25 15:37Z" 
         title="RT Style System: Reference Manual"
         copyright="2026 Reasoning Technology">
-      </RT⋅title>
+      </RT·title>
 
-      <RT⋅TOC level="1-2"></RT⋅TOC>
+      <RT·TOC level="1-2"></RT·TOC>
 
       <h1>Layout Environments</h1>
       <p>
@@ -37,15 +37,15 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅article&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·article&gt;</RT·code></td>
             <td>Standard technical document layout with dynamic pagination.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅memo&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·memo&gt;</RT·code></td>
             <td>Strict print layout (6.5 inch width, serif typography, monochrome).</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅book&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·book&gt;</RT·code></td>
             <td>Multi chapter compilation layout (Upcoming).</td>
           </tr>
         </tbody>
@@ -53,7 +53,7 @@
 
       <h2>Article Environment</h2>
       <p>
-        The <RT⋅code>&lt;RT⋅article&gt;</RT⋅code> container provides the standard toolset for technical documentation, whitepapers, and specifications. It utilizes dynamic soft limit pagination and responsive ink ratio balancing.
+        The <RT·code>&lt;RT·article&gt;</RT·code> container provides the standard toolset for technical documentation, whitepapers, and specifications. It utilizes dynamic soft limit pagination and responsive ink ratio balancing.
       </p>
 
       <h3>Section Generators</h3>
@@ -66,19 +66,19 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅title&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·title&gt;</RT·code></td>
             <td>Constructs the standardized title block and metadata header.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅TOC&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·TOC&gt;</RT·code></td>
             <td>Compiles an automatic table of contents by scanning heading depths.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅term-index&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·term-index&gt;</RT·code></td>
             <td>Compiles an alphabetized glossary of terms defined within the document.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅endnotes&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·endnotes&gt;</RT·code></td>
             <td>Container for extracted bibliographic citations.</td>
           </tr>
         </tbody>
@@ -94,35 +94,35 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅term&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·term&gt;</RT·code></td>
             <td>Standard technical term. Decorates first occurrence and establishes an anchor.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅term-em&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·term-em&gt;</RT·code></td>
             <td>Forces visual emphasis for a term subsequent to its first occurrence.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅neologism&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·neologism&gt;</RT·code></td>
             <td>Project specific vocabulary. Styled distinctly from conventional terms.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅neologism-em&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·neologism-em&gt;</RT·code></td>
             <td>Forces visual emphasis for a neologism subsequent to its first occurrence.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅code&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·code&gt;</RT·code></td>
             <td>Code span or pre formatted code block with theme aware borders.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅math&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·math&gt;</RT·code></td>
             <td>Inline or block mathematics evaluated by MathJax.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅symbol&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·symbol&gt;</RT·code></td>
             <td>Technical symbol wrapper enforcing strict font weight and character spacing.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅constraint&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·constraint&gt;</RT·code></td>
             <td>Highlights architectural limits or hard requirements in a distinct block.</td>
           </tr>
         </tbody>
@@ -138,23 +138,23 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT-counter⋅make&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·Counter··make&gt;</RT·code></td>
             <td>Declares an empty named counter sequence (e.g., figure, equation).</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT-counter⋅step&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·Counter··step&gt;</RT·code></td>
             <td>Advances the counter from empty or increments to the next ordinal address.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT-counter⋅indent&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·Counter··indent&gt;</RT·code></td>
             <td>Pushes a new structural depth onto the tracking stack.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT-counter⋅snapshot&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·Counter··snapshot&gt;</RT·code></td>
             <td>Deep copies the active count and styling parameters to a dictionary key.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT-counter⋅read&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·Counter··read&gt;</RT·code></td>
             <td>Recalls a saved count or format parameter from the snapshot dictionary.</td>
           </tr>
         </tbody>
@@ -170,19 +170,19 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅crossref&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·crossref&gt;</RT·code></td>
             <td>Context aware internal anchor link.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅ref&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·ref&gt;</RT·code></td>
             <td>Dynamic reference evaluating to a structural target.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅cite&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·cite&gt;</RT·code></td>
             <td>Bibliographic citation marker mapping to the endnotes block.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅footnote&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·footnote&gt;</RT·code></td>
             <td>Inline text extracted and appended to the bottom of the active page.</td>
           </tr>
         </tbody>
@@ -198,11 +198,11 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅page&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·page&gt;</RT·code></td>
             <td>Automatically generated boundary container. Do not author manually.</td>
           </tr>
           <tr>
-            <td><RT⋅code>&lt;RT⋅page-break&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·page-break&gt;</RT·code></td>
             <td>Explicit directive forcing subsequent content to the next page container.</td>
           </tr>
         </tbody>
@@ -210,12 +210,12 @@
 
       <h2>Memo Environment</h2>
       <p>
-        The <RT⋅code>&lt;RT⋅memo&gt;</RT⋅code> container inherits all valid tags from the Article environment but overrides the global CSS to enforce a static, print ready monochrome aesthetic.
+        The <RT·code>&lt;RT·memo&gt;</RT·code> container inherits all valid tags from the Article environment but overrides the global CSS to enforce a static, print ready monochrome aesthetic.
       </p>
 
       <h2>Book Environment</h2>
       <p>
-        The <RT⋅code>&lt;RT⋅book&gt;</RT⋅code> container is reserved for multi chapter compilations. It introduces tags designed exclusively for macro level document orchestration. 
+        The <RT·code>&lt;RT·book&gt;</RT·code> container is reserved for multi chapter compilations. It introduces tags designed exclusively for macro level document orchestration. 
       </p>
 
       <h3>Book Specific Tags</h3>
@@ -228,7 +228,7 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅chapter&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·chapter&gt;</RT·code></td>
             <td>Chapter heading. Implies a page break, inherits standard H1 typography, and registers as a top level division in the TOC.</td>
           </tr>
         </tbody>
@@ -244,12 +244,12 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT⋅code>&lt;RT⋅theme-selector&gt;</RT⋅code></td>
+            <td><RT·code>&lt;RT·theme-selector&gt;</RT·code></td>
             <td>Floating interactive widget permitting real time swapping of visual themes.</td>
           </tr>
         </tbody>
       </table>
 
-    </RT⋅article>
+    </RT·article>
   </body>
 </html>

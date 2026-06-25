@@ -2,8 +2,8 @@
 window.RT = window.RT || {};
 
 window.RT.crossref = function(){
-  document.querySelectorAll('rt-crossref').forEach( (el) => {
-    el.style.color = 'var(--rt-brand-link)';
+  document.querySelectorAll('rt·crossref').forEach( (el) => {
+    el.style.color = 'var(--RT·brand-link)';
     el.style.textDecoration = 'underline';
     el.style.cursor = 'pointer';
     el.style.fontWeight = '500';

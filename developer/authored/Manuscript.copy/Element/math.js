@@ -1,11 +1,11 @@
 /*
-  Processes <RT-MATH> tags.
+  Processes <RT·math> tags.
   JavaScript: math() 
-  HTML Tag: <RT-MATH> (parsed as rt-math)
+  HTML Tag: <RT·math> (parsed as rt·math)
 */
 function math(){
-  // querySelector treats 'rt-math' as case-insensitive for the tag
-  document.querySelectorAll('rt-math').forEach(el => {
+  // querySelector treats 'rt·math' as case-insensitive for the tag
+  document.querySelectorAll('rt·math').forEach(el => {
     if (el.textContent.startsWith('$')) return;
 
     const is_block = el.parentElement.tagName === 'DIV' || 

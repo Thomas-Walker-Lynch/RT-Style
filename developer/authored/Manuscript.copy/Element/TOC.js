@@ -1,5 +1,5 @@
 /*
-  Processes <RT-TOC> tags.
+  Processes <RT·TOC> tags.
   Populates each with headings found below it.
 
   Attributes:
@@ -22,7 +22,7 @@ window.RT = window.RT || {};
 
 window.RT.TOC = function(){
   const debug = window.RT.debug || { log: function(){} };
-  const TOC_seq = document.querySelectorAll('rt-toc');
+  const TOC_seq = document.querySelectorAll('rt·toc');
 
   TOC_seq.forEach( (container ,TOC_index) => {
     container.style.display = 'block';
@@ -151,7 +151,7 @@ window.RT.TOC = function(){
       a.style.color = 'inherit';
       a.style.display = 'block';
 
-      a.onmouseover = () => a.style.color = 'var(--rt-brand-primary)';
+      a.onmouseover = () => a.style.color = 'var(--RT·brand-primary)';
       a.onmouseout  = () => a.style.color = 'inherit';
 
       li.appendChild(a);

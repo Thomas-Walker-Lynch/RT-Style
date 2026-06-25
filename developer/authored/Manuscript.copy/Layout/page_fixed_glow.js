@@ -16,17 +16,17 @@
       ,padding: "3rem"
       ,margin: "4rem auto"
       
-      ,bg_color:     "var(--rt-surface-0)"         
-      ,border_color: "var(--rt-brand-primary)"     
-      ,text_color:   "var(--rt-brand-primary)"     
+      ,bg_color:     "var(--RT·surface-0)"         
+      ,border_color: "var(--RT·brand-primary)"     
+      ,text_color:   "var(--RT·brand-primary)"     
       
-      ,shadow: "drop-shadow(0px 0px 15px var(--rt-brand-primary))" 
+      ,shadow: "drop-shadow(0px 0px 15px var(--RT·brand-primary))" 
     };
 
     RT.config.page = Object.assign({}, defaults, RT.config.page || {});
 
     const conf = RT.config.page;
-    const style_id = 'rt-page-fixed-glow';
+    const style_id = 'RT·page-fixed-glow';
     
     if (!document.getElementById(style_id)) {
       const style_el = document.createElement('style');
@@ -34,11 +34,11 @@
       
       style_el.textContent = `
         /* Reset page counter on the article container */
-        rt-article {
-          counter-reset: rt-page-counter;
+        RT·article {
+          counter-reset: RT·page-counter;
         }
 
-        rt-page {
+        RT·page {
           display: block;
           position: relative;
           box-sizing: border-box;
@@ -58,12 +58,12 @@
           filter: ${conf.shadow};
           
           /* Counter Increment */
-          counter-increment: rt-page-counter;
+          counter-increment: RT·page-counter;
         }
 
         /* Page Numbering */
-        rt-page::after {
-          content: "Page " counter(rt-page-counter);
+        RT·page::after {
+          content: "Page " counter(RT·page-counter);
           position: absolute;
           bottom: 1.5rem;
           right: 3rem;

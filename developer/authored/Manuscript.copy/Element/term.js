@@ -1,7 +1,7 @@
 /*
-  Processes <RT-TERM> and <RT-NEOLOGISM> tags.
+  Processes <RT·term> and <RT·neologism> tags.
   - Styles only the first occurrence of a unique term/neologism.
-  - The "-em" variants (e.g., <RT-term-em>) are always styled.
+  - The "-em" variants (e.g., <RT·term-em>) are always styled.
   - Automatically generates IDs for first occurrences for future indexing.
 */
 
@@ -26,8 +26,8 @@ window.RT.term = function() {
       el.style.fontStyle = 'italic';
       el.style.fontWeight = is_neologism_b ? '600' : '500';
       el.style.color = is_neologism_b
-        ? 'var(--rt-brand-secondary)'
-        : 'var(--rt-brand-primary)';
+        ? 'var(--RT·brand-secondary)'
+        : 'var(--RT·brand-primary)';
       el.style.paddingRight = '0.1em'; // Compensation for italic slant
       el.style.display = 'inline';
     };
@@ -41,10 +41,10 @@ window.RT.term = function() {
     };
 
     const selector_s = [
-      'rt-term'
-      ,'rt-term-em'
-      ,'rt-neologism'
-      ,'rt-neologism-em'
+      'rt·term'
+      ,'rt·term-em'
+      ,'rt·neologism'
+      ,'rt·neologism-em'
     ].join(',');
 
     const tags_dpa = document.querySelectorAll(selector_s);

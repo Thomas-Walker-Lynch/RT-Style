@@ -1,10 +1,10 @@
 window.RT = window.RT || {};
 
-window.RT.end_note = function(){
-  const citations = document.querySelectorAll('rt-cite');
+window.RT.endnote = function(){
+  const citations = document.querySelectorAll('rt·cite');
   if(citations.length === 0) return;
 
-  const article = document.querySelector('rt-article');
+  const article = document.querySelector('rt·article');
   if(!article) return;
 
   // 1. Ensure the H1 is a direct child of the article so the TOC can see it
@@ -17,9 +17,9 @@ window.RT.end_note = function(){
   }
 
   // 2. Locate or generate the endnotes list container
-  let endnoteContainer = document.querySelector('rt-endnotes');
+  let endnoteContainer = document.querySelector('rt·endnotes');
   if(!endnoteContainer) {
-    endnoteContainer = document.createElement('rt-endnotes');
+    endnoteContainer = document.createElement('rt·endnotes');
     article.appendChild(endnoteContainer);
   }
   
@@ -37,7 +37,7 @@ window.RT.end_note = function(){
     
     cite.innerHTML = `<a href="#note-${refNum}" id="cite-${refNum}">[${refNum}]</a>`;
     cite.style.cursor = 'pointer';
-    cite.style.color = 'var(--rt-brand-link)';
+    cite.style.color = 'var(--RT·brand-link)';
     cite.style.textDecoration = 'none';
 
     // Append the corresponding entry into the endnotes list
@@ -50,6 +50,6 @@ window.RT.end_note = function(){
   // Style the container
   endnoteContainer.style.display = 'block';
   endnoteContainer.style.marginTop = '1rem';
-  endnoteContainer.style.borderTop = '1px solid var(--rt-surface-3)';
+  endnoteContainer.style.borderTop = '1px solid var(--RT·surface-3)';
   endnoteContainer.style.paddingTop = '1rem';
 };

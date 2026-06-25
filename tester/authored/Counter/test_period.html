@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Comprehensive RT. Namespace Test</title>
+  <style>
+    /* 1. Testing CSS Variables */
+    :root {
+      --RT.content-main: #e0e0e0;
+      --RT.bg-color: #1a1a1a;
+      --RT.border-style: 1px solid #444;
+    }
+
+    body {
+      background-color: var(--RT.bg-color);
+      color: var(--RT.content-main);
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    /* 2. Testing Custom Tag Selectors */
+    RT.chapter {
+      display: block;
+      margin-bottom: 20px;
+      padding: 10px;
+      border: var(--RT.border-style);
+    }
+
+    RT.page-break {
+      display: block;
+      height: 4px;
+      background-color: #555;
+      margin: 20px 0;
+    }
+
+    /* 3. Testing CSS Class Selectors */
+    .RT.highlight {
+      color: #ffd700;
+      font-weight: bold;
+    }
+  </style>
+  <script>
+    window.RT = window.RT || {};
+
+    window.RT.processChapters = function() {
+      const debug = window.RT.debug || { log: function(){} };
+
+      // 4. Testing JS Query Selectors
+      document.querySelectorAll('RT.chapter').forEach((el, index) => {
+        if (debug.log) debug.log('chapter', `Processing chapter ${index + 1}`);
+
+        // 5. Testing Element Creation
+        const brk = document.createElement('RT.page-break');
+        const h1 = document.createElement('h1');
+
+        h1.innerHTML = el.innerHTML;
+
+        if (el.className) {
+          h1.className = el.className;
+        }
+        
+        // 6. Testing ClassList Manipulation
+        h1.classList.add('RT.processed-chapter');
+
+        Array.from(el.attributes).forEach((attr) => {
+          if (attr.name !== 'class') {
+            h1.setAttribute(attr.name, attr.value);
+          }
+        });
+
+        el.parentNode.insertBefore(brk, el);
+        el.replaceWith(h1);
+      });
+
+      // 7. Testing JS Variable Identifiers (Unicode support)
+      const RT.status = "DOM fully processed using center dot namespace.";
+      console.log(RT.status);
+    };
+
+    document.addEventListener("DOMContentLoaded", window.RT.processChapters);
+  </script>
+</head>
+<body>
+
+  <p class="RT.highlight">Hello!</p>
+  
+  <RT.chapter class="RT.highlight">Chapter 1: The Setup</RT.chapter>
+  
+  <RT.chapter data-custom="valid">Chapter 2: The Execution</RT.chapter>
+
+</body>
+</html>

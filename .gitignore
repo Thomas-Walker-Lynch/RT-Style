@@ -1,4 +1,10 @@
-# Protect against accidental local .gitignore deletion
+
+# no archive or temporary files
+*.tar
+*.tgz
+*.zip
+*.
+temp.*
 **/scratchpad/*
 !**/scratchpad/.gitignore
 
