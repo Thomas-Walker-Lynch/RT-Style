@@ -8,6 +8,14 @@
     <script>
       window.RT.load('Layout/article_tech_ref');
     </script>
+    <style>
+      /* Minor inline styling to improve manual readability */
+      table { width: 100%; margin-bottom: 2rem; border-collapse: collapse; }
+      th, td { padding: 0.75rem; border-bottom: 1px solid var(--RT·surface-3); vertical-align: top; }
+      th { text-align: left; color: var(--RT·brand-secondary); }
+      .attr-list { margin-top: 0.5rem; font-size: 0.9em; color: var(--RT·content-muted); }
+      .attr-list code { color: var(--RT·content-main); }
+    </style>
   </head>
   <body>
     <RT·theme-selector></RT·theme-selector>
@@ -16,7 +24,7 @@
 
       <RT·title 
         author="Thomas Walker Lynch" 
-        date="2026-06-25 15:37Z" 
+        date="2026-06-26 09:35Z" 
         title="RT Style System: Reference Manual"
         copyright="2026 Reasoning Technology">
       </RT·title>
@@ -31,8 +39,8 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
@@ -60,26 +68,41 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·title&gt;</RT·code></td>
-            <td>Title block.</td>
+            <td>
+              Assembles the standardized title block and metadata header.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>title</code>: (Default: "Untitled Document")<br>
+                <code>author</code>: (Default: None)<br>
+                <code>date</code>: (Default: None)<br>
+                <code>copyright</code>: (Default: None)
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·TOC&gt;</RT·code></td>
-            <td>Table of contents.</td>
+            <td>
+              Compiles an automatic table of contents by scanning heading depths.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>level</code>: Target heading level "N" or range "A-B". (Default: Context-aware. Looks backward for the nearest heading H(N) and targets H(N+1)).
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·term-index&gt;</RT·code></td>
-            <td>Inserts list of the terms used in the paper and the pages they occur on.</td>
+            <td>Inserts a list of the terms used in the paper and the pages they occur on.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·endnotes&gt;</RT·code></td>
-            <td>Inserts a list of the endnotes.</td>
+            <td>Inserts a compiled list of the endnotes.</td>
           </tr>
         </tbody>
       </table>
@@ -88,14 +111,20 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·term&gt;</RT·code></td>
-            <td>Standard technical term. Decorates first occurrence. Author should mark all occurrences of the term.</td>
+            <td>
+              Standard technical term. Decorates first occurrence and establishes an anchor. Author should mark all occurrences of the term.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>id</code>: (Default: Auto-generated from text content, e.g., "def-my-term")
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·term-em&gt;</RT·code></td>
@@ -103,7 +132,7 @@
           </tr>
           <tr>
             <td><RT·code>&lt;RT·neologism&gt;</RT·code></td>
-            <td>Project specific vocabulary. Styled distinctly from conventional terms.</td>
+            <td>Project specific vocabulary. Styled distinctly from conventional terms. Auto-generates an anchor ID prefixed with "def-neo-".</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·neologism-em&gt;</RT·code></td>
@@ -111,7 +140,7 @@
           </tr>
           <tr>
             <td><RT·code>&lt;RT·code&gt;</RT·code></td>
-            <td>Code span or pre formatted code block with theme aware borders.</td>
+            <td>Code span or pre formatted code block with theme aware borders. Automatically dedents block content.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·math&gt;</RT·code></td>
@@ -132,30 +161,66 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·Counter·make&gt;</RT·code></td>
-            <td>Declares an empty named counter sequence (e.g., figure, equation).</td>
+            <td>
+              Initializes an empty named counter sequence.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>counter</code>: Required identifier.<br>
+                <code>style</code>: "Natural", "roman", "Roman", "alpha", "Alpha", or "roman-outline". (Default: "Natural")<br>
+                <code>on-first-step</code>: The starting value. (Default: "1")<br>
+                <code>separator</code>: The string separating depth counts. (Default: ".")<br>
+                <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·step&gt;</RT·code></td>
-            <td>Advances the counter from empty or increments to the next ordinal address.</td>
+            <td>
+              Advances the counter from empty or increments to the next ordinal address.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>counter</code>: Required identifier.
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·indent&gt;</RT·code></td>
-            <td>Scope within tag pairs counts at a new structural depth.</td>
+            <td>
+              Scope within tag pairs counts at a new depth. Must be closed with <code>&lt;/RT·Counter·indent&gt;</code>.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>counter</code>: Required identifier.
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·snapshot&gt;</RT·code></td>
-            <td>Takes a snapshot of the counter state.</td>
+            <td>
+              Deep copies the active count and styling parameters to a dictionary key.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>counter</code>: Required identifier.<br>
+                <code>snapshot</code>: Required snapshot name.
+              </div>
+            </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·read&gt;</RT·code></td>
-            <td>Read a field from a snapshot as innerHTML. Snapshot can come from anywhere in the document.</td>
+            <td>
+              Reads a field from a snapshot as innerHTML. A snapshot can be recalled from anywhere in the document.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>snapshot</code>: Required snapshot name.<br>
+                <code>key</code>: The state property to read. (Default: "count")
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -164,22 +229,22 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·crossref&gt;</RT·code></td>
-            <td>Context aware internal anchor link.</td>
+            <td>Context aware internal anchor link. Visual styling applied automatically.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·endnote&gt;</RT·code></td>
-            <td>Tag pair contents added as an item to the endnote list.</td>
+            <td>Tag pair contents added as an item to the endnote list. Replaces the inline text with an anchor link.</td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·footnote&gt;</RT·code></td>
-            <td>Tag pair contents put at the bottom of the page.</td>
+            <td>Tag pair contents are automatically extracted and appended to the bottom of the active printed page container.</td>
           </tr>
         </tbody>
       </table>
@@ -188,8 +253,8 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
@@ -218,14 +283,14 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·chapter&gt;</RT·code></td>
-            <td>Chapter heading. Implies a page break, inherits standard H1 typography, and registers as a top level division in the TOC.</td>
+            <td>Chapter heading. Implies a page break, inherits standard H1 typography, and registers as a top level division in the TOC. Preserves existing <code>class</code> attributes.</td>
           </tr>
         </tbody>
       </table>
@@ -234,14 +299,14 @@
       <table>
         <thead>
           <tr>
-            <th>Tag</th>
-            <th>Description</th>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td><RT·code>&lt;RT·theme-selector&gt;</RT·code></td>
-            <td>Floating interactive widget permitting real time swapping of visual themes.</td>
+            <td>Floating interactive widget permitting real time swapping of visual themes. Retains preference in <code>localStorage</code>.</td>
           </tr>
         </tbody>
       </table>
