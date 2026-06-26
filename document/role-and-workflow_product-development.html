@@ -9,14 +9,14 @@
     </script>
   </head>
   <body>
-    <RT-article>
-      <RT-title 
+    <RT·article>
+      <RT·title 
         author="Thomas Walker Lynch" 
         date="2026-03-09" 
         title="Product development roles and workflow">
       </RT-title>
 
-      <RT-TOC level="1"></RT-TOC>
+      <RT·TOC level="1"></RT-TOC>
 
       <h1>Roles as hats</h1>
       <p>
@@ -27,7 +27,7 @@
       <p>
         These roles interact directly with the repository. To enter a workspace, change directory to the top-level of the project and source the setup file for the desired role:
       </p>
-      <RT-code>
+      <RT·code>
         > . setup administrator
         > . setup developer
         > . setup tester
@@ -41,23 +41,23 @@
       <p>Responsibilities:</p>
       <ol>
         <li>Set up the project directory and keep it in sync with the Harmony skeleton.</li>
-        <li>Maintain role environments (apart from role-specific <RT-code>tool/setup</RT-code> files).</li>
+        <li>Maintain role environments (apart from role-specific <RT·code>tool/setup</RT-code> files).</li>
         <li>Install and maintain shared and third_party tools, addressing issues with the project workflow. Note that the term "third_party" encompasses any software not authored within this specific project.</li>
       </ol>
 
       <h3>Developer role</h3>
       <p>Responsibilities and Boundaries:</p>
       <ol>
-        <li>Write and modify <RT-code>authored/</RT-code> source.</li>
-        <li>Run builds and place artifacts in <RT-code>scratchpad/made</RT-code>, then execute the <RT-code>promote write</RT-code> script to copy artifacts to <RT-code>consumer/made</RT-code> for testing.</li>
-        <li>Run experiments in <RT-code>experiment/</RT-code>. These experiments can sometimes be promoted to formal tests, but there is no requirement to do so. The developer role should not blur into the tester role; experiments are informal, whereas tests are formal and retained.</li>
-        <li><strong>Strict Boundary:</strong> A developer never writes into the <RT-code>tester/</RT-code> directory. Instead, a developer adds tests to <RT-code>developer/experiment/</RT-code> and offers to share them.</li>
+        <li>Write and modify <RT·code>authored/</RT-code> source.</li>
+        <li>Run builds and place artifacts in <RT·code>scratchpad/made</RT-code>, then execute the <RT·code>promote write</RT-code> script to copy artifacts to <RT·code>consumer/made</RT-code> for testing.</li>
+        <li>Run experiments in <RT·code>experiment/</RT-code>. These experiments can sometimes be promoted to formal tests, but there is no requirement to do so. The developer role should not blur into the tester role; experiments are informal, whereas tests are formal and retained.</li>
+        <li><strong>Strict Boundary:</strong> A developer never writes into the <RT·code>tester/</RT-code> directory. Instead, a developer adds tests to <RT·code>developer/experiment/</RT-code> and offers to share them.</li>
       </ol>
 
       <h3>Tester role</h3>
       <p>Responsibilities and Boundaries:</p>
       <ol>
-        <li>Evaluate candidates under <RT-code>consumer/made/</RT-code> and run regression suites to confirm:
+        <li>Evaluate candidates under <RT·code>consumer/made/</RT-code> and run regression suites to confirm:
           <ul>
             <li>That the code does not crash.</li>
             <li>That consumers do not have a bad experience.</li>
@@ -65,21 +65,21 @@
           </ul>
         </li>
         <li>File issues and communicate feedback to the developers.</li>
-        <li><strong>Strict Boundary:</strong> A tester never patches code in the <RT-code>developer/</RT-code> directory. Instead, the tester files issues or proposes code fixes on a separate branch.</li>
+        <li><strong>Strict Boundary:</strong> A tester never patches code in the <RT·code>developer/</RT-code> directory. Instead, the tester files issues or proposes code fixes on a separate branch.</li>
       </ol>
 
       <h3>Consumer role</h3>
       <p>Responsibilities:</p>
       <ol>
         <li>Act as the end-user simulation environment.</li>
-        <li>Consume and deploy artifacts exclusively from the <RT-code>consumer/made/</RT-code> target.</li>
+        <li>Consume and deploy artifacts exclusively from the <RT·code>consumer/made/</RT-code> target.</li>
         <li>Never author or modify code; strictly run local builds or deployments for architecture-specific testing.</li>
         <li>Report issues. (Anyone can report an issue, and consumers regularly do).</li>
       </ol>
 
       <h2>External roles</h2>
       <p>
-        These roles drive the project forward but do not have a dedicated <RT-code>setup &lt;role&gt;</RT-code> workspace, as they do not directly build or test the code in that capacity. If these individuals need to interface with the code, they simply put on a workspace role hat, such as administer, developer, tester, or consumer.
+        These roles drive the project forward but do not have a dedicated <RT·code>setup &lt;role&gt;</RT-code> workspace, as they do not directly build or test the code in that capacity. If these individuals need to interface with the code, they simply put on a workspace role hat, such as administer, developer, tester, or consumer.
       </p>
 
       <h3>Product manager</h3>
@@ -111,10 +111,10 @@
 
       <h1>Promotion mechanics</h1>
       <p>
-        Building and promotion are separate activities. The developer compiles and places files in <RT-code>developer/scratchpad/made</RT-code>. The developer then runs <RT-code>promote write</RT-code> to transfer those files to <RT-code>consumer/made</RT-code>. 
+        Building and promotion are separate activities. The developer compiles and places files in <RT·code>developer/scratchpad/made</RT-code>. The developer then runs <RT·code>promote write</RT-code> to transfer those files to <RT·code>consumer/made</RT-code>. 
       </p>
       <p>
-        The <RT-code>consumer/made</RT-code> directory is strictly an untracked deployment target. No tools are permitted to rebuild during promotion, and no builds are run directly inside the consumer made directory.
+        The <RT·code>consumer/made</RT-code> directory is strictly an untracked deployment target. No tools are permitted to rebuild during promotion, and no builds are run directly inside the consumer made directory.
       </p>
 
     </RT-article>
