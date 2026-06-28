@@ -15,12 +15,12 @@ function code() {
   
   document.querySelectorAll('rt·code').forEach((el) => {
     el.style.fontFamily = 'monospace';
-    
+
     const computed = window.getComputedStyle(el);
-    const accent = computed.getPropertyValue('--RT·accent').trim() || 'gold';
+    const accent = window.RT.theme('read', 'brand', 'secondary') || 'gold';
     
     const is_block = U.Dom.is_block_content(el);
-    const parentColor = computed.color;
+    const parentColor = window.RT.theme('read', 'content', 'main');
     const is_text_light = U.Color.is_light(parentColor);
     
     const alpha = is_block ? 0.08 : 0.15;

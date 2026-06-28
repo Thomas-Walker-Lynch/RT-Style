@@ -14,6 +14,7 @@ window.RT.theme = (function() {
     state: { success: "", warning: "", error: "", info: "" },
     syntax: { keyword: "", string: "", func: "", comment: "" },
     page: { width: "", min_height: "", padding: "", margin: "", bg_color: "", border_color: "", text_color: "", shadow: "" },
+    custom_css: ""
   };
 
   function resolve_path(path_array) {
@@ -94,6 +95,17 @@ window.RT.theme = (function() {
       }
 
       apply_and_validate_theme(window.RT.theme_library[theme_name], fallback);
+      
+      // --- CSS Fallback for Pseudo-Elements and External Libraries ---
+      let style_el = document.getElementById('rt-theme-custom-css');
+      if (!style_el) {
+        style_el = document.createElement('style');
+        style_el.id = 'rt-theme-custom-css';
+        document.head.appendChild(style_el);
+      }
+      // Write the string if it exists, otherwise clear the block
+      style_el.textContent = dictionary.custom_css || '';
+      
       return true;
     }
 
