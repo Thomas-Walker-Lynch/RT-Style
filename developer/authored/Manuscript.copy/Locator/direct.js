@@ -31,9 +31,7 @@ window.RT = window.RT || {};
   
   document.write(
     '<script>' +
-    'window.RT.load("Core/utility");' +
     'window.RT.load("Core/block_visibility_during_layout");' +
-    'window.RT.load("Theme");' +
     'window.RT.load("Element/theme_selector");' +
     '<\/script>'
   );

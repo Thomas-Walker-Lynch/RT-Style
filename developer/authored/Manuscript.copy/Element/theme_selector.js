@@ -1,11 +1,13 @@
-window.RT = window.RT || {};
+// Element/theme_selector.js
 
-window.RT.theme_selector = function(){
-  document.querySelectorAll('rt·theme-selector').forEach( (el) => {
-    let current_theme = localStorage.getItem('RT_theme_preference');
-    if(!current_theme){
-      current_theme = 'dark_gold';
-    }
+window.RT = window.RT || {};
+window.RT.Element = window.RT.Element || [];
+
+window.RT.Element.push(function build_theme_selector() {
+  document.querySelectorAll('rt·theme-selector').forEach((el) => {
+    
+    const active_theme = window.RT.theme('read', 'meta', 'name');
+    const available_themes = Object.keys(window.RT.theme_library || {});
     
     const container = document.createElement('div');
     container.style.position = 'fixed';
@@ -18,23 +20,31 @@ window.RT.theme_selector = function(){
     container.style.color = 'white';
     container.style.fontFamily = 'sans-serif';
 
-    container.innerHTML = `
-      <b>Theme Selection</b><br>
-      <label>
-        <input type="radio" name="RT·theme" value="dark_gold" ${current_theme === 'dark_gold' ? 'checked' : ''}> Dark Gold
-      </label><br>
-      <label>
-        <input type="radio" name="RT·theme" value="light_gold" ${current_theme === 'light_gold' ? 'checked' : ''}> Light Gold
-      </label>
-    `;
+    let html_content = `<b>Theme Selection</b><br>`;
+    
+    if (available_themes.length === 0) {
+      html_content += `<small>No themes found in library.</small>`;
+    } else {
+      available_themes.forEach(theme_name => {
+        const is_checked = active_theme === theme_name ? 'checked' : '';
+        html_content += `
+          <label>
+            <input type="radio" name="RT·theme" value="${theme_name}" ${is_checked}> ${theme_name}
+          </label><br>
+        `;
+      });
+    }
 
-    container.addEventListener( 'change' ,(e) => {
+    container.innerHTML = html_content;
+
+    container.addEventListener('change', (e) => {
       if(e.target.name === 'RT·theme') {
-        localStorage.setItem('RT_theme_preference' ,e.target.value);
-        location.reload();
+        localStorage.setItem('RT-Style·theme_preference', e.target.value);
+        // Reloading applies the new preference via theme_preference() in the <head>
+        location.reload(); 
       }
     });
 
     el.replaceWith(container);
   });
-};
+});

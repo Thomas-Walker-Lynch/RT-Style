@@ -4,116 +4,6 @@ window.RT = window.RT || {};
 window.RT.Element = [];
 window.RT.Module = window.RT.Module || new Set();
 
-// 1. Establish the Generic Theme Dictionary
-//  e.g. RT.theme( 'read', 'content_main')
-window.RT.theme = (function() {
-  const dictionary = {
-    meta: { 
-      is_dark: false, 
-      name: "" 
-    },
-    surface: { 
-      0: "", 1: "", 2: "", 3: "", 
-      input: "", code: "", select: "" 
-    },
-    content: { 
-      main: "", muted: "", subtle: "", inverse: "" 
-    },
-    brand: { 
-      primary: "", secondary: "", tertiary: "", link: "" 
-    },
-    border: { 
-      faint: "", regular: "", strong: "" 
-    },
-    state: { 
-      success: "", warning: "", error: "", info: "" 
-    },
-    syntax: { 
-      keyword: "", string: "", func: "", comment: "" 
-    },
-    page: { 
-      width: "", min_height: "", padding: "", margin: "", 
-      bg_color: "", border_color: "", text_color: "", shadow: "" 
-    }
-  };
-
-  function resolve_path(path_array) {
-    let current = dictionary;
-    for (let i = 0; i < path_array.length - 1; i++) {
-      const step = path_array[i];
-      if (current[step] === undefined) return null;
-      current = current[step];
-    }
-    return { container: current, key: path_array[path_array.length - 1] };
-  }
-
-  function check_completion(obj, path_string) {
-    for (const key in obj) {
-      if (typeof obj[key] === 'object' && obj[key] !== null) {
-        if (!check_completion(obj[key], path_string + key + '.')) {
-          return false;
-        }
-      } else {
-        if (obj[key] === "") {
-          window.RT.debug.error('theme', 'is_defined check failed at missing key: ' + path_string + key);
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  return function(command, ...args) {
-
-    // e.g. RT.theme('read','page','width')
-    if (command === 'read') {
-      const target = resolve_path(args);
-      if (target && target.container.hasOwnProperty(target.key)) {
-        return target.container[target.key];
-      }
-      window.RT.debug.error('theme', 'Read attempt on unknown path: ' + args.join('.'));
-      return null;
-    } 
-    
-    if (command === 'write') {
-      if (args.length < 2) {
-        window.RT.debug.error('theme', 'Write command expects a path and a value.');
-        return;
-      }
-      const value = args.pop();
-      const target = resolve_path(args);
-      
-      if (target && target.container.hasOwnProperty(target.key)) {
-        target.container[target.key] = value;
-      } else {
-        window.RT.debug.error('theme', 'Write attempt on unknown path rejected: ' + args.join('.'));
-      }
-      return;
-    }
-
-    if (command === 'is_defined') {
-      if (args.length === 0) {
-        return check_completion(dictionary, '');
-      }
-      
-      for (let i = 0; i < args.length; i++) {
-        const path_array = args[i];
-        if (!Array.isArray(path_array)) {
-           window.RT.debug.error('theme', 'is_defined arguments must be path arrays. Received: ' + path_array);
-           return false;
-        }
-        const target = resolve_path(path_array);
-        if (!target || !target.container.hasOwnProperty(target.key) || target.container[target.key] === "") {
-           window.RT.debug.error('theme', 'is_defined check failed at: ' + path_array.join('.'));
-           return false;
-        }
-      }
-      return true;
-    }
-    
-    window.RT.debug.error('theme', 'Invalid command passed to theme dictionary: ' + command);
-  };
-})();
 
 
 // 2. Establish the Debug System
@@ -297,6 +187,14 @@ window.RT.utility = {
 
 };
 
+window.RT.theme_preference = function(author_pref, default_color = "#FF00FF") {
+  const reader_pref = localStorage.getItem('RT-Style·theme_preference');
+  const theme_to_load = reader_pref ? reader_pref : author_pref;
+  
+  window.RT.theme('load', theme_to_load, default_color);
+};
+
+
 window.RT.load = function(module_path) {
   if (window.RT.Module.has(module_path)) {
     return;
@@ -310,3 +208,7 @@ window.RT.load = function(module_path) {
 
   document.write('<script src="' + resolved_path + '"></script>');
 };
+
+window.RT.load('Core/stage_manager');
+window.RT.load('Core/theme_make');
+window.RT.load('Theme/manifest.js')
