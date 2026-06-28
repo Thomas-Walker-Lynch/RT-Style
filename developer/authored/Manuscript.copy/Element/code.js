@@ -6,12 +6,12 @@
 */
 function code() {
   const RT = window.RT;
-  const U = RT.utility;
-  const debug = RT.debug;
+  const U = RT.Utility;
+  const debug = RT.Debug;
 
   debug.log('code', 'Starting render cycle.');
 
-  const metrics = U.measure_ink_ratio('monospace');
+  const metrics = U.Font.measure_ink_ratio('monospace');
   
   document.querySelectorAll('rt·code').forEach((el) => {
     el.style.fontFamily = 'monospace';
@@ -19,9 +19,9 @@ function code() {
     const computed = window.getComputedStyle(el);
     const accent = computed.getPropertyValue('--RT·accent').trim() || 'gold';
     
-    const is_block = U.is_block_content(el);
+    const is_block = U.Dom.is_block_content(el);
     const parentColor = computed.color;
-    const is_text_light = U.is_color_light(parentColor);
+    const is_text_light = U.Color.is_light(parentColor);
     
     const alpha = is_block ? 0.08 : 0.15;
     const overlay = is_text_light ? `rgba(255,255,255,${alpha})` : `rgba(0,0,0,${alpha})`;

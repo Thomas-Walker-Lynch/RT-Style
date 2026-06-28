@@ -21,7 +21,7 @@ Next heading 2                3
 window.RT = window.RT || {};
 
 window.RT.TOC = function(){
-  const debug = window.RT.debug || { log: function(){} };
+  const debug = window.RT.Debug || { log: function(){} };
   const TOC_seq = document.querySelectorAll('rt·toc');
 
   TOC_seq.forEach( (container ,TOC_index) => {

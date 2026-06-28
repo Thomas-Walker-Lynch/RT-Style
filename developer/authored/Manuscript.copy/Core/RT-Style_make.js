@@ -7,7 +7,7 @@ window.RT.Module = window.RT.Module || new Set();
 
 
 // 2. Establish the Debug System
-window.RT.debug = {
+window.RT.Debug = {
   active_tokens: new Set([
     'scroll'
   ]),
@@ -33,9 +33,9 @@ window.RT.debug = {
 };
 
 // 3. Establish the Utilities
-window.RT.utility = {
+window.RT.Utility = {
 
-  string: {
+  String: {
     to_roman: function(num) {
       if (num < 1) return num.toString();
       const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
@@ -90,7 +90,7 @@ window.RT.utility = {
     }
   },
 
-  dom: {
+  Dom: {
     measure_outer_height: function(el) {
       const wasInDOM = el.parentNode !== null;
       if (!wasInDOM) document.body.appendChild(el);
@@ -106,9 +106,9 @@ window.RT.utility = {
     }
   },
 
-  font: {
+  Font: {
     measure_ink_ratio: function(target_font, ref_font = null) {
-      const debug = window.RT.debug;
+      const debug = window.RT.Debug;
       debug.log('layout', `Measuring ink ratio for ${target_font}`);
 
       const canvas = document.createElement('canvas');
@@ -140,7 +140,7 @@ window.RT.utility = {
     }
   },
 
-  color: {
+  Color: {
     extract_l: function(color_string) {
       const str = String(color_string).trim();
       

@@ -3,13 +3,10 @@ window.RT = window.RT || {};
 
 window.RT.crossref = function(){
   document.querySelectorAll('rt·crossref').forEach( (el) => {
-    el.style.color = 'var(--RT·brand-link)';
+    el.style.color = window.RT.theme('read', 'brand', 'link');
     el.style.textDecoration = 'underline';
     el.style.cursor = 'pointer';
     el.style.fontWeight = '500';
-    
-    // Note: To make this fully context-aware across soft limits,
-    // this module will eventually need to hook into the page 
-    // registry built by paginate_by_element.js.
   });
 };
+

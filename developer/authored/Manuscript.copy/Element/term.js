@@ -10,7 +10,7 @@ window.RT = window.RT || {};
 window.RT.term = function() {
   const RT = window.RT;
 
-  const debug = RT.debug || {
+  const debug = RT.Debug || {
     log: function() {}
     ,warn: function() {}
     ,error: function() {}
@@ -22,13 +22,14 @@ window.RT.term = function() {
     // Track seen terms so only the first occurrence is decorated
     const seen_terms_dpa = new Set();
 
+    // Inside the apply_style function
     const apply_style = (el, is_neologism_b) => {
       el.style.fontStyle = 'italic';
       el.style.fontWeight = is_neologism_b ? '600' : '500';
       el.style.color = is_neologism_b
-        ? 'var(--RT·brand-secondary)'
-        : 'var(--RT·brand-primary)';
-      el.style.paddingRight = '0.1em'; // Compensation for italic slant
+        ? window.RT.theme('read', 'brand', 'secondary')
+        : window.RT.theme('read', 'brand', 'primary');
+      el.style.paddingRight = '0.1em';
       el.style.display = 'inline';
     };
 

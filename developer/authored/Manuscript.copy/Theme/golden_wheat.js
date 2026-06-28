@@ -46,6 +46,16 @@ window.RT.theme_library['golden_wheat'] = {
     func: "oklch(0.45 0.12 35)",
     comment: "oklch(0.60 0.02 90)"
   },
+  page: {
+    width: "6.5in",
+    min_height: "9in",
+    padding: "0.5in 1in",
+    margin: "20px auto",
+    bg_color: "oklch(0.95 0.02 90)",
+    border_color: "oklch(0.85 0.02 90)",
+    text_color: "oklch(0.20 0.02 25)",
+    shadow: "0 4px 15px rgba(0,0,0,0.1)"
+  },
   custom_css: `
     rt-article p, rt-article li { text-shadow: 0px 0px 0.5px rgba(0,0,0, 0.2); }
     .MathJax, .MathJax_Display, .mjx-chtml {

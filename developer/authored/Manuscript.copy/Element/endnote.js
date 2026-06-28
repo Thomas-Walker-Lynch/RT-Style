@@ -37,7 +37,7 @@ window.RT.endnote = function(){
     
     cite.innerHTML = `<a href="#note-${refNum}" id="cite-${refNum}">[${refNum}]</a>`;
     cite.style.cursor = 'pointer';
-    cite.style.color = 'var(--RT·brand-link)';
+    cite.style.color = window.RT.theme('read', 'brand', 'link');
     cite.style.textDecoration = 'none';
 
     // Append the corresponding entry into the endnotes list
@@ -50,6 +50,6 @@ window.RT.endnote = function(){
   // Style the container
   endnoteContainer.style.display = 'block';
   endnoteContainer.style.marginTop = '1rem';
-  endnoteContainer.style.borderTop = '1px solid var(--RT·surface-3)';
+  endnoteContainer.style.borderTop = `1px solid ${window.RT.theme('read', 'surface', '3')}`;
   endnoteContainer.style.paddingTop = '1rem';
 };

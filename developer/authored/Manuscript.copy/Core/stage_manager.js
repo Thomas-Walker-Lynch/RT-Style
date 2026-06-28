@@ -5,7 +5,7 @@ window.RT.Element = window.RT.Element || [];
 window.RT.Module = window.RT.Module || new Set();
 
 (function(){
-  const debug = window.RT.debug || { log: function(){} };
+  const debug = window.RT.Debug || { log: function(){} };
   
   let target_y = 0;
   let is_reload = false;
@@ -92,7 +92,6 @@ window.RT.Module = window.RT.Module || new Set();
   function execute_pagination_and_scroll(){
     debug.log('scroll' ,`Pagination layout starting.`);
     if(window.RT.paginate_by_element) window.RT.paginate_by_element();
-    if(window.RT.page) window.RT.page();
     
     let final_target = target_y;
     let use_hash = false;
@@ -109,10 +108,6 @@ window.RT.Module = window.RT.Module || new Set();
   function process_elements_and_layout() {
     debug.log('lifecycle', 'Processing registered elements.');
 
-    if (window.RT.theme) {
-      window.RT.theme();
-    }
-    
     if (window.RT.Element && Array.isArray(window.RT.Element)) {
       while (window.RT.Element.length > 0) {
         const element_fn = window.RT.Element.shift();

@@ -46,5 +46,14 @@ window.RT.theme_library['wheat'] = {
     func: "oklch(0.50 0.10 320)",
     comment: "oklch(0.65 0.02 80)"
   },
-  custom_css: ``
+  page: {
+    width: "6.5in",
+    min_height: "9in",
+    padding: "0.5in 1in",
+    margin: "20px auto",
+    bg_color: "oklch(0.95 0.02 90)",
+    border_color: "oklch(0.85 0.02 90)",
+    text_color: "oklch(0.20 0.02 25)",
+    shadow: "0 4px 15px rgba(0,0,0,0.1)"
+  },
 };

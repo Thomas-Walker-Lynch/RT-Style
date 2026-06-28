@@ -4,6 +4,7 @@
 window.RT.theme_library = window.RT.theme_library || {};
 
 window.RT.theme = (function() {
+
   const dictionary = {
     meta: { is_dark: false, name: "" },
     surface: { 0: "", 1: "", 2: "", 3: "", input: "", code: "", select: "" },
@@ -12,7 +13,7 @@ window.RT.theme = (function() {
     border: { faint: "", regular: "", strong: "" },
     state: { success: "", warning: "", error: "", info: "" },
     syntax: { keyword: "", string: "", func: "", comment: "" },
-    page: { width: "", min_height: "", padding: "", margin: "", bg_color: "", border_color: "", text_color: "", shadow: "" }
+    page: { width: "", min_height: "", padding: "", margin: "", bg_color: "", border_color: "", text_color: "", shadow: "" },
   };
 
   function resolve_path(path_array) {
@@ -26,7 +27,7 @@ window.RT.theme = (function() {
   }
 
   function apply_and_validate_theme(new_theme, fallback_color) {
-    const debug = window.RT.debug || { error: function(){} };
+    const debug = window.RT.Debug || { error: function(){} };
 
     // Pass 1: Walk the structure of the active dictionary
     function walk_current(curr, source, path) {
@@ -88,7 +89,7 @@ window.RT.theme = (function() {
       const fallback = args[1] || "#FF00FF";
 
       if (!window.RT.theme_library.hasOwnProperty(theme_name)) {
-        window.RT.debug.error('theme', `Load aborted: Theme '${theme_name}' is not in the theme_library.`);
+        window.RT.Debug.error('theme', `Load aborted: Theme '${theme_name}' is not in the theme_library.`);
         return false;
       }
 
@@ -96,6 +97,6 @@ window.RT.theme = (function() {
       return true;
     }
 
-    window.RT.debug.error('theme', 'Invalid command passed to theme dictionary: ' + command);
+    window.RT.Debug.error('theme', 'Invalid command passed to theme dictionary: ' + command);
   };
 })();

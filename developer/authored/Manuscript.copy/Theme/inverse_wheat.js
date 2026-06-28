@@ -46,6 +46,16 @@ window.RT.theme_library['inverse_wheat'] = {
     func: "oklch(0.80 0.12 85)",
     comment: "oklch(0.55 0.02 90)"
   },
+  page: {
+    width: "6.5in",
+    min_height: "9in",
+    padding: "0.5in 1in",
+    margin: "20px auto",
+    bg_color: "oklch(0.95 0.02 90)",
+    border_color: "oklch(0.85 0.02 90)",
+    text_color: "oklch(0.20 0.02 25)",
+    shadow: "0 4px 15px rgba(0,0,0,0.1)"
+  },
   custom_css: `
     img.rt-diagram { filter: invert(1) hue-rotate(180deg); }
   `

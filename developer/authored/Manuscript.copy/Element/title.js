@@ -8,7 +8,7 @@
 window.RT = window.RT || {};
 
 window.RT.title = function() {
-  const debug = window.RT.debug || { log: function(){} };
+  const debug = window.RT.Debug || { log: function(){} };
   
   document.querySelectorAll('rt·title').forEach(el => {
     const title = el.getAttribute('title') || 'Untitled Document';

@@ -5,7 +5,7 @@
 window.RT = window.RT || {};
 
 window.RT.chapter = function(){
-  const debug = window.RT.debug || { log: function(){} };
+  const debug = window.RT.Debug || { log: function(){} };
 
   document.querySelectorAll('RT·chapter').forEach( (el ,index) => {
     if(debug.log) debug.log('chapter' ,`Processing chapter ${index + 1}`);

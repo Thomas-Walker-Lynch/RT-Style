@@ -144,7 +144,7 @@
       if (typeof RT[name] === 'function') {
         RT.Element.push(RT[name]);
       } else {
-        RT.debug.warn('layout', 'Required element function missing: RT.' + name);
+        RT.Debug.warn('layout', 'Required element function missing: RT.' + name);
       }
     });
   }
