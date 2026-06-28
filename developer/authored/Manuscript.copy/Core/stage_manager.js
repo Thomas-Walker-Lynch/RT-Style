@@ -1,11 +1,10 @@
-// Core/document_loaded.js
+// Core/stage_manager.js
 
-window.RT = window.RT || {};
-window.RT.Element = window.RT.Element || [];
-window.RT.Module = window.RT.Module || new Set();
+RT = RT || {};
+RT.Element = RT.Element || new Set();
 
 (function(){
-  const debug = window.RT.Debug || { log: function(){} };
+  const debug = RT.Debug || { log: function(){} };
   
   let target_y = 0;
   let is_reload = false;
@@ -91,7 +90,7 @@ window.RT.Module = window.RT.Module || new Set();
 
   function execute_pagination_and_scroll(){
     debug.log('scroll' ,`Pagination layout starting.`);
-    if(window.RT.paginate_by_element) window.RT.paginate_by_element();
+    if(RT.paginate_by_element) RT.paginate_by_element();
     
     let final_target = target_y;
     let use_hash = false;
@@ -108,11 +107,17 @@ window.RT.Module = window.RT.Module || new Set();
   function process_elements_and_layout() {
     debug.log('lifecycle', 'Processing registered elements.');
 
-    if (window.RT.Element && Array.isArray(window.RT.Element)) {
-      while (window.RT.Element.length > 0) {
-        const element_fn = window.RT.Element.shift();
+    if (RT.Element instanceof Set && RT.Element.size > 0) {
+      for (const element_fn of RT.Element) {
         if (typeof element_fn === 'function') {
           element_fn();
+        } else {
+          // Fallback warning if your debug utility is not available
+          if (RT.Debug?.warn) {
+            RT.Debug.warn('layout', 'Invalid element in RT.Element Set: ' + element_fn);
+          } else {
+            console.warn('Invalid element in RT.Element Set:', element_fn);
+          }
         }
       }
     }
@@ -124,6 +129,7 @@ window.RT.Module = window.RT.Module || new Set();
     }
   }
 
+
   // Initial Execution
   lock_layout();
   configure_history();
@@ -132,7 +138,7 @@ window.RT.Module = window.RT.Module || new Set();
   
   document.addEventListener('DOMContentLoaded', process_elements_and_layout);
 
-  // Structural Safety Net: restore visibility on load if layout engine hangs
+  // Safety Net: restore visibility on load if layout engine hangs
   window.addEventListener("load", unlock_layout);
   
 })();

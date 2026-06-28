@@ -16,9 +16,6 @@
     'crossref'
   ];
 
-  // Trigger file loading immediately
-  required_elements.forEach(name => RT.load('Element/' + name));
-  
   // 2. The Extracted Styling Function
   function apply_article_styles() {
     const t = function(...path) { return window.RT.theme('read', ...path); };
@@ -133,24 +130,17 @@
     element_styles.forEach(rule => apply(rule[0], rule[1]));
   }
 
-  // 3. The Core Layout Entry Function
-  function article_tech_ref(){
-    
-    // Execute the extracted style generator first
-    apply_article_styles();
+  //----------------------------------------
+  // stuff done when article_tech_ref is loaded
+  //
+  
+  // load the element files
+  required_elements.forEach(name => RT.load('Element/' + name));
 
-    // Dynamically enqueue the semantic processors
-    required_elements.forEach(name => {
-      if (typeof RT[name] === 'function') {
-        RT.Element.push(RT[name]);
-      } else {
-        RT.Debug.warn('layout', 'Required element function missing: RT.' + name);
-      }
-    });
+  if (RT.Element) {
+    RT.Element.add(apply_article_styles);
+  } else {
+    console.error("RT.Element not defined, was the state_manager run?");
   }
-
-  // 4. Register the layout function immediately upon parsing
-  RT.Element = RT.Element || [];
-  RT.Element.push(article_tech_ref);
 
 })();

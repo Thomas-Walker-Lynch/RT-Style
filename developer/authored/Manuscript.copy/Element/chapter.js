@@ -2,31 +2,43 @@
   Processes <RT·chapter> tags.
   Transforms the tag into an <RT·page-break> followed by an <h1> with the RT·chapter class.
 */
-window.RT = window.RT || {};
 
-window.RT.chapter = function(){
-  const debug = window.RT.Debug || { log: function(){} };
+(function() {
 
-  document.querySelectorAll('RT·chapter').forEach( (el ,index) => {
-    if(debug.log) debug.log('chapter' ,`Processing chapter ${index + 1}`);
+  if (!RT) {
+    console.error("RT not defined – was RT-Style_make run?");
+    return;
+  }
+  if (!RT.Element) {
+    console.error("RT.Element not defined – was the state_manager run?");
+    return;
+  }
 
-    const brk = document.createElement('RT·page-break');
-    const h1 = document.createElement('h1');
+  RT.Element.add( function() {
+    const debug = RT.Debug || { log: function(){} };
 
-    h1.innerHTML = el.innerHTML;
+    document.querySelectorAll('RT·chapter').forEach((el, index) => {
+      if (debug.log) debug.log('chapter', `Processing chapter ${index + 1}`);
 
-    if(el.className){
-      h1.className = el.className;
-    }
-    h1.classList.add('RT·chapter');
+      const brk = document.createElement('RT·page-break');
+      const h1 = document.createElement('h1');
 
-    Array.from(el.attributes).forEach( (attr) => {
-      if(attr.name !== 'class'){
-        h1.setAttribute(attr.name ,attr.value);
+      h1.innerHTML = el.innerHTML;
+
+      if (el.className) {
+        h1.className = el.className;
       }
-    });
+      h1.classList.add('RT·chapter');
 
-    el.parentNode.insertBefore(brk ,el);
-    el.replaceWith(h1);
-  });
-};
+      Array.from(el.attributes).forEach((attr) => {
+        if (attr.name !== 'class') {
+          h1.setAttribute(attr.name, attr.value);
+        }
+      });
+
+      el.parentNode.insertBefore(brk, el);
+      el.replaceWith(h1);
+    });
+  })
+
+})();

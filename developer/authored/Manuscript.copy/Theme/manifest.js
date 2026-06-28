@@ -4,9 +4,10 @@ window.RT = window.RT || {};
 
 (function() {
   const themes = [
-    'inverse_wheat',
-    'golden_wheat',
-    'wheat'
+    'inverse_wheat'
+    ,'inverse_wheat_DS'
+    ,'golden_wheat'
+    ,'wheat'
   ];
 
   themes.forEach(theme_name => {

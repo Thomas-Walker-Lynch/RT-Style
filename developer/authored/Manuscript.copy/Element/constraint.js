@@ -1,13 +1,25 @@
 // developer/authored/RT/element/constraint.js
-window.RT = window.RT || {};
+(function() {
 
-window.RT.constraint = function(){
-  document.querySelectorAll('rt·constraint').forEach( (el) => {
-    el.style.display = 'block';
-    el.style.borderLeft = `4px solid ${window.RT.theme('read', 'state', 'warning')}`;
-    el.style.backgroundColor = window.RT.theme('read', 'surface', '1');
-    el.style.padding = '1rem';
-    el.style.margin = '1.5rem 0';
-    el.style.color = window.RT.theme('read', 'content', 'main');
+  if (!RT) {
+    console.error("RT not defined – was RT-Style_make run?");
+    return;
+  }
+  if (!RT.Element) {
+    console.error("RT.Element not defined – was the state_manager run?");
+    return;
+  }
+
+  RT.Element.add( function(){
+    document.querySelectorAll('RT·constraint').forEach( (el) => {
+      el.style.display = 'block';
+      el.style.borderLeft = `4px solid ${RT.theme('read', 'state', 'warning')}`;
+      el.style.backgroundColor = RT.theme('read', 'surface', '1');
+      el.style.padding = '1rem';
+      el.style.margin = '1.5rem 0';
+      el.style.color = RT.theme('read', 'content', 'main');
+    });
   });
-};
+
+})();
+

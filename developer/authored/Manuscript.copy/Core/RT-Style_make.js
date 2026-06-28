@@ -1,10 +1,7 @@
 // Core/loader.js
 
 window.RT = window.RT || {};
-window.RT.Element = [];
 window.RT.Module = window.RT.Module || new Set();
-
-
 
 // 2. Establish the Debug System
 window.RT.Debug = {
