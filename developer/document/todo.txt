@@ -1,0 +1,6 @@
+
+2026-06-28 17:14:07 Z
+
+The theme meta name field, must match the key the manifest uses to write the theme into the library. There is a third name, the file name. We should simplify this. If the names don't match then the theme selector, which accesses the 'read meta name' will fail to color in the selected theme.
+
+The RT = RT || {},  etc, should be replaced with checks and error messes, already done in some places. Things being missing is a problem.

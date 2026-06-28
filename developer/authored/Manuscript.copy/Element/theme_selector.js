@@ -20,8 +20,9 @@
 
     document.querySelectorAll('rt·theme-selector').forEach((el) => {
       
-      const active_theme = window.RT.theme('read', 'meta', 'name');
-      const available_themes = Object.keys(window.RT.theme_library || {});
+      // This holds the display name, e.g., "Inverse Wheat"
+      const active_theme_name = window.RT.theme('read', 'meta', 'name'); 
+      const available_theme_keys = Object.keys(window.RT.theme_library || {});
       
       const container = document.createElement('div');
       container.style.position = 'fixed';
@@ -36,14 +37,21 @@
 
       let html_content = `<b>Theme Selection</b><br>`;
       
-      if (available_themes.length === 0) {
+      if (available_theme_keys.length === 0) {
         html_content += `<small>No themes found in library.</small>`;
       } else {
-        available_themes.forEach(theme_name => {
-          const is_checked = active_theme === theme_name ? 'checked' : '';
+        available_theme_keys.forEach(theme_key => {
+          // Extract the display name from the library, fallback to key if missing
+          const theme_def = window.RT.theme_library[theme_key];
+          const display_name = (theme_def.meta && theme_def.meta.name) ? theme_def.meta.name : theme_key;
+          
+          // Compare display name to display name
+          const is_checked = active_theme_name === display_name ? 'checked' : '';
+          
+          // Store the registry key in the value, but show the display name to the user
           html_content += `
             <label>
-              <input type="radio" name="RT·theme" value="${theme_name}" ${is_checked}> ${theme_name}
+              <input type="radio" name="RT·theme" value="${theme_key}" ${is_checked}> ${display_name}
             </label><br>
           `;
         });
@@ -53,8 +61,8 @@
 
       container.addEventListener('change', (e) => {
         if(e.target.name === 'RT·theme') {
+          // Saves 'inverse_wheat' to local storage
           localStorage.setItem('RT-Style·theme_preference', e.target.value);
-          // Reloading applies the new preference via theme_preference() in the <head>
           location.reload(); 
         }
       });

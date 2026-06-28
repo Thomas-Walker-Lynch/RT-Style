@@ -6,7 +6,7 @@ window.RT.theme_library = window.RT.theme_library || {};
 window.RT.theme_library['wheat'] = {
   meta: {
     is_dark: false,
-    name: "Classic Wheat"
+    name: "wheat"
   },
   surface: {
     0: "oklch(0.95 0.02 80)",

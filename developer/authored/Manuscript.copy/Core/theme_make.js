@@ -1,9 +1,8 @@
-// 1. Establish the Generic Theme Dictionary
-//  e.g. RT.theme( 'read', 'content_main')
-// Establish the global theme library
-window.RT.theme_library = window.RT.theme_library || {};
+// see Theme/manifest, all themes are registered in the library by name
+RT.theme_library = RT.theme_library || {};
 
-window.RT.theme = (function() {
+// 'read' or 'write' the active theme fields, or 'load' a new theme
+RT.theme = (function() {
 
   const dictionary = {
     meta: { is_dark: false, name: "" },
@@ -28,7 +27,7 @@ window.RT.theme = (function() {
   }
 
   function apply_and_validate_theme(new_theme, fallback_color) {
-    const debug = window.RT.Debug || { error: function(){} };
+    const debug = RT.Debug || { error: function(){} };
 
     // Pass 1: Walk the structure of the active dictionary
     function walk_current(curr, source, path) {
@@ -89,12 +88,12 @@ window.RT.theme = (function() {
       const theme_name = args[0];
       const fallback = args[1] || "#FF00FF";
 
-      if (!window.RT.theme_library.hasOwnProperty(theme_name)) {
-        window.RT.Debug.error('theme', `Load aborted: Theme '${theme_name}' is not in the theme_library.`);
+      if (!RT.theme_library.hasOwnProperty(theme_name)) {
+        RT.Debug.error('theme', `Load aborted: Theme '${theme_name}' is not in the theme_library.`);
         return false;
       }
 
-      apply_and_validate_theme(window.RT.theme_library[theme_name], fallback);
+      apply_and_validate_theme(RT.theme_library[theme_name], fallback);
       
       // --- CSS Fallback for Pseudo-Elements and External Libraries ---
       let style_el = document.getElementById('rt-theme-custom-css');
@@ -109,6 +108,14 @@ window.RT.theme = (function() {
       return true;
     }
 
-    window.RT.Debug.error('theme', 'Invalid command passed to theme dictionary: ' + command);
+    RT.Debug.error('theme', 'Invalid command passed to theme dictionary: ' + command);
   };
 })();
+
+RT.theme_preference = function(author_pref, default_color = "#FF00FF") {
+  const reader_pref = localStorage.getItem('RT-Style·theme_preference');
+  const theme_to_load = reader_pref ? reader_pref : author_pref;
+  
+  RT.theme('load', theme_to_load, default_color);
+};
+

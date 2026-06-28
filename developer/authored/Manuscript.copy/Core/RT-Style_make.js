@@ -184,13 +184,6 @@ window.RT.Utility = {
 
 };
 
-window.RT.theme_preference = function(author_pref, default_color = "#FF00FF") {
-  const reader_pref = localStorage.getItem('RT-Style·theme_preference');
-  const theme_to_load = reader_pref ? reader_pref : author_pref;
-  
-  window.RT.theme('load', theme_to_load, default_color);
-};
-
 
 window.RT.load = function(module_path) {
   if (window.RT.Module.has(module_path)) {

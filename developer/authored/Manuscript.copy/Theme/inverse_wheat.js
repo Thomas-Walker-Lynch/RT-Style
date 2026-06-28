@@ -6,7 +6,7 @@ window.RT.theme_library = window.RT.theme_library || {};
 window.RT.theme_library['inverse_wheat'] = {
   meta: {
     is_dark: true,
-    name: "Inverse Wheat"
+    name: "inverse_wheat"
   },
   surface: {
     0: "oklch(0.15 0 0)",
