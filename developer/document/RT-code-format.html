@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+  <!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>RT code format conventions</title>
-    <script src="RT-Style_locator.js"></script>
+    <script src="RT-Manuscript_locator.js"></script>
     <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
       window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
     </script>
   </head>
   <body>
-    <RT-article>
-      <RT-title 
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title 
         author="Thomas Walker Lynch" 
         date="2026-03-11" 
         title="RT code format conventions">
-      </RT-title>
+      </RT·title>
 
-      <RT-TOC level="1"></RT-TOC>
+      <RT·TOC level="1"></RT·TOC>
 
       <p>
         This document has been evolving. Consequently there is a body of non-conforming code.  Whenever we run up against it, it is nice to update it.
@@ -24,27 +30,27 @@
 
       <h1>Object vs. instance nomenclature</h1>
       <p>
-        It is too much of an ask to remove the word 'object' from the English language, and then set it aside and give it a esoteric technical meaning. This is why the term is often misused. So we instead talk about an <RT-term>interface</RT-term> as being a set of functions that share one or more state variables. The term <RT-term>instance</RT-term> is then a collection of such state variables and their values sitting in memory. Interface functions are usually grouped within a named container, and state variables are often grouped into a single named data structure.
+        It is too much of an ask to remove the word 'object' from the English language, and then set it aside and give it a esoteric technical meaning. This is why the term is often misused. So we instead talk about an <RT·term>interface</RT·term> as being a set of functions that share one or more state variables. The term <RT·term>instance</RT·term> is then a collection of such state variables and their values sitting in memory. Interface functions are usually grouped within a named container, and state variables are often grouped into a single named data structure.
       </p>
       <p>
-        In some languages the instance occurs to the left of a lower dot (period) operator and is referred to as <RT-code>this</RT-code> from inside the interface functions.  In other languages there is a convention where the instance is passed in as the first parameter to interface functions.  There can also be interface functions that accept multiple instances of the same type. Bridge interfaces can be created that accept two instances potentially of different types.
+        In some languages the instance occurs to the left of a lower dot (period) operator and is referred to as <RT·code>this</RT·code> from inside the interface functions.  In other languages there is a convention where the instance is passed in as the first parameter to interface functions.  There can also be interface functions that accept multiple instances of the same type. Bridge interfaces can be created that accept two instances potentially of different types.
       </p>
       <p>
-        Since we have released <RT-term>object</RT-term> from captivity,  a programmer can talk about math objects, as things found in mathematics, and C objects, as things found in the C language, even though they are not instantiated from classes, or might not even be data. For example, the <RT-term>for loop</RT-term> is a C object.
+        Since we have released <RT·term>object</RT·term> from captivity,  a programmer can talk about math objects, as things found in mathematics, and C objects, as things found in the C language, even though they are not instantiated from classes, or might not even be data. For example, the <RT·term>for loop</RT·term> is a C object.
       </p>
 
       <h1>Identifier names</h1>
 
       <h2>Case</h2>
       <ul>
-        <li>Types, modules: <RT-code>PascalCase</RT-code></li>
-        <li>Functions, variables: <RT-code>snake-kebab_case</RT-code>. If a language does not allow the <RT-code>-</RT-code> character in identifiers, then <RT-code>snake-kebab_case</RT-code> reduces to RT-code>snake_case</RT-code>.</li>
-        <li>Globals: <RT-code>UPPER_SNAKE-KEBAB_CASE</RT-code>, that, reduces to <RT-code>UPPER_SNAKE_CASE</RT-code> when the language does not allow the <RT-code>-</RT-code> character in identifiers.</li>
+        <li>Types, modules: <RT·code>PascalCase</RT·code></li>
+        <li>Functions, variables: <RT·code>snake-kebab_case</RT·code>. If a language does not allow the <RT·code>-</RT·code> character in identifiers, then <RT·code>snake-kebab_case</RT·code> reduces to RT·code>snake_case</RT·code>.</li>
+        <li>Globals: <RT·code>UPPER_SNAKE-KEBAB_CASE</RT·code>, that, reduces to <RT·code>UPPER_SNAKE_CASE</RT·code> when the language does not allow the <RT·code>-</RT·code> character in identifiers.</li>
       </ul>
 
       <h2>Proper nouns and acronyms</h2>
       <p>
-        Even in <RT-code>PascalCase</RT-code> and <RT-code>snake-kebab_case</RT-code>, proper nouns and acronyms remain capitalized, as per standard English language conventions (e.g., <RT-code>IEEE_publication-count</RT-code>).
+        Even in <RT·code>PascalCase</RT·code> and <RT·code>snake-kebab_case</RT·code>, proper nouns and acronyms remain capitalized, as per standard English language conventions (e.g., <RT·code>IEEE_publication-count</RT·code>).
       </p>
 
       <h2>Abbreviations</h2>
@@ -57,15 +63,15 @@
 
       <h2>Primary and secondary separator use</h2>
       <p>
-        When a language supports the dash, <RT-code>-</RT-code>, dash connected components are given precedence and of choice, and bind semantically higher than under score separated components. E.g. <RT-code>rounded_x-coordinate</RT-code>. 
+        When a language supports the dash, <RT·code>-</RT·code>, dash connected components are given precedence and of choice, and bind semantically higher than under score separated components. E.g. <RT·code>rounded_x-coordinate</RT·code>. 
       </p>
       <p>
-        Otherwise, if the language does not support hyphens in identifiers (such as C, Python, and Java), we conventionally drop the nicety of multiple semantic bindings, e.g. <RT-code>rounded_x_coordinate</RT-code>. However if the distinction has high value, a double underscore and be used, <RT-code>rounded__x_coordinate</RT-code>. 
+        Otherwise, if the language does not support hyphens in identifiers (such as C, Python, and Java), we conventionally drop the nicety of multiple semantic bindings, e.g. <RT·code>rounded_x_coordinate</RT·code>. However if the distinction has high value, a double underscore and be used, <RT·code>rounded__x_coordinate</RT·code>. 
       </p>
 
       <h2>Ad hoc namespacing</h2>
       <p>
-      Most parsers now a allow a center dot (<RT-code>·</RT-code>) in identifiers. In languages were namespaces are not explicitly available, we use the cdot to represent a namespace. Namespaces are closely related to module names, class names, interface names, and to type names,so all are written in PascalCase.  So for example, <RT-code>Math·rounded__x_coordinate</RT-code>, might be variable in the <RT-code>Math</RT-code> namespace, a function on the <RT-code>Math</RT-code> interface, etc.
+      Most parsers now a allow a center dot (<RT·code>·</RT·code>) in identifiers. In languages were namespaces are not explicitly available, we use the cdot to represent a namespace. Namespaces are closely related to module names, class names, interface names, and to type names,so all are written in PascalCase.  So for example, <RT·code>Math·rounded__x_coordinate</RT·code>, might be variable in the <RT·code>Math</RT·code> namespace, a function on the <RT·code>Math</RT·code> interface, etc.
 
       <h2>Component order</h2>
       <p>
@@ -77,7 +83,7 @@
         'read' and 'write', are the two ends of a copy.  When 'this instance' is understood as being one end of the copy, then using 'read' or 'write' makes sense. However, it is generally  better to provide an external copy command. The order of arguments in a copy command are  `read from source value -->  write to destination value` i.e. data flows from left to write.  (This is contrary to an assignment operator, which has data flowing from right to left during a copy.)
       </p>
 
-      <h2>The term <RT-term>make</RT-term></h2>
+      <h2>The term <RT·term>make</RT·term></h2>
       <p>
         When allowed by the langauge, factory functions are called 'make'.  They are not called 'create', nor 'new'. 
       </p>
@@ -93,10 +99,10 @@
         Arguments drive the function computation. Conceptually they might change on every separate call, so they are highly dynamic. Argument variables are specified when the function is defined. Argument values are given to the function at call time.
       </p>
       <p>
-        Values are said to be <RT-term>given</RT-term> to a function. We don't say a function  <RT-term>takes</RT-term> arguments, as though a call stack could reach into memory and grab values.  We use terms <RT-term>accept</RT-term> and <RT-term>reject</RT-term> of values for guard code. For a function to <RT-term>accept</RT-term> an argument value is to mean that argument value was tested and passed.  As an example, we can say that a square root function only accepts values greater than or equal to zero, or that it <RT-term>rejects</RT-term> negative values.
+        Values are said to be <RT·term>given</RT·term> to a function. We don't say a function  <RT·term>takes</RT·term> arguments, as though a call stack could reach into memory and grab values.  We use terms <RT·term>accept</RT·term> and <RT·term>reject</RT·term> of values for guard code. For a function to <RT·term>accept</RT·term> an argument value is to mean that argument value was tested and passed.  As an example, we can say that a square root function only accepts values greater than or equal to zero, or that it <RT·term>rejects</RT·term> negative values.
       </p>
       <p>
-        <RT-term>Operators</RT-term> are logically functions by another name. Syntactically infix notation is often used. <RT-term>Operands</RT-term> are arguments given to an operator.
+        <RT·term>Operators</RT·term> are logically functions by another name. Syntactically infix notation is often used. <RT·term>Operands</RT·term> are arguments given to an operator.
       </p>
 
       <h2>Plural identifiers</h2>
@@ -106,76 +112,76 @@
       </p>
 
       <ul>
-        <li><RT-code>list_*</RT-code> / <RT-code>seq_*</RT-code> : generic ordered items / indexed items</li>
-        <li><RT-code>Map_*</RT-code> / <RT-code>dict_*</RT-code> : keyed containers</li>
+        <li><RT·code>list_*</RT·code> / <RT·code>seq_*</RT·code> : generic ordered items / indexed items</li>
+        <li><RT·code>Map_*</RT·code> / <RT·code>dict_*</RT·code> : keyed containers</li>
       </ul>
 
       <p>Add a type prefix when it adds clarity.</p>
       <ul>
-        <li><RT-code>count-of_*</RT-code> : number of elements</li>
-        <li><RT-code>Bool_*</RT-code> : <RT-code>Bool</RT-code> type</li>
-        <li><RT-code>flag_*</RT-code> : value used as a Boolean flag</li>
+        <li><RT·code>count-of_*</RT·code> : number of elements</li>
+        <li><RT·code>Bool_*</RT·code> : <RT·code>Bool</RT·code> type</li>
+        <li><RT·code>flag_*</RT·code> : value used as a Boolean flag</li>
       </ul>
 
       <h2>Identifiers for directory/file names</h2>
       <ul>
-        <li><RT-code>dir_*</RT-code> : directory name</li>
-        <li><RT-code>dirn_*</RT-code> : directory name</li>
-        <li><RT-code>dirp_*</RT-code> : directory path</li>
-        <li><RT-code>dirpr_*</RT-code> / <RT-code>dirpa_*</RT-code> : relative / absolute directory path</li>
-        <li><RT-code>file_*</RT-code> : file name</li>
-        <li><RT-code>filen_*</RT-code> : file name</li>
-        <li><RT-code>filep_*</RT-code> : file path</li>
-        <li><RT-code>filepr_*</RT-code> / <RT-code>fpr_*</RT-code> : relative path</li>
-        <li><RT-code>filepa_*</RT-code> / <RT-code>fpa_*</RT-code> : absolute path</li>
-        <li><RT-code>fsnodn_*</RT-code> : file system node name
-        <li><RT-code>fsnodp_*</RT-code> : file system node path 
-        <li><RT-code>fsnodpr_*</RT-code> / <RT-code>fsnpr_*</RT-code> : relative</li>
-        <li><RT-code>fsnodpa_*</RT-code> / <RT-code>fsnpa_*</RT-code>: absolute</li>
+        <li><RT·code>dir_*</RT·code> : directory name</li>
+        <li><RT·code>dirn_*</RT·code> : directory name</li>
+        <li><RT·code>dirp_*</RT·code> : directory path</li>
+        <li><RT·code>dirpr_*</RT·code> / <RT·code>dirpa_*</RT·code> : relative / absolute directory path</li>
+        <li><RT·code>file_*</RT·code> : file name</li>
+        <li><RT·code>filen_*</RT·code> : file name</li>
+        <li><RT·code>filep_*</RT·code> : file path</li>
+        <li><RT·code>filepr_*</RT·code> / <RT·code>fpr_*</RT·code> : relative path</li>
+        <li><RT·code>filepa_*</RT·code> / <RT·code>fpa_*</RT·code> : absolute path</li>
+        <li><RT·code>fsnodn_*</RT·code> : file system node name
+        <li><RT·code>fsnodp_*</RT·code> : file system node path 
+        <li><RT·code>fsnodpr_*</RT·code> / <RT·code>fsnpr_*</RT·code> : relative</li>
+        <li><RT·code>fsnodpa_*</RT·code> / <RT·code>fsnpa_*</RT·code>: absolute</li>
       </ul>
 
       <h1>Comma separated lists</h1>
 
       <h2>Horizontal comma list</h2>
       <p>The comma is preceded by a space and abuts the item it follows.</p>
-      <RT-code>
+      <RT·code>
         int x ,y ,z;
-      </RT-code>
+      </RT·code>
 
       <h2>Vertical comma list</h2>
       <p>The comma is placed <em>before</em> the item on the new line, aligned with the item's indentation. This applies to all languages, including Python and C.</p>
-      <RT-code>
+      <RT·code>
         result = some_function(
           first_argument
           ,second_argument
           ,third_argument
         );
-      </RT-code>
+      </RT·code>
 
       <h1>Enclosure spacing</h1>
 
       <h2>Single-level enclosures</h2>
       <p>No space padding inside the enclosure punctuation.</p>
-      <RT-code>
+      <RT·code>
         if(condition){
           do_something();
         }
-      </RT-code>
+      </RT·code>
 
       <h2>Multi-level enclosures</h2>
       <p>One space of padding is applied <em>only</em> to the outermost enclosure punctuation.</p> 
 
-      <RT-code>
+      <RT·code>
         if( f(g(x)) ){
           do_something();
         }
-      </RT-code>
+      </RT·code>
 
       <p>This rule is not applied to function calls in Lisp. For example, the outer parentheses forming a function call receive no padding, even when they contain nested data lists:</p>
       
-      <RT-code>
+      <RT·code>
         (cat 'a 'b '( 2 (4 5)))
-      </RT-code>
+      </RT·code>
 
       <h1>Indentation</h1>
       <ul>
@@ -190,58 +196,58 @@
         To avoid the "String Trap" (where logic is tightly coupled to the terminal and requires string serialization to reuse) executable modules must separate the Command Line Interface from the core logic.
       </p>
       <ul>
-        <li><strong>Work Functions:</strong> Implement core logic. They accept and return native instances (ints, lists, paths), never look at <RT-code>sys.argv</RT-code> (or equivalent), and do not depend on being run from a command line.</li>
-        <li><strong>CLI Function:</strong> The bridge between the OS and the Work Function. It is always named <RT-code>CLI()</RT-code>. It parses string arguments into native types, calls the Work Function, formats the output for the user, and translates exceptions into exit codes.</li>
+        <li><strong>Work Functions:</strong> Implement core logic. They accept and return native instances (ints, lists, paths), never look at <RT·code>sys.argv</RT·code> (or equivalent), and do not depend on being run from a command line.</li>
+        <li><strong>CLI Function:</strong> The bridge between the OS and the Work Function. It is always named <RT·code>CLI()</RT·code>. It parses string arguments into native types, calls the Work Function, formats the output for the user, and translates exceptions into exit codes.</li>
       </ul>
 
       <h2>Python application</h2>
-      <p>Put argument parsing and <RT-code>if __name__ == "__main__":</RT-code> in the CLI section. Keep side effects out of import time.</p>
+      <p>Put argument parsing and <RT·code>if __name__ == "__main__":</RT·code> in the CLI section. Keep side effects out of import time.</p>
 
       <h2>Bash application</h2>
-      <p>Bash scripts should start with <RT-code>#!/usr/bin/env bash</RT-code> and <RT-code>set -euo pipefail</RT-code>. RT-style Bash separates a small top-level CLI harness from a set of functions that implement the work. Parse arguments into variables, call a main function with explicit parameters, and avoid relying on global mutable state where possible.</p>
+      <p>Bash scripts should start with <RT·code>#!/usr/bin/env bash</RT·code> and <RT·code>set -euo pipefail</RT·code>. RT·style Bash separates a small top-level CLI harness from a set of functions that implement the work. Parse arguments into variables, call a main function with explicit parameters, and avoid relying on global mutable state where possible.</p>
 
       <h1>C addendum: error handling and ownership</h1>
       <ul>
         <li>Functions should document ownership of pointers and lifetimes.</li>
-        <li>Prefer explicit <RT-code>*_count</RT-code> parameters over sentinel values when passing arrays.</li>
+        <li>Prefer explicit <RT·code>*_count</RT·code> parameters over sentinel values when passing arrays.</li>
       </ul>
 
       <h1>Automated formatting tools</h1>
       <p>
-        To ensure consistency without manual drudgery, the Harmony skeleton provides a dedicated code formatter called <RT-code>RTfmt</RT-code>. A person can find this tool in the <RT-code>shared/tool/</RT-code> directory.
+        To ensure consistency without manual drudgery, the Harmony skeleton provides a dedicated code formatter called <RT·code>RTfmt</RT·code>. A person can find this tool in the <RT·code>shared/tool/</RT·code> directory.
       </p>
 
       <h2>The RTfmt CLI</h2>
       <p>
-        <RT-code>RTfmt</RT-code> is a shallow-tokenizing formatter written in Python. It parses source code into structural blocks (strings, comments, commas, and enclosures) without needing a full Abstract Syntax Tree. This architecture allows it to safely enforce RT formatting rules across multiple languages while preserving indentation and protecting native operators.
+        <RT·code>RTfmt</RT·code> is a shallow-tokenizing formatter written in Python. It parses source code into structural blocks (strings, comments, commas, and enclosures) without needing a full Abstract Syntax Tree. This architecture allows it to safely enforce RT formatting rules across multiple languages while preserving indentation and protecting native operators.
       </p>
       <ul>
-        <li><RT-code>RTfmt write &lt;file...&gt;</RT-code> : Formats files in place. It performs a content comparison before writing, leaving the file modification timestamp untouched if the file is already compliant.</li>
-        <li><RT-code>RT-formatter pipe</RT-code> : Reads from standard input and writes to standard output, making it ideal for editor integration.</li>
-        <li><RT-code>--lisp</RT-code> : A flag that instructs the formatter to skip the outermost enclosure padding rule, honoring the Lisp function call exception.</li>
+        <li><RT·code>RTfmt write &lt;file...&gt;</RT·code> : Formats files in place. It performs a content comparison before writing, leaving the file modification timestamp untouched if the file is already compliant.</li>
+        <li><RT·code>RT·formatter pipe</RT·code> : Reads from standard input and writes to standard output, making it ideal for editor integration.</li>
+        <li><RT·code>--lisp</RT·code> : A flag that instructs the formatter to skip the outermost enclosure padding rule, honoring the Lisp function call exception.</li>
       </ul>
 
       <h2>Emacs integration</h2>
       <p>
-        For Emacs users, the <RT-code>RT-formatter.el</RT-code> file provides the <RT-code>RT-formatter-buffer</RT-code> interactive command.
+        For Emacs users, the <RT·code>RT·formatter.el</RT·code> file provides the <RT·code>RT·formatter-buffer</RT·code> interactive command.
       </p>
       <p>
-        This wrapper passes the current buffer through the <RT-code>RT-formatter pipe</RT-code> command. It automatically detects Lisp-derived modes to append the <RT-code>--lisp</RT-code> flag. Furthermore, it utilizes a non-destructive buffer replacement strategy. This ensures that a programmer's cursor position, selection marks, and window scroll state remain anchored exactly where they were before the formatting occurred.
+        This wrapper passes the current buffer through the <RT·code>RT·formatter pipe</RT·code> command. It automatically detects Lisp-derived modes to append the <RT·code>--lisp</RT·code> flag. Furthermore, it utilizes a non-destructive buffer replacement strategy. This ensures that a programmer's cursor position, selection marks, and window scroll state remain anchored exactly where they were before the formatting occurred.
       </p>
 
       <h1>Exercises</h1>
       <h2>Exercise 1: Comma and function call formatting</h2>
       <p>Reformat the following C code snippet to strictly adhere to the RT code format rules.</p>
-      <RT-code>
+      <RT·code>
         void my_function(int a, int b, int c) {
           int result = calculate_value(a, b, c);
           printf("Result: %d, a: %d, b: %d, c: %d\n", result, a, b, c);
         }
-      </RT-code>
+      </RT·code>
 
       <h2>Exercise 2: Multi-level enclosure and short stuff rule</h2>
       <p>Reformat the following C code snippet to use the multi-level enclosure rule and the short stuff rule.</p>
-      <RT-code>
+      <RT·code>
         if (check_permissions(user_id, file_path) && is_valid(file_path)) {
           for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
@@ -249,32 +255,32 @@
             }
           }
         }
-      </RT-code>
+      </RT·code>
 
       <h2>Exercise 3: Identifier Naming Conventions</h2>
       <p>
-        Rename the following poorly named variables to strictly adhere to the RT code format rules. Assume these are variables in a C or Python program (using standard <RT-code>snake_case</RT-code>). Pay close attention to proper nouns, acronyms, and the expanded suffix semantics.
+        Rename the following poorly named variables to strictly adhere to the RT code format rules. Assume these are variables in a C or Python program (using standard <RT·code>snake_case</RT·code>). Pay close attention to proper nouns, acronyms, and the expanded suffix semantics.
       </p>
       <ul>
-        <li>A variable holding a list of addresses for HTTP servers: <RT-code>httpServers</RT-code></li>
-        <li>A variable counting the total number of parsed HTML nodes: <RT-code>num_html_nodes</RT-code></li>
-        <li>A custom type representing a JSON payload: <RT-code>json_payload</RT-code></li>
-        <li>A boolean indicating if the NASA data download is complete: <RT-code>isNasaDone</RT-code></li>
-        <li>A variable holding multiple absolute file paths for images: <RT-code>imageFiles</RT-code></li>
+        <li>A variable holding a list of addresses for HTTP servers: <RT·code>httpServers</RT·code></li>
+        <li>A variable counting the total number of parsed HTML nodes: <RT·code>num_html_nodes</RT·code></li>
+        <li>A custom type representing a JSON payload: <RT·code>json_payload</RT·code></li>
+        <li>A boolean indicating if the NASA data download is complete: <RT·code>isNasaDone</RT·code></li>
+        <li>A variable holding multiple absolute file paths for images: <RT·code>imageFiles</RT·code></li>
       </ul>
 
       <h2>Exercise 4: Identifier naming with hyphens</h2>
       <p>
-        Rename the same poorly named variables from Exercise 3, but this time assume they are written in a language that supports the hyphen (<RT-code>-</RT-code>) in identifiers. Apply the rules for primary and secondary separators, keeping in mind the structural boundary of suffixes.
+        Rename the same poorly named variables from Exercise 3, but this time assume they are written in a language that supports the hyphen (<RT·code>-</RT·code>) in identifiers. Apply the rules for primary and secondary separators, keeping in mind the structural boundary of suffixes.
       </p>
       <ul>
-        <li>A variable holding a list of addresses for HTTP servers: <RT-code>httpServers</RT-code></li>
-        <li>A variable counting the total number of parsed HTML nodes: <RT-code>num_html_nodes</RT-code></li>
-        <li>A custom type representing a JSON payload: <RT-code>json_payload</RT-code></li>
-        <li>A boolean indicating if the NASA data download is complete: <RT-code>isNasaDone</RT-code></li>
-        <li>A variable holding multiple absolute file paths for images: <RT-code>imageFiles</RT-code></li>
+        <li>A variable holding a list of addresses for HTTP servers: <RT·code>httpServers</RT·code></li>
+        <li>A variable counting the total number of parsed HTML nodes: <RT·code>num_html_nodes</RT·code></li>
+        <li>A custom type representing a JSON payload: <RT·code>json_payload</RT·code></li>
+        <li>A boolean indicating if the NASA data download is complete: <RT·code>isNasaDone</RT·code></li>
+        <li>A variable holding multiple absolute file paths for images: <RT·code>imageFiles</RT·code></li>
       </ul>
 
-    </RT-article>
+    </RT·article>
   </body>
 </html>

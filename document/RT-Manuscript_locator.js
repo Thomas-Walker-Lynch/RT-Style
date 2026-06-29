@@ -27,14 +27,11 @@ window.RT = window.RT || {};
     window.RT.dirpr_library = "../consumer/made/Manuscript";
   }
   
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
-  
   document.write(
-    '<script>' +
-    'window.RT.load("Core/utility");' +
-    'window.RT.load("Core/block_visibility_during_layout");' +
-    'window.RT.load("Theme");' +
-    'window.RT.load("Element/theme_selector");' +
-    '<\/script>'
+      '<script src="'
+      + window.RT.dirpr_library
+      + '/Core/RT-Manuscript_make.js"'
+      + '><\/script>'
   );
+
 })();

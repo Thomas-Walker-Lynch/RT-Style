@@ -41,16 +41,11 @@ window.RT.server_url = "http://localhost:8000/shared/linked-project/RT-Style/Man
   
   window.RT.dirpr_library = style_path;
   
-  // 1. Inject the loader script
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
-  
-  // 2. Inject the secondary script block for core dependencies
   document.write(
-    '<script>' +
-    'window.RT.load("Core/utility");' +
-    'window.RT.load("Core/block_visibility_during_layout");' +
-    'window.RT.load("Theme");' +
-    'window.RT.load("Element/theme_selector");' +
-    '<\/script>'
+      '<script src="'
+      + window.RT.dirpr_library
+      + '/Core/RT-Manuscript_make.js"'
+      + '><\/script>'
   );
+  
 })();

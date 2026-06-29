@@ -14,5 +14,10 @@ window.RT = window.RT || {};
 
 (function() {
   window.RT.dirpr_library = "..";
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/RT-Manuscript_make.js"><\/script>');
+  document.write(
+      '<script src="'
+      + window.RT.dirpr_library
+      + '/Core/RT-Manuscript_make.js"'
+      + '><\/script>'
+  );
 })();

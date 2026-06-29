@@ -27,6 +27,11 @@ window.RT = window.RT || {};
     window.RT.dirpr_library = "../consumer/made/Manuscript";
   }
   
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
+  document.write(
+      '<script src="'
+      + window.RT.dirpr_library
+      + '/Core/RT-Manuscript_make.js"'
+      + '><\/script>'
+  );
 
 })();

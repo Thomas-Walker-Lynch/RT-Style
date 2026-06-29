@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+  <!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>RT Code Format: Lisp Addendum</title>
-    <script src="RT-Style_locator.js"></script>
+    <script src="RT-Manuscript_locator.js"></script>
     <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
       window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
     </script>
   </head>
   <body>
-    <RT-article>
-      <RT-title 
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title 
         author="Thomas Walker Lynch" 
         date="2026-03-28" 
         title="RT Code Format: Lisp Addendum">
-      </RT-title>
+      </RT·title>
 
-      <RT-TOC level="1"></RT-TOC>
+      <RT·TOC level="1"></RT·TOC>
 
       <p>
         This document serves as the authoritative addendum for applying the RT code format conventions to Lisp dialects, specifically Emacs Lisp. It integrates micro-syntax rules with macro-structural organization to ensure consistency across the software ecosystem.
@@ -24,15 +30,15 @@
 
       <h1>File Architecture and Section Banners</h1>
       <p>
-        To maintain a predictable progression from static data to external hooks, a Lisp file is divided into standard architectural sections. Each section is introduced by an <RT-term>Architectural Banner</RT-term>.
+        To maintain a predictable progression from static data to external hooks, a Lisp file is divided into standard architectural sections. Each section is introduced by an <RT·term>Architectural Banner</RT·term>.
       </p>
 
       <ul>
         <li><strong>Utilities:</strong>General use helpers that are independent of the code in the module. Perhaps these will later be moved to a utilities library.</li>
-        <li><strong>Configuration:</strong> Houses foundational parameters, constants (<RT-code>defconst</RT-code>), and global variables that dictate module behavior.</li>
+        <li><strong>Configuration:</strong> Houses foundational parameters, constants (<RT·code>defconst</RT·code>), and global variables that dictate module behavior.</li>
         <li><strong>Interior code:</strong> Reserved for internal, non-exported mechanisms. This includes private helper functions, macros, and localized state variables that support the public interface but remain isolated from external dependencies.</li>
         <li><strong>API:</strong> The public boundary of the module. It contains the primary functions with stable signatures and clear contracts intended for consumption by other parts of the system.</li>
-        <li><strong>Interactive:</strong> Isolates functions designed for direct human execution through the Emacs command loop, typically utilizing the <RT-code>(interactive)</RT-code> declaration.</li>
+        <li><strong>Interactive:</strong> Isolates functions designed for direct human execution through the Emacs command loop, typically utilizing the <RT·code>(interactive)</RT·code> declaration.</li>
         <li><strong>Integration:</strong> Placed at the bottom of the file, this section handles side effects that wire the module into the broader environment, such as adding hooks, defining keybindings, or applying advice. It is permitted to reference the API and Interactive sections, but must never reference Interior code.</li>
       </ul>
 
@@ -42,15 +48,15 @@
       </p>
 
       <ul>
-        <li><strong>The Prologue Block:</strong> Located at the very top of the document. It uses flush left triple semicolons <RT-code>;;;</RT-code>. Empty triple semicolons act as vertical spacing to separate paragraphs without breaking the block format.</li>
+        <li><strong>The Prologue Block:</strong> Located at the very top of the document. It uses flush left triple semicolons <RT·code>;;;</RT·code>. Empty triple semicolons act as vertical spacing to separate paragraphs without breaking the block format.</li>
 
         <li><strong>The Architectural Banner:</strong> Used for major file divisions (like Configuration, API). It consists of flush left triple semicolons followed by a continuous line of dashes, a title line, and an empty triple semicolon line.</li>
 
-        <li><strong>The Scope Header:</strong> Used to group related variables or functions within a major section. These are indented two spaces, begin with double semicolons <RT-code>;;</RT-code>, and are followed by an empty double semicolon line for vertical padding.</li>
+        <li><strong>The Scope Header:</strong> Used to group related variables or functions within a major section. These are indented two spaces, begin with double semicolons <RT·code>;;</RT·code>, and are followed by an empty double semicolon line for vertical padding.</li>
 
         <li><strong>The Contract Annotation:</strong> Double semicolon comments indented two spaces, placed directly above a function definition. They specify preconditions, structural expectations, or size checks that must be true before the function is called.</li>
 
-        <li><strong>The Trailing Tag:</strong> A single semicolon <RT-code>;</RT-code> placed at the end of a line of executable code, used to label a specific return state or note a brief detail.</li>
+        <li><strong>The Trailing Tag:</strong> A single semicolon <RT·code>;</RT·code> placed at the end of a line of executable code, used to label a specific return state or note a brief detail.</li>
       </ul>
 
       <p>Header case, for all RT documents and code, is an initial capital letter, and no trailing period. Acronyms and tagged code or terms keep their original capitalization or lack thereof.</p>
@@ -59,16 +65,16 @@
 
       <h2>Primary and Secondary Separators</h2>
       <p>
-        Because Emacs Lisp and Common Lisp support the hyphen character in identifiers, Lisp code utilizes <RT-code>snake-kebab_case</RT-code>. The hyphen acts as the primary word separator. The underscore is reserved strictly as a secondary separator to group logically related portions of an identifier or to denote semantic boundaries, acting as a structural namespace within the symbol (e.g., <RT-code>city-scape_building-height</RT-code>).
+        Because Emacs Lisp and Common Lisp support the hyphen character in identifiers, Lisp code utilizes <RT·code>snake-kebab_case</RT·code>. The hyphen acts as the primary word separator. The underscore is reserved strictly as a secondary separator to group logically related portions of an identifier or to denote semantic boundaries, acting as a structural namespace within the symbol (e.g., <RT·code>city-scape_building-height</RT·code>).
       </p>
 
       <h2>Ad Hoc Namespaces</h2>
       <p>
-        Emacs Lisp shares a global environment. To prevent global environment pollution, functions and global variables use the center dot (<RT-code>·</RT-code>) to separate namespace hierarchies. Spaces are omitted around the dot to ensure the symbol evaluates contiguously.
+        Emacs Lisp shares a global environment. To prevent global environment pollution, functions and global variables use the center dot (<RT·code>·</RT·code>) to separate namespace hierarchies. Spaces are omitted around the dot to ensure the symbol evaluates contiguously.
       </p>
-      <RT-code>
+      <RT·code>
         (defconst RT·first-order-list·control·continue 0)
-      </RT-code>
+      </RT·code>
 
       <h1>Code Structure Attributes</h1>
       <p>
@@ -77,25 +83,25 @@
 
       <h2>Global Two Space Offset</h2>
       <p>
-        Unlike standard Emacs Lisp where top level forms like <RT-code>defun</RT-code> or <RT-code>setq</RT-code> are flush left, the entire programmatic contents of the file are indented by two spaces.
+        Unlike standard Emacs Lisp where top level forms like <RT·code>defun</RT·code> or <RT·code>setq</RT·code> are flush left, the entire programmatic contents of the file are indented by two spaces.
       </p>
 
       <h2>Function Call Enclosures</h2>
       <p>
         Lisp function calls are exempt from the multi-level enclosure padding rule. The outer parentheses forming a function call receive no padding, even when they contain nested data lists.
       </p>
-      <RT-code>
+      <RT·code>
         (cat 'a 'b '( 2 (4 5)))
-      </RT-code>
+      </RT·code>
 
       <h2>Vertical Branching</h2>
       <p>
-        The <RT-code>if</RT-code> and <RT-code>while</RT-code> statements are expanded vertically. The operator, the condition, the true branch, and the false branch each occupy their own isolated lines. 
+        The <RT·code>if</RT·code> and <RT·code>while</RT·code> statements are expanded vertically. The operator, the condition, the true branch, and the false branch each occupy their own isolated lines. 
       </p>
 
       <h2>Isolated Binding Blocks</h2>
       <p>
-        In <RT-code>let</RT-code> and <RT-code>let*</RT-code> forms, the variable declaration list is pushed to its own level. The opening parenthesis sits alone on a new line. Each binding sits on its own line. The closing parenthesis sits alone, vertically aligned with the opening parenthesis. The body of the form follows on the subsequent line.
+        In <RT·code>let</RT·code> and <RT·code>let*</RT·code> forms, the variable declaration list is pushed to its own level. The opening parenthesis sits alone on a new line. Each binding sits on its own line. The closing parenthesis sits alone, vertically aligned with the opening parenthesis. The body of the form follows on the subsequent line.
       </p>
 
       <h2>Using let to destructure a list</h2>
@@ -107,7 +113,7 @@
       <p>
         When the items of a list appear one per line, i.e. for a vertical list, the closing parenthesis, and all cascading closures, appear on a line of their own at the same indention level as though an element of the list. In a sense, the innermost vertical list wins, as it will close all the vertical lists it is nested in.
       </p>
-      <RT-code>
+      <RT·code>
         (let
           (
             (example_list
@@ -117,7 +123,7 @@
                 '(6 [])
                 )))
           ...
-      </RT-code>
+      </RT·code>
 
 
       <h2>A comment subsection</h2>
@@ -125,45 +131,45 @@
         When a comment under a triple semicolon section forms a subsection, the
         comment starts at the indention level of the code, has two semicolons.  After the comment there is a line at the indent level with only two semicolons. Then there is a blank line. The subsection contents follow.
       </p>
-      <RT-code>
+      <RT·code>
       ;; Color logic
       ;;
 
-      (defun RT-literal·highlight-none ()
+      (defun RT·literal·highlight-none ()
         nil
         )
 
-      (defun RT-literal·highlight-default ()
+      (defun RT·literal·highlight-default ()
         'region
         )
-      </RT-code>
+      </RT·code>
 
       <h2>one line specific comment</h2>
       <p>
         A single semicolon occurs after the code on the line, followed by a comment.
       </p>
-      <RT-code>
+      <RT·code>
 
-      </RT-code>
+      </RT·code>
 
 
       <h2>Contiguous Form Cluster</h2>
       <p>
         When the comment adds insight into the code, the comment typically appears with two semicolons at the same indentation level above said code. There is no following blank line.  All code the comment applies to then follows without intervening blank lines.
       </p>
-      <RT-code>
+      <RT·code>
       ;; By contract: only called when overlay is in quoted form, and null string case already handled
       ;; Everything from content_leftmost to content_rightmost is data, inclusive.
-      (setq RT-literal·describe-new-form_status (list 'new-good))
-      (defun RT-literal·describe-new-form_message (status)
+      (setq RT·literal·describe-new-form_status (list 'new-good))
+      (defun RT·literal·describe-new-form_message (status)
         nil
         )
-      (defun RT-literal·describe-new-form (overlay_leftmost content_rightmost_right-neighbor)
+      (defun RT·literal·describe-new-form (overlay_leftmost content_rightmost_right-neighbor)
         (let*
           ( ... )
           ...
           )))
-      </RT-code>
+      </RT·code>
 
       <h1>API Design Conventions</h1>
       
@@ -178,16 +184,16 @@
       </p>
 
       <ul>
-        <li><RT-term>Tape</RT-term>: An array of cells. A tape has a leftmost cell and a rightmost cell.</li>
-        <li><RT-term>Rightmost Right-Neighbor</RT-term>: The cell located one position to the right of the rightmost cell. A tape area is not guaranteed to have a rightmost_right-neighbor, but it will always have a rightmost cell.</li>
-        <li><RT-term>Extent</RT-term>: The index of the rightmost cell. The index of the leftmost cell is conventionally 0. The extent defines the required bit size of an index register. When speaking of arrays of bytes, extent is the maximum byte index.</li>
-        <li><RT-term>Length</RT-term>: A count of cells in an array. Length is 1 plus extent, and can overflow an index register.</li>
-        <li><RT-term>Size</RT-term>: A count of the underlying bytes, unless otherwise noted.</li>
-        <li><RT-term>Position</RT-term>: An index (similar to a cursor position) that indicates a cell. Emacs positions differ mathematically from TTCA theory indexes.</li>
+        <li><RT·term>Tape</RT·term>: An array of cells. A tape has a leftmost cell and a rightmost cell.</li>
+        <li><RT·term>Rightmost Right-Neighbor</RT·term>: The cell located one position to the right of the rightmost cell. A tape area is not guaranteed to have a rightmost_right-neighbor, but it will always have a rightmost cell.</li>
+        <li><RT·term>Extent</RT·term>: The index of the rightmost cell. The index of the leftmost cell is conventionally 0. The extent defines the required bit size of an index register. When speaking of arrays of bytes, extent is the maximum byte index.</li>
+        <li><RT·term>Length</RT·term>: A count of cells in an array. Length is 1 plus extent, and can overflow an index register.</li>
+        <li><RT·term>Size</RT·term>: A count of the underlying bytes, unless otherwise noted.</li>
+        <li><RT·term>Position</RT·term>: An index (similar to a cursor position) that indicates a cell. Emacs positions differ mathematically from TTCA theory indexes.</li>
       </ul>
 
       <p>
-        The TTCA ontology is a topological description. It speaks of left, and right, of leftmost and rightmost.  Time dependent terms such as <RT-term>first</RT-term>  or <RT-term>last</RT-term> imply scanning/traversal.  The first cell scanned could be anywhere on the tape, depending on the algorithm used for the scan or traversal. Careful, the term <RT-term>rightmost</RT-term> refers to a cell that is included on the tape. It is an inclusive bound. Today exclusive bounds are more common. Inclusive found loops often exit from the middle.
+        The TTCA ontology is a topological description. It speaks of left, and right, of leftmost and rightmost.  Time dependent terms such as <RT·term>first</RT·term>  or <RT·term>last</RT·term> imply scanning/traversal.  The first cell scanned could be anywhere on the tape, depending on the algorithm used for the scan or traversal. Careful, the term <RT·term>rightmost</RT·term> refers to a cell that is included on the tape. It is an inclusive bound. Today exclusive bounds are more common. Inclusive found loops often exit from the middle.
       </p>
 
 
@@ -205,7 +211,7 @@
 
       <p>Here is the canonical RT code format for the first/rest loop:</p>
 
-      <RT-code>
+      <RT·code>
       (let
         (
           ;; 1. The "First" Work & Boundary Evaluation
@@ -225,13 +231,13 @@
         ;; Return the final state of the work
         work-successful
         )
-      </RT-code>
+      </RT·code>
 
       <p>
         Elisp does not have a middle-of-loop exit, but if it did, the logic would look like this:
       </p>
 
-      <RT-code>
+      <RT·code>
       (let
         (        
           (work-successful nil)
@@ -248,15 +254,15 @@
             ))
         work-successful
         )
-      </RT-code>
+      </RT·code>
 
-      <p>Which eliminates the need for two calls to <RT-code>evaluate-current-cell</RT-code>  and <RT-code>has-right-neighbor</RT-code>. This can be done in other languages that have a loop <RT-code>break</RT-code>. (Donald Knuth argued in his 1974 paper, Structured Programming with go to Statements, that forcing programmers to duplicate code simply to satisfy a rigid while or repeat/until pre/post-test constraint was a failure of the language's expressiveness. Also discussed in the Art of Computer Programming.)
+      <p>Which eliminates the need for two calls to <RT·code>evaluate-current-cell</RT·code>  and <RT·code>has-right-neighbor</RT·code>. This can be done in other languages that have a loop <RT·code>break</RT·code>. (Donald Knuth argued in his 1974 paper, Structured Programming with go to Statements, that forcing programmers to duplicate code simply to satisfy a rigid while or repeat/until pre/post-test constraint was a failure of the language's expressiveness. Also discussed in the Art of Computer Programming.)
       </p>
 
       <p>If we are willing to us catch and throw in normal control flow, this can be done in elisp as:
       </p>
 
-      <RT-code>
+      <RT·code>
       (catch 'loop-exit
         (while t
           (let
@@ -269,10 +275,10 @@
               (throw 'loop-exit work-successful)
               (RT·TM·step machine)
               ))))
-      </RT-code>
+      </RT·code>
 
       <p>So defining:</p>
-      <RT-code>
+      <RT·code>
       (defmacro RT·loop (&rest body)
         "An infinite loop construct designed to be exited via RT·break."
         `(catch 'loop-exit
@@ -284,11 +290,11 @@
         "Break out of an RT·loop, optionally returning RETURN_VAL."
         `(throw 'loop-exit ,return_val)
         )
-      </RT-code>
+      </RT·code>
 
       <p>Our example becomes:</p>
       
-      <RT-code>
+      <RT·code>
       (let
         (        
           (work-successful nil)
@@ -307,13 +313,13 @@
             (RT·TM·step machine)
             ))
         )
-      </RT-code>
+      </RT·code>
 
       <p>
         Production code first/rest loop example without a middle loop break.
       </p>
 
-      <RT-code>
+      <RT·code>
       (defun RT·TM·sequence·eq (TM_substrate TM_target)
         (let
           (
@@ -337,7 +343,7 @@
                 ))
             (and are-eq (not target-has-right-neighbor))
             )))
-      </RT-code>
+      </RT·code>
 
       <p> If the double call code is substantial, and we do not want to use a middle break, it can be put in a helper function, and then this reduces to two calls to the helper. the helper function is called in the first part and the rest loop. If the programmer tries to trick the loop by giving the variables fake values in the first part, the first/rest pattern will be broken.
       </p>
@@ -360,7 +366,7 @@
 
       <p>To illustrate the mathematical equivalence, here is the exact same logic written as a tail-recursive function. Note that while this form is theoretically pure, the first/rest iterative loop is strictly preferred in Emacs Lisp. Because Elisp lacks Tail Call Optimization (TCO), this recursive form would eventually exhaust the call stack and crash when traversing massive sequences.</p>
 
-      <RT-code>
+      <RT·code>
       (defun process-sequence-recursively (machine)
         (let
           (
@@ -381,11 +387,11 @@
             ;; Base case: loop terminates, return final state
             work-successful
             )))
-      </RT-code>
+      </RT·code>
 
       <h2>Exercise</h2>
       <p>Show the 'production code' with a first/rest pattern using the RT macros and a middle break loop.</p>
 
-    </RT-article>
+    </RT·article>
   </body>
 </html>
