@@ -28,11 +28,5 @@ window.RT = window.RT || {};
   }
   
   document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
-  
-  document.write(
-    '<script>' +
-    'window.RT.load("Core/block_visibility_during_layout");' +
-    'window.RT.load("Element/theme_selector");' +
-    '<\/script>'
-  );
+
 })();

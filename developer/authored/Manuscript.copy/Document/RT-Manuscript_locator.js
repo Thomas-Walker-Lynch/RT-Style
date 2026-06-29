@@ -4,10 +4,10 @@
   There are 4 variations for RT-Style-locator.js:
 
   URL_only - used by websites
-  indirect - used by Harmony projects, except for RT-style
+  indirect - used by Harmony projects, except for RT-Manuscript
 
-  immediate - used by RT-style in the distribution (authored, consummer, staged)
-  direct - used by RT-style project outside of the distribution, e.g. the main document directory
+  immediate - used by RT-Manuscript in the distribution (authored, consummer, staged)
+  direct - used by RT-Manuscript project outside of the distribution, e.g. the main document directory
 */
 
 window.RT = window.RT || {};

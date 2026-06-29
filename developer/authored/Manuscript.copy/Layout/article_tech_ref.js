@@ -1,3 +1,9 @@
+/*
+  Layout/article_tech_ref.js
+  Applies base technical document styling in Phase 1, 
+  and applies structural page wrappers in Phase 3.
+*/
+
 (function(){
   const RT = window.RT = window.RT || {};
 
@@ -16,10 +22,25 @@
     'crossref'
   ];
 
-  // 2. The Extracted Styling Function
-  function apply_article_styles() {
-    const t = function(...path) { return window.RT.theme('read', ...path); };
+  // Shared utility functions
+  const t = function(...path) { return window.RT.theme('read', ...path); };
 
+  const apply = function(selector, rules) {
+    document.querySelectorAll(selector).forEach(el => {
+      for (let p in rules) {
+        if (typeof rules[p] === 'string' && rules[p].includes('!important')) {
+          el.style.setProperty(p.replace(/[A-Z]/g, m => "-" + m.toLowerCase()), rules[p].replace(' !important', ''), 'important');
+        } else {
+          el.style[p] = rules[p];
+        }
+      }
+    });
+  };
+
+  // =========================================================
+  // Phase 1: Base Element & Article Styling
+  // =========================================================
+  function apply_base_styles() {
     const surface_0 = t('surface', '0');
     const surface_code = t('surface', 'code');
     const content_main = t('content', 'main');
@@ -29,18 +50,6 @@
     const is_dark = t('meta', 'is_dark');
 
     const font_weight = is_dark === false ? "600" : "400";
-
-    const apply = function(selector, rules) {
-      document.querySelectorAll(selector).forEach(el => {
-        for (let p in rules) {
-          if (typeof rules[p] === 'string' && rules[p].includes('!important')) {
-            el.style.setProperty(p.replace(/[A-Z]/g, m => "-" + m.toLowerCase()), rules[p].replace(' !important', ''), 'important');
-          } else {
-            el.style[p] = rules[p];
-          }
-        }
-      });
-    };
 
     // Apply base geometry
     apply('body, html, RT·article', { overflowAnchor: "none !important" });
@@ -57,13 +66,8 @@
       boxSizing: "border-box !important"
     });
     
+    // Default padding if pagination fails or is bypassed
     apply('RT·article:not(:has(RT·page))', { padding: "3rem !important" });
-    apply('RT·article:has(RT·page)', { padding: "0 !important" });
-    apply('RT·article RT·page', {
-      position: "relative", display: "block", padding: "3rem",
-      margin: "1.25rem auto", backgroundColor: surface_0,
-      boxShadow: `0 0 0.625rem ${brand_primary}`
-    });
 
     // Apply specific element scales
     const element_styles = [
@@ -130,17 +134,39 @@
     element_styles.forEach(rule => apply(rule[0], rule[1]));
   }
 
+  // =========================================================
+  // Phase 3: Post-Pagination Styling
+  // =========================================================
+  function apply_page_styles() {
+    const surface_0 = t('surface', '0');
+    const brand_primary = t('brand', 'primary');
+
+    // Strip internal padding so the pages can dictate the margin/padding layout
+    apply('RT·article:has(RT·page)', { padding: "0 !important" });
+    
+    // Style the actual page wrappers
+    apply('RT·article RT·page', {
+      position: "relative", 
+      display: "block", 
+      padding: "3rem",
+      margin: "1.25rem auto", 
+      backgroundColor: surface_0,
+      boxShadow: `0 0 0.625rem ${brand_primary}`
+    });
+  }
+
   //----------------------------------------
-  // stuff done when article_tech_ref is loaded
+  // Execution & Registration
   //
   
-  // load the element files
+  // Load the element files
   required_elements.forEach(name => RT.load('Element/' + name));
 
-  if (RT.Element) {
-    RT.Element.add(apply_article_styles);
+  if (RT.Element && RT.PageStyle) {
+    RT.Element.add(apply_base_styles);
+    RT.PageStyle.add(apply_page_styles);
   } else {
-    console.error("RT.Element not defined, was the state_manager run?");
+    console.error("RT.Element or RT.PageStyle not defined, was the stage_manager run?");
   }
 
 })();

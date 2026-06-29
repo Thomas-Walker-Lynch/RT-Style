@@ -113,7 +113,7 @@ RT.theme = (function() {
 })();
 
 RT.theme_preference = function(author_pref, default_color = "#FF00FF") {
-  const reader_pref = localStorage.getItem('RT-Style·theme_preference');
+  const reader_pref = localStorage.getItem('RT-Manuscript·theme_preference');
   const theme_to_load = reader_pref ? reader_pref : author_pref;
   
   RT.theme('load', theme_to_load, default_color);

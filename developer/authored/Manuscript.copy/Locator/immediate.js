@@ -1,31 +1,18 @@
 /*
   immediate.js
 
-  We have four scenarios
+  There are 4 variations for RT-Style-locator.js:
 
-  immediate - used in the RT-style distribution itself (authored, consummer, staged)
-  direct - used in the RT-style project itself, but not in the distribution
-  indirect - the version all Harmony projects use
-  URL_only - always pulls style through a URL, a webserver must be present
+  URL_only - used by websites
+  indirect - used by Harmony projects, except for RT-style
 
+  immediate - used by RT-style in the distribution (authored, consummer, staged)
+  direct - used by RT-style project outside of the distribution, e.g. the main document directory
 */
 
 window.RT = window.RT || {};
 
 (function() {
-  // We are the style library, so ...
   window.RT.dirpr_library = "..";
-  
-  // 1. Inject the loader script
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/loader.js"><\/script>');
-  
-  // 2. Inject a secondary script block for the core dependencies
-  document.write(
-    '<script>' +
-    'window.RT.load("Core/utility");' +
-    'window.RT.load("Core/block_visibility_during_layout");' +
-    'window.RT.load("Theme");' +
-    'window.RT.load("Element/theme_selector");' +
-    '<\/script>'
-  );
+  document.write('<script src="' + window.RT.dirpr_library + '/Core/RT-Style_make.js"><\/script>');
 })();

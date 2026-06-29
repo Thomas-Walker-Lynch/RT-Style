@@ -4,34 +4,18 @@
   manages MathJax async typesetting, and handles scroll restoration.
 */
 
-(function() {
+window.RT = window.RT || {};
+window.RT.Element = window.RT.Element || new Set();
+window.RT.PageStyle = window.RT.PageStyle || new Set();
+window.RT.paginate = null;
 
-  if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
-    return;
-  }
-
-  // Prevent duplicate initialization
-  if (window.RT.Element instanceof Set) {
-    console.warn("RT stage_manager already initialized. Aborting duplicate run.");
-    return;
-  }
-
-  // Phase queues/pointers
-  window.RT.Element = new Set();
-  window.RT.PageStyle = new Set();
-  window.RT.paginate = null; 
-
+(function(){
   const debug = window.RT.Debug || { log: function(){}, warn: function(){}, error: function(){} };
   
   let target_y = 0;
   let is_reload = false;
   let is_layout_locked = false;
   let scroll_timer;
-
-  // =========================================================
-  // SCROLL & LAYOUT LOCK UTILITIES
-  // =========================================================
 
   function lock_layout() {
     is_layout_locked = true;
@@ -111,14 +95,46 @@
   }
 
   // =========================================================
-  // MASTER PIPELINE EXECUTION
+  // PIPELINE EXECUTION
   // =========================================================
 
-  function run_pipeline() {
-    
-    // Phase 1: Base Elements
+  // Phase 2 & 3: Pagination and Page Styling
+  function execute_phase_2_and_3(){
+    debug.log('stage_manager', 'Phase 2: Executing Pagination');
+    if (typeof window.RT.paginate === 'function') {
+      try { window.RT.paginate(); } 
+      catch (e) { debug.error('stage_manager', "Pagination failed: " + e); }
+    }
+
+    debug.log('stage_manager', 'Phase 3: Executing PageStyle tasks');
+    if (window.RT.PageStyle instanceof Set) {
+      window.RT.PageStyle.forEach(task => {
+        if (typeof task === 'function') {
+          try { task(); } 
+          catch (e) { debug.error('stage_manager', "PageStyle task failed: " + e); }
+        }
+      });
+    }
+
+    // Now that final layout geometry exists, execute scroll mapping
+    debug.log('scroll' ,`Pagination layout complete. Enforcing scroll target.`);
+    let final_target = target_y;
+    let use_hash = false;
+    if (window.location.hash && !is_reload) {
+        const hash_target = document.getElementById(window.location.hash.substring(1));
+        if (hash_target) {
+            use_hash = true;
+        }
+    }
+
+    enforce_scroll(final_target ,use_hash ,0);
+  }
+
+  // Phase 1: Base Elements
+  function process_elements_and_layout() {
     debug.log('stage_manager', 'Phase 1: Executing Element tasks');
-    if (window.RT.Element.size > 0) {
+
+    if (window.RT.Element instanceof Set && window.RT.Element.size > 0) {
       for (const element_fn of window.RT.Element) {
         if (typeof element_fn === 'function') {
           try { element_fn(); }
@@ -129,69 +145,32 @@
       }
     }
 
-    // Define the continuation (Phases 2 & 3 + Scroll) to run after MathJax resolves
-    const run_post_math_phases = () => {
-      // Phase 2: Pagination
-      debug.log('stage_manager', 'Phase 2: Executing Pagination');
-      if (typeof window.RT.paginate === 'function') {
-        try { window.RT.paginate(); } 
-        catch (e) { debug.error('stage_manager', "Pagination failed: " + e); }
-      } else {
-        debug.log('stage_manager', 'No pagination function registered. Skipping.');
-      }
-
-      // Phase 3: Page Styling
-      debug.log('stage_manager', 'Phase 3: Executing PageStyle tasks');
-      if (window.RT.PageStyle.size > 0) {
-        for (const style_fn of window.RT.PageStyle) {
-          if (typeof style_fn === 'function') {
-            try { style_fn(); } 
-            catch (e) { debug.error('stage_manager', "PageStyle task failed: " + e); }
-          }
-        }
-      }
-
-      // Final Step: Resolve Scroll Target
-      debug.log('scroll' ,`Pagination layout complete. Enforcing scroll target.`);
-      let final_target = target_y;
-      let use_hash = false;
-      if (window.location.hash && !is_reload) {
-          const hash_target = document.getElementById(window.location.hash.substring(1));
-          if (hash_target) {
-              use_hash = true;
-          }
-      }
-
-      enforce_scroll(final_target ,use_hash ,0);
-    };
-
-    // MathJax Intercept: Await typeset before paginating
+    // Check for MathJax (Handles both v3 Promises and v2 Hub Queues)
+    // We must wait for typesetting to finish before paginating, as equations change element heights.
     if (window.MathJax) {
       if (typeof window.MathJax.typesetPromise === 'function') {
-        window.MathJax.typesetPromise().then(run_post_math_phases).catch((err) => {
+        window.MathJax.typesetPromise().then(execute_phase_2_and_3).catch((err) => {
           debug.error('stage_manager', 'MathJax typeset failed: ' + err);
-          run_post_math_phases();
+          execute_phase_2_and_3();
         });
       } else if (window.MathJax.Hub && window.MathJax.Hub.Queue) {
-        window.MathJax.Hub.Queue(["Typeset", window.MathJax.Hub], run_post_math_phases);
+        MathJax.Hub.Queue(["Typeset", MathJax.Hub], execute_phase_2_and_3);
       } else {
-        run_post_math_phases();
+        execute_phase_2_and_3();
       }
     } else {
-      run_post_math_phases();
+      execute_phase_2_and_3();
     }
   }
 
-  // =========================================================
-  // INITIALIZATION
-  // =========================================================
-  
+
+  // Initial Execution Sequence
   lock_layout();
   configure_history();
   capture_scroll_target();
   bind_window_events();
   
-  document.addEventListener('DOMContentLoaded', run_pipeline);
+  document.addEventListener('DOMContentLoaded', process_elements_and_layout);
 
   // Safety Net: restore visibility on load if the async layout engine hangs
   window.addEventListener("load", unlock_layout);
