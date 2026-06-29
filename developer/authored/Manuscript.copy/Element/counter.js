@@ -1,6 +1,6 @@
 /*
-  Processes <RT·Counter·*> tags.
-  Calculates numbering, maintains the stack, manages snapshots, and outputs values for read tags.
+  Processes <RT·counter·*> tags.
+  Calculates numbering, maintains the explicit status machine, manages snapshots, and outputs values for read tags.
 */
 
 (function() {
@@ -18,26 +18,81 @@
   RT.dict_instance = RT.dict_instance || {};
   RT.dict_snapshot = RT.dict_snapshot || {};
 
-  RT.Element.add( function() {
-    const debug = RT.Debug || { log: function(){} };
-    if (debug.log) debug.log('counter', 'Processing counters');
-
-    const root_node = document.documentElement;
-
-    function clone_state(state) {
-      return {
-        counter: state.counter,
-        stack: [...state.stack], 
-        empty: [...state.empty], 
-        separator: state.separator,
-        'separator-placement': state['separator-placement'],
-        style: state.style,
-        'on-first-step': state['on-first-step'],
-        count: state.count 
-      };
+  class CounterMachine {
+    constructor(first_step_val, style, separator, separator_placement) {
+      this.list = [];
+      this.status = 'empty'; // 'empty', 'preamble', 'between'
+      this.first_step_val = first_step_val;
+      this.style = style || 'NaturalNumber';
+      this.separator = separator || '.';
+      this.separator_placement = separator_placement || 'embedded';
+      this.count = '';
     }
 
-    function to_roman(num) {
+    enter() {
+      if (this.status === 'empty') {
+        this.list.push(this.first_step_val);
+        this.status = 'preamble';
+      } else if (this.status === 'preamble') {
+        this.list.push(0); // indent appends 0
+        this.status = 'preamble';
+      } else if (this.status === 'between') {
+        this.list[this.list.length - 1] += 1; // inc last value
+        this.status = 'preamble';
+      }
+      this.update_count_string();
+    }
+
+    exit() {
+      if (this.status === 'empty') {
+        console.error("RT-Manuscript Layout Error: Attempted to exit an empty counter scope.");
+      } else if (this.status === 'preamble') {
+        this.status = 'between';
+      } else if (this.status === 'between') {
+        this.list.pop();
+        this.status = 'between';
+      }
+      this.update_count_string();
+    }
+
+    update_count_string() {
+      if (this.status === 'empty' || this.list.length === 0) {
+        this.count = '';
+        return;
+      }
+      
+      const formatted_list = this.list.map((val, index) => 
+        this.format_count(val, this.style, index)
+      );
+      
+      let count_str = formatted_list.join(this.separator);
+      if (this.separator_placement === 'embedded-after') {
+        count_str += this.separator;
+      }
+      this.count = count_str;
+    }
+
+    format_count(num, style, depth) {
+      if (style === 'roman') return this.to_roman(num).toLowerCase();
+      if (style === 'Roman') return this.to_roman(num);
+      if (style === 'Alpha') return String.fromCharCode(64 + num); 
+      if (style === 'alpha') return String.fromCharCode(96 + num);
+      
+      if (style === 'roman-outline') {
+        const levels = ['Roman', 'Alpha', 'CountingNumber', 'alpha', 'roman'];
+        const current_style = levels[depth % levels.length];
+        return this.format_count(num, current_style, 0); 
+      }
+      
+      if (style === 'CountingNumber') {
+        return (num + 1).toString();
+      }
+      
+      // Default behavior maps to NaturalNumber
+      return num.toString();
+    }
+
+    to_roman(num) {
       if (num < 1) return num.toString();
       const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
       let roman = '';
@@ -50,8 +105,21 @@
       return roman;
     }
 
-    function parse_first_step(val_str, style, counter_name) {
-      if (!val_str) return 1;
+    clone() {
+      const copy = new CounterMachine(
+        this.first_step_val, 
+        this.style, 
+        this.separator, 
+        this.separator_placement
+      );
+      copy.list = [...this.list];
+      copy.status = this.status;
+      copy.count = this.count;
+      return copy;
+    }
+
+    static parse_first_step(val_str, style, counter_name) {
+      if (!val_str) return 0; // Defaulting to 0 to support preamble logic
 
       let num = NaN;
 
@@ -88,97 +156,62 @@
         }
       }
 
-      if (isNaN(num) || num < 1) {
+      if (isNaN(num) || num < 0) {
         console.error(`RT-Manuscript Layout Error: Type mismatch. Invalid 'on-first-step' value '${val_str}' for style '${style}' in counter '${counter_name}'.`);
-        return 1;
+        return 0;
       }
       return num;
     }
+  }
 
-    function format_count(num, style, depth) {
-      if (style === 'roman') return to_roman(num).toLowerCase();
-      if (style === 'Roman') return to_roman(num);
-      if (style === 'Alpha') return String.fromCharCode(64 + num); 
-      if (style === 'alpha') return String.fromCharCode(96 + num);
-      
-      if (style === 'roman-outline') {
-        const levels = ['Roman', 'Alpha', 'Natural', 'alpha', 'roman'];
-        const current_style = levels[depth % levels.length];
-        return format_count(num, current_style, 0); 
-      }
-      
-      return num.toString();
-    }
+  RT.Element.add( function() {
+    const debug = RT.Debug || { log: function(){} };
+    if (debug.log) debug.log('counter', 'Processing counters');
+
+    const root_node = document.documentElement;
 
     function walk(node) {
       if (node.nodeType !== Node.ELEMENT_NODE) return;
 
       const tag = node.tagName.toLowerCase();
-      let pushed_name = null;
+      let machine_to_exit = null;
 
       if (tag === 'rt·counter·make') {
         const name = node.getAttribute('counter');
         if (name) {
-          const style = node.getAttribute('style') || 'Natural';
+          const style = node.getAttribute('style') || 'NaturalNumber';
           const on_first_step_str = node.getAttribute('on-first-step');
+          const separator = node.getAttribute('separator');
+          const separator_placement = node.getAttribute('separator-placement');
           
-          let first_step_int = parse_first_step(on_first_step_str, style, name);
+          let first_step_int = CounterMachine.parse_first_step(on_first_step_str, style, name);
           
-          RT.dict_instance[name] = {
-            counter: name,
-            stack: [0], 
-            empty: [true], 
-            separator: node.getAttribute('separator') || '.',
-            'separator-placement': node.getAttribute('separator-placement') || 'embedded',
-            style: style,
-            'on-first-step': on_first_step_str || '1', 
-            on_first_step_int: first_step_int,
-            count: ''
-          };
-        }
-      } else if (tag === 'rt·counter·indent') {
-        const name = node.getAttribute('counter');
-        if (name && RT.dict_instance[name]) {
-          RT.dict_instance[name].stack.push(0);
-          RT.dict_instance[name].empty.push(true);
-          pushed_name = name;
+          RT.dict_instance[name] = new CounterMachine(
+            first_step_int, 
+            style, 
+            separator, 
+            separator_placement
+          );
         }
       } else if (tag === 'rt·counter·step') {
         const name = node.getAttribute('counter');
         if (name && RT.dict_instance[name]) {
-          const state = RT.dict_instance[name];
-          const depth = state.stack.length - 1;
+          const active_machine = RT.dict_instance[name];
           
-          if (state.empty[depth]) {
-              state.stack[depth] = (depth === 0) ? state.on_first_step_int : 1;
-              state.empty[depth] = false;
-          } else {
-              state.stack[depth] += 1;
-          }
-          
-          const formatted_stack = state.stack.map((val, index) => 
-            format_count(val, state.style, index)
-          );
-          
-          let count_str = formatted_stack.join(state.separator);
-          if (state['separator-placement'] === 'embedded-after') {
-            count_str += state.separator;
-          }
-          
-          state.count = count_str;
+          active_machine.enter();
+          machine_to_exit = active_machine;
         }
       } else if (tag === 'rt·counter·snapshot') {
         const counter_name = node.getAttribute('counter');
         const snapshot_name = node.getAttribute('snapshot');
         
         if (counter_name && snapshot_name && RT.dict_instance[counter_name]) {
-          const state = RT.dict_instance[counter_name];
-          const depth = state.stack.length - 1;
+          const active_machine = RT.dict_instance[counter_name];
 
-          if (state.empty[depth]) {
-               console.error(`RT-Manuscript Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT·Counter·step> before taking a snapshot.`);
+          if (active_machine.status === 'empty') {
+               console.error(`RT-Manuscript Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A step is required first.`);
           } else {
-               RT.dict_snapshot[snapshot_name] = clone_state(state);
+               RT.dict_snapshot[snapshot_name] = active_machine.clone();
           }
         }
       }
@@ -189,25 +222,25 @@
         child = child.nextElementSibling;
       }
 
-      if (pushed_name) {
-        RT.dict_instance[pushed_name].stack.pop();
-        RT.dict_instance[pushed_name].empty.pop();
+      if (machine_to_exit) {
+        machine_to_exit.exit();
       }
     }
 
     walk(root_node);
 
-    const reads = root_node.querySelectorAll('RT·Counter·read');
+    const reads = root_node.querySelectorAll('RT·counter·read, rt·counter·read');
     for (let i = 0; i < reads.length; i++) {
       const snapshot_name = reads[i].getAttribute('snapshot');
       const key = reads[i].getAttribute('key') || 'count'; 
       
       if (snapshot_name && RT.dict_snapshot[snapshot_name]) {
-        const value = RT.dict_snapshot[snapshot_name][key];
+        const snapshot_machine = RT.dict_snapshot[snapshot_name];
+        const value = snapshot_machine[key];
         reads[i].innerHTML = (value !== undefined) ? value : `[Missing key: ${key}]`;
       } else {
         reads[i].innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
-        console.error(`RT-Manuscript Layout Error: <RT·Counter·read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
+        console.error(`RT-Manuscript Layout Error: <RT·counter·read> failed. No snapshot named '${snapshot_name}' found.`);
       }
     }
   });

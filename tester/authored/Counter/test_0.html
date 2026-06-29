@@ -1,68 +1,216 @@
-<!-- smoke test basic count, no default args -->
+<!-- smoke test
+
+make("A"){}: (empty,)
+      ^ scoped by name
+
+snapshot() -> (empty,)
+
+step("A"){
+
+  snapshot() == (preamble,[0])
+
+  step("A"){ 
+    snapshot() == (preamble,[0,0])
+  } 
+
+  snapshot() ==  (between,[0,0])
+
+  step("A"){
+    snapshot() == (preamble,[0,1])
+  }
+
+  snapshot() ==  (between,[0,1])
+
+} 
+
+snapshot() == (between,[0])
+
+step("A"){ : (rest,[1])
+
+  snapshot() == (preamble,[1])
+
+  step("A"){
+    snapshot() == (preamble,[1,0])
+  }
+
+  snapshot() == (between,[1,0])
+
+  step("A"){
+    snapshot() == (preamble,[1,1])
+  }
+
+} 
+
+snapshot() == (between,[1])
+
+-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Manuscript Counter Test Bench</title>
-    <script src="RT-Style_locator.js"></script>
+    <title>Counter Status Machine Diagnostics</title>
+    <script src="RT-Manuscript_locator.js"></script>
     <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
       window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
     </script>
+    <style>
+      .indent { margin-left: 2rem; border-left: 1px solid #444; padding-left: 1rem; }
+      .comment { color: #6a9955; }
+      .line { margin-bottom: 0.5rem; font-family: monospace; }
+    </style>
   </head>
   <body>
+    <RT·theme-selector></RT·theme-selector>
     <RT·article>
+      <RT·title 
+        author="Thomas Walker Lynch" 
+        date="2026-06-29 23:17Z" 
+        title="Counter Status Machine Diagnostics">
+      </RT·title>
 
-      <RT·Counter·make counter="figure" style="Natural" on-first-step="1" separator="."></RT·Counter·make>
-      
-      <h1>Primary Analysis</h1>
-      <p>
-        Observe the data in Figure 
-        <RT·Counter·step counter="figure"></RT·Counter·step>
-        <RT·Counter·snapshot counter="figure" snapshot="fig-primary"></RT·Counter·snapshot>
-        <RT·Counter·read snapshot="fig-primary" key="count"></RT·Counter·read>.
-      </p>
+      <div class="line"><span class="comment">// Initialize scoped counter</span></div>
+      <RT·Counter·make counter="A" style="NaturalNumber" on-first-step="0" separator=" ,"></RT·Counter·make>
+      <div class="line">make("A"){} : </div>
 
-      <RT·Counter·indent counter="figure">
-        <p>
-          Detail view of the left quadrant: Figure 
-          <RT·Counter·step counter="figure"></RT·Counter·step>
-          <RT·Counter·snapshot counter="figure" snapshot="fig-sub-left"></RT·Counter·snapshot>
-          <RT·Counter·read snapshot="fig-sub-left" key="count"></RT·Counter·read>.
-        </p>
-        
-        <p>
-          Detail view of the right quadrant: Figure 
-          <RT·Counter·step counter="figure"></RT·Counter·step>
-          <RT·Counter·snapshot counter="figure" snapshot="fig-sub-right"></RT·Counter·snapshot>
-          <RT·Counter·read snapshot="fig-sub-right" key="count"></RT·Counter·read>.
-        </p>
-        
-        <RT·Counter·indent counter="figure">
-          <p>
-            Microscopic inspection: Figure 
-            <RT·Counter·step counter="figure"></RT·Counter·step>
-            <RT·Counter·snapshot counter="figure" snapshot="fig-micro"></RT·Counter·snapshot>
-            <RT·Counter·read snapshot="fig-micro" key="count"></RT·Counter·read>.
-          </p>
-        </RT·Counter·indent>
-      </RT·Counter·indent>
+      <div class="line"><span class="comment">// attempt to snapshot an empty counter will generate an error in the console</span></div>
+      <div class="line">
+        snapshot() -> (
+          <RT·Counter·snapshot counter="A" snapshot="s1"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="s1" key="status"></RT·Counter·read> ,
+          [<RT·Counter·read snapshot="s1" key="count"></RT·Counter·read>]
+        )
+      </div>
 
-      <h1>Secondary Analysis</h1>
-      <p>
-        Proceeding to the next major component, shown in Figure 
-        <RT·Counter·step counter="figure"></RT·Counter·step>
-        <RT·Counter·snapshot counter="figure" snapshot="fig-secondary"></RT·Counter·snapshot>
-        <RT·Counter·read snapshot="fig-secondary" key="count"></RT·Counter·read>.
-      </p>
+      <div class="line">step("A"){</div>
+      <RT·Counter·step counter="A">
+        <div class="indent">
+          <div class="line">
+            snapshot() == (
+              <RT·Counter·snapshot counter="A" snapshot="s2"></RT·Counter·snapshot>
+              <RT·Counter·read snapshot="s2" key="status"></RT·Counter·read> ,
+              [<RT·Counter·read snapshot="s2" key="count"></RT·Counter·read>]
+            ) 
+            <span class="comment">// Expected: ( preamble ,[0] )</span>
+          </div>
 
-      <div class="reference-box">
-        <h2>Forward Reference Validation</h2>
-        <p>This text proves we can accurately call back to earlier elements.</p>
-        <ul>
-          <li>The primary analysis was Figure <RT·Counter·read snapshot="fig-primary" key="count"></RT·Counter·read>.</li>
-          <li>The left quadrant was Figure <RT·Counter·read snapshot="fig-sub-left" key="count"></RT·Counter·read>.</li>
-          <li>The microscopic view was Figure <RT·Counter·read snapshot="fig-micro" key="count"></RT·Counter·read>.</li>
-        </ul>
+          <div class="line">step("A"){</div>
+          <RT·Counter·step counter="A">
+            <div class="indent">
+              <div class="line">
+                snapshot() == (
+                  <RT·Counter·snapshot counter="A" snapshot="s3"></RT·Counter·snapshot>
+                  <RT·Counter·read snapshot="s3" key="status"></RT·Counter·read> ,
+                  [<RT·Counter·read snapshot="s3" key="count"></RT·Counter·read>]
+                ) 
+                <span class="comment">// Expected: ( preamble ,[0 ,0] )</span>
+              </div>
+            </div>
+          </RT·Counter·step>
+          <div class="line">}</div>
+
+          <div class="line">
+            snapshot() == (
+              <RT·Counter·snapshot counter="A" snapshot="s4"></RT·Counter·snapshot>
+              <RT·Counter·read snapshot="s4" key="status"></RT·Counter·read> ,
+              [<RT·Counter·read snapshot="s4" key="count"></RT·Counter·read>]
+            ) 
+            <span class="comment">// Expected: ( between ,[0 ,0] )</span>
+          </div>
+
+          <div class="line">step("A"){</div>
+          <RT·Counter·step counter="A">
+            <div class="indent">
+              <div class="line">
+                snapshot() == (
+                  <RT·Counter·snapshot counter="A" snapshot="s5"></RT·Counter·snapshot>
+                  <RT·Counter·read snapshot="s5" key="status"></RT·Counter·read> ,
+                  [<RT·Counter·read snapshot="s5" key="count"></RT·Counter·read>]
+                ) 
+                <span class="comment">// Expected: ( preamble ,[0 ,1] )</span>
+              </div>
+            </div>
+          </RT·Counter·step>
+          <div class="line">}</div>
+
+          <div class="line">
+            snapshot() == (
+              <RT·Counter·snapshot counter="A" snapshot="s6"></RT·Counter·snapshot>
+              <RT·Counter·read snapshot="s6" key="status"></RT·Counter·read> ,
+              [<RT·Counter·read snapshot="s6" key="count"></RT·Counter·read>]
+            ) 
+            <span class="comment">// Expected: ( between ,[0 ,1] )</span>
+          </div>
+        </div>
+      </RT·Counter·step>
+      <div class="line">}</div>
+
+      <div class="line">
+        snapshot() == (
+          <RT·Counter·snapshot counter="A" snapshot="s7"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="s7" key="status"></RT·Counter·read> ,
+          [<RT·Counter·read snapshot="s7" key="count"></RT·Counter·read>]
+        ) <span class="comment">// Expected: ( between ,[0] )</span>
+      </div>
+
+      <div class="line">step("A"){</div>
+      <RT·Counter·step counter="A">
+        <div class="indent">
+          <div class="line">
+            snapshot() == (
+              <RT·Counter·snapshot counter="A" snapshot="s8"></RT·Counter·snapshot>
+              <RT·Counter·read snapshot="s8" key="status"></RT·Counter·read> ,
+              [<RT·Counter·read snapshot="s8" key="count"></RT·Counter·read>]
+            ) <span class="comment">// Expected: ( preamble ,[1] )</span>
+          </div>
+
+          <div class="line">step("A"){</div>
+          <RT·Counter·step counter="A">
+            <div class="indent">
+              <div class="line">
+                snapshot() == (
+                  <RT·Counter·snapshot counter="A" snapshot="s9"></RT·Counter·snapshot>
+                  <RT·Counter·read snapshot="s9" key="status"></RT·Counter·read> ,
+                  [<RT·Counter·read snapshot="s9" key="count"></RT·Counter·read>]
+                ) <span class="comment">// Expected: ( preamble ,[1 ,0] )</span>
+              </div>
+            </div>
+          </RT·Counter·step>
+          <div class="line">}</div>
+
+          <div class="line">
+            snapshot() == (
+              <RT·Counter·snapshot counter="A" snapshot="s10"></RT·Counter·snapshot>
+              <RT·Counter·read snapshot="s10" key="status"></RT·Counter·read> ,
+              [<RT·Counter·read snapshot="s10" key="count"></RT·Counter·read>]
+            ) <span class="comment">// Expected: ( between ,[1 ,0] )</span>
+          </div>
+
+          <div class="line">step("A"){</div>
+          <RT·Counter·step counter="A">
+            <div class="indent">
+              <div class="line">
+                snapshot() == (
+                  <RT·Counter·snapshot counter="A" snapshot="s11"></RT·Counter·snapshot>
+                  <RT·Counter·read snapshot="s11" key="status"></RT·Counter·read> ,
+                  [<RT·Counter·read snapshot="s11" key="count"></RT·Counter·read>]
+                ) <span class="comment">// Expected: ( preamble ,[1 ,1] )</span>
+              </div>
+            </div>
+          </RT·Counter·step>
+          <div class="line">}</div>
+        </div>
+      </RT·Counter·step>
+      <div class="line">}</div>
+
+      <div class="line">
+        snapshot() == (
+          <RT·Counter·snapshot counter="A" snapshot="s12"></RT·Counter·snapshot>
+          <RT·Counter·read snapshot="s12" key="status"></RT·Counter·read> ,
+          [<RT·Counter·read snapshot="s12" key="count"></RT·Counter·read>]
+        ) <span class="comment">// Expected: ( between ,[1] )</span>
       </div>
 
     </RT·article>

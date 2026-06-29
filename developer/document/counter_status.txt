@@ -1,0 +1,97 @@
+
+--------------------------------------------------------------------------------
+2026-06-29 15:31:50 Z
+
+  Mile marker counters count when they are found in the walk. They have no
+  scope, or at least that scope extends until the next step operation.
+
+  In contract, scoped counters have a value that applies within a scope.
+  The problem is the 'between' scope areas, where the parent scope is
+  in effect.  Sections in a document do not have in between areas, for example,
+  but code in a program does.
+
+  This approach can do either.  
+
+    For mile markers, use the full length count.  The scoping is only
+    necessary for indention, the between counts carry the count down to
+    the next count.  
+
+    For scoped count, when the state is 'between', drop the last
+    member of the list when reporting the count.  If the list has
+    only one member, then dropping it leaves the status 'empty'.
+
+
+    make("A"){}: (empty,)
+          ^ scoped by name
+
+    snapshot() -> (empty,)
+
+    step("A"){
+
+      snapshot() == (preamble,[0])
+
+      step("A"){ 
+        snapshot() == (preamble,[0,0])
+      } 
+
+      snapshot() ==  (between,[0,0])
+
+      step("A"){
+        snapshot() == (preamble,[0,1])
+      }
+
+      snapshot() ==  (between,[0,1])
+
+    } 
+
+    snapshot() == (between,[0])
+
+    step("A"){ : (rest,[1])
+
+      snapshot() == (preamble,[1])
+
+      step("A"){
+        snapshot() == (preamble,[1,0])
+      }
+
+      snapshot() == (between,[1,0])
+
+      step("A"){
+        snapshot() == (preamble,[1,1])
+      }
+
+    } 
+
+    snapshot() == (between,[1])
+
+  ----
+  notes:
+
+  -I use the word 'status' instead of 'state' so as to disambiguate other eventualities of state in the same context. (This was done when describing second order machines in TTCA)
+
+  -'init' create the list and give it an initial value
+  -`inc` means to add one to the last counter position
+  -'indent`  is to append a 0
+
+  keep a two status window  [status_current, status_prior]  or status_current
+
+  make(): status -> empty, there is no list
+
+  upon entry to step:
+
+    empty: init
+    preamble: indent
+    between: inc
+
+    status -> preamble
+
+    continue with scoped code
+
+  on step closing:
+
+    empty: throw error
+    preamble: keep the counter value
+    between: drop last value from counter
+
+    status -> between
+

@@ -5,7 +5,6 @@ window.RT = window.RT || {};
 (function() {
   const themes = [
     'inverse_wheat'
-    ,'inverse_wheat_DS'
     ,'golden_wheat'
     ,'wheat'
   ];

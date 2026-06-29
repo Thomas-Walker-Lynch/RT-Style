@@ -1,4 +1,4 @@
-// Theme/inverse_wheat.js
+// Theme/inverse_wheat_DS.js
 
 window.RT = window.RT || {};
 window.RT.theme_library = window.RT.theme_library || {};
@@ -6,45 +6,45 @@ window.RT.theme_library = window.RT.theme_library || {};
 window.RT.theme_library['inverse_wheat'] = {
   meta: {
     is_dark: true,
-    name: "inverse_wheat"
+    name: "inverse_wheat_DS"
   },
   surface: {
-    0: "oklch(0.15 0 0)",
-    1: "oklch(0.18 0 0)",
-    2: "oklch(0.21 0 0)",
-    3: "oklch(0.24 0 0)",
-    input: "oklch(0.19 0 0)",
-    code: "oklch(0.17 0 0)",
-    select: "oklch(0.30 0.05 80)"
+    0: "oklch(0.157 0 0)",
+    1: "oklch(0.198 0 0)",
+    2: "oklch(0.221 0 0)",
+    3: "oklch(0.240 0 0)",
+    input: "oklch(0.210 0 0)",
+    code: "oklch(0.204 0 0)",
+    select: "oklch(0.358 0.073 88)"
   },
   content: {
-    main: "oklch(0.85 0.05 90)",
-    muted: "oklch(0.70 0.03 90)",
-    subtle: "oklch(0.50 0.02 90)",
-    inverse: "oklch(0.15 0 0)"
+    main: "oklch(0.927 0.050 97)",
+    muted: "oklch(0.699 0.030 78)",
+    subtle: "oklch(0.522 0.022 82)",
+    inverse: "oklch(0.157 0 0)"
   },
   brand: {
-    primary: "oklch(0.75 0.15 80)",
-    secondary: "oklch(0.65 0.12 70)",
-    tertiary: "oklch(0.60 0.10 60)",
-    link: "oklch(0.75 0.15 85)"
+    primary: "oklch(0.841 0.173 85)",
+    secondary: "oklch(0.827 0.135 78)",
+    tertiary: "oklch(0.795 0.081 66)",
+    link: "oklch(0.865 0.177 90)"
   },
   border: {
-    faint: "oklch(0.25 0.01 90)",
-    regular: "oklch(0.35 0.02 90)",
-    strong: "oklch(0.45 0.03 90)"
+    faint: "oklch(0.280 0.018 78)",
+    regular: "oklch(0.386 0.028 82)",
+    strong: "oklch(0.533 0.041 77)"
   },
   state: {
-    success: "oklch(0.60 0.12 130)",
-    warning: "oklch(0.65 0.15 50)",
-    error: "oklch(0.55 0.15 25)",
-    info: "oklch(0.60 0.10 240)"
+    success: "oklch(0.671 0.168 137)",
+    warning: "oklch(0.767 0.159 68)",
+    error: "oklch(0.591 0.172 24)",
+    info: "oklch(0.661 0.078 232)"
   },
   syntax: {
-    keyword: "oklch(0.70 0.15 50)",
-    string: "oklch(0.75 0.10 130)",
-    func: "oklch(0.80 0.12 85)",
-    comment: "oklch(0.55 0.02 90)"
+    keyword: "oklch(0.825 0.146 72)",
+    string: "oklch(0.804 0.132 122)",
+    func: "oklch(0.756 0.134 39)",
+    comment: "oklch(0.573 0.035 78)"
   },
   page: {
     width: "6.5in",
