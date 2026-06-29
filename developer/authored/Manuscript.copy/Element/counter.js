@@ -6,7 +6,7 @@
 (function() {
 
   if (!RT) {
-    console.error("RT not defined - was RT-Style_make run?");
+    console.error("RT not defined - was RT-Manuscript_make run?");
     return;
   }
   if (!RT.Element) {
@@ -89,7 +89,7 @@
       }
 
       if (isNaN(num) || num < 1) {
-        console.error(`RT-Style Layout Error: Type mismatch. Invalid 'on-first-step' value '${val_str}' for style '${style}' in counter '${counter_name}'.`);
+        console.error(`RT-Manuscript Layout Error: Type mismatch. Invalid 'on-first-step' value '${val_str}' for style '${style}' in counter '${counter_name}'.`);
         return 1;
       }
       return num;
@@ -176,7 +176,7 @@
           const depth = state.stack.length - 1;
 
           if (state.empty[depth]) {
-               console.error(`RT-Style Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT·Counter·step> before taking a snapshot.`);
+               console.error(`RT-Manuscript Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A person must use <RT·Counter·step> before taking a snapshot.`);
           } else {
                RT.dict_snapshot[snapshot_name] = clone_state(state);
           }
@@ -207,7 +207,7 @@
         reads[i].innerHTML = (value !== undefined) ? value : `[Missing key: ${key}]`;
       } else {
         reads[i].innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
-        console.error(`RT-Style Layout Error: <RT·Counter·read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
+        console.error(`RT-Manuscript Layout Error: <RT·Counter·read> failed. No snapshot named '${snapshot_name}' found in the dictionary.`);
       }
     }
   });

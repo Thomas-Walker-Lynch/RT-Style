@@ -21,7 +21,7 @@ Next heading 2                3
 (function() {
 
   if (!window.RT) {
-    console.error("RT not defined - was RT-Style_make run?");
+    console.error("RT not defined - was RT-Manuscript_make run?");
     return;
   }
   if (!window.RT.Element) {

@@ -6,7 +6,7 @@
 (function() {
 
   if (!window.RT) {
-    console.error("RT not defined - was RT-Style_make run?");
+    console.error("RT not defined - was RT-Manuscript_make run?");
     return;
   }
   if (!window.RT.Element) {
@@ -62,7 +62,7 @@
       container.addEventListener('change', (e) => {
         if(e.target.name === 'RT·theme') {
           // Saves 'inverse_wheat' to local storage
-          localStorage.setItem('RT-Style·theme_preference', e.target.value);
+          localStorage.setItem('RT-Manuscript·theme_preference', e.target.value);
           location.reload(); 
         }
       });

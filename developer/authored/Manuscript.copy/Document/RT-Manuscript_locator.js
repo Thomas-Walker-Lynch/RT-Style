@@ -1,7 +1,7 @@
 /*
   immediate.js
 
-  There are 4 variations for RT-Style-locator.js:
+  There are 4 variations for RT-Manuscript-locator.js:
 
   URL_only - used by websites
   indirect - used by Harmony projects, except for RT-Manuscript
@@ -14,5 +14,5 @@ window.RT = window.RT || {};
 
 (function() {
   window.RT.dirpr_library = "..";
-  document.write('<script src="' + window.RT.dirpr_library + '/Core/RT-Style_make.js"><\/script>');
+  document.write('<script src="' + window.RT.dirpr_library + '/Core/RT-Manuscript_make.js"><\/script>');
 })();

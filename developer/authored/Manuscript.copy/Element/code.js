@@ -7,7 +7,7 @@
 (function(){
 
   if (!RT) {
-    console.error("RT not defined – was RT-Style_make run?");
+    console.error("RT not defined – was RT-Manuscript_make run?");
     return;
   }
   if (!RT.Element) {
