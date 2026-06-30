@@ -1,6 +1,7 @@
 /*
   Processes <RT·counter·*> tags.
   Calculates numbering, maintains the explicit status machine, manages snapshots, and outputs values for read tags.
+  Supports two modes: 'scoped' (default) and 'milestone'.
 */
 
 (function() {
@@ -18,81 +19,250 @@
   RT.dict_instance = RT.dict_instance || {};
   RT.dict_snapshot = RT.dict_snapshot || {};
 
-  class CounterMachine {
-    constructor(first_step_val, style, separator, separator_placement) {
-      this.list = [];
-      this.status = 'empty'; // 'empty', 'preamble', 'between'
-      this.first_step_val = first_step_val;
-      this.style = style || 'NaturalNumber';
-      this.separator = separator || '.';
-      this.separator_placement = separator_placement || 'embedded';
-      this.count = '';
+
+  class Count {
+    constructor() {
+      this.status = 'empty';
+      this.list = null;
     }
 
-    enter() {
-      if (this.status === 'empty') {
-        this.list.push(this.first_step_val);
-        this.status = 'preamble';
-      } else if (this.status === 'preamble') {
-        this.list.push(0); // indent appends 0
-        this.status = 'preamble';
-      } else if (this.status === 'between') {
-        this.list[this.list.length - 1] += 1; // inc last value
-        this.status = 'preamble';
+    reset() {
+      this.status = 'preamble';
+      this.list = [0];
+    }
+
+    reset(list) {
+      if (Array.isArray(list)) {
+        const is_natural = list.every(val => Number.isInteger(val) && val >= 0);
+        if (is_natural) {
+          this.list = list.length > 0 ? [...list] : null;
+        } else {
+          console.error("RT-Manuscript Layout Error: Counter list must contain only natural numbers.");
+          this.list = null;
+        }
+      } else {
+        this.list = null;
       }
-      this.update_count_string();
+    }
+
+
+    read(...path) {
+      if (path.length === 0) return undefined;
+      const key = path[0];
+
+      if (key === 'list') {
+        if (this.status === 'empty') {
+          console.error("RT-Manuscript Layout Error: Attempted to read 'list' from an empty Count object.");
+          return null;
+        }
+        if (!this.list) return null;
+        
+        if (path[1] === 'short') {
+          return this.list.slice(0, -1);
+        }
+        return [...this.list];
+      }
+      
+      if (key === 'status') {
+        return this.status;
+      }
+
+      return undefined;
+    }
+
+    write(key, value) {
+      if (key === 'status') {
+        this.status = value;
+      } else if (key === 'list') {
+        if (Array.isArray(value)) {
+          const is_natural = value.every(val => Number.isInteger(val) && val >= 0);
+          if (is_natural) {
+            this.list = value.length > 0 ? [...value] : null;
+          } else {
+            console.error("RT-Manuscript Layout Error: Counter list must contain only natural numbers.");
+            this.list = null;
+          }
+        } else {
+          this.list = null;
+        }
+      } else if (key === 'Count' || key === 'count') {
+        const source_count = value instanceof Count ? value : (value && value.count instanceof Count ? value.count : null);
+        if (source_count) {
+          this.status = source_count.status;
+          this.list = source_count.list ? [...source_count.list] : null;
+        } else {
+          console.error("RT-Manuscript Layout Error: Invalid object provided to write('Count').");
+        }
+      }
+    }
+
+    increment() {
+      if (this.status === 'empty') {
+        console.error("RT-Manuscript Layout Error: Attempted to increment an empty Count object.");
+        return;
+      }
+      if (this.list && this.list.length > 0) {
+        this.list[this.list.length - 1] += 1;
+      }
+    }
+
+    push(val) {
+      if (this.status === 'empty') {
+        console.error("RT-Manuscript Layout Error: Attempted to push to an empty Count object.");
+        return;
+      }
+      if (!this.list) {
+        this.list = [];
+      }
+      this.list.push(val);
+    }
+
+    pop() {
+      if (this.status === 'empty') {
+        console.error("RT-Manuscript Layout Error: Attempted to pop from an empty Count object.");
+        return undefined;
+      }
+      if (this.list && this.list.length > 0) {
+        const val = this.list.pop();
+        if (this.list.length === 0) {
+            this.list = null; // Revert to strict null state if emptied
+        }
+        return val;
+      }
+      return undefined;
+    }
+
+    clone() {
+      const c = new Count();
+      c.status = this.status;
+      c.list = this.list ? [...this.list] : null;
+      return c;
+    }
+
+  }
+
+  class CounterMachine {
+    constructor(config) {
+      this.count = new Count();
+      this.style = ['NaturalNumber']; 
+      this.separator = '.';
+      this.separator_placement = 'embedded';
+      this.mode = 'scoped'; // 'scoped', 'milestone'
+
+      if (config) {
+        this.write(config);
+      }
+    }
+
+    read(...path) {
+      if (path.length === 0) return undefined;
+      
+      if (path[0] === 'count') {
+        if (path.length === 1) {
+          return this.count.clone();
+        }
+        return this.count.read(...path.slice(1));
+      }
+      
+      return path.reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this);
+    }
+
+    write(dict) {
+      for (const [key, value] of Object.entries(dict)) {
+        if (key === 'style') {
+          this.style = Array.isArray(value) ? value : [value];
+        } else if (key === 'Count' || key === 'count') {
+          // Support copying from another CounterMachine or Count object
+          const source_count = value instanceof CounterMachine ? value.count : (value instanceof Count ? value : null);
+          if (source_count) {
+            this.count = source_count.clone();
+          } else {
+            console.error("RT-Manuscript Layout Error: Invalid object provided to write('Count').");
+          }
+        } else {
+          this[key] = value;
+        }
+      }
+    }
+
+    enter(first_step_val) {
+      const current_status = this.count.read('status');
+      
+      if (current_status === 'empty') {
+        // Transition state strictly before mutating the list
+        this.count.write('status', 'preamble');
+        this.count.push(first_step_val !== undefined ? first_step_val : 0);
+      } else if (current_status === 'preamble') {
+        this.count.push(0); // indent appends 0
+        this.count.write('status', 'preamble');
+      } else if (current_status === 'between') {
+        this.count.increment();
+        this.count.write('status', 'preamble');
+      }
     }
 
     exit() {
-      if (this.status === 'empty') {
+      const current_status = this.count.read('status');
+      
+      if (current_status === 'empty') {
         console.error("RT-Manuscript Layout Error: Attempted to exit an empty counter scope.");
-      } else if (this.status === 'preamble') {
-        this.status = 'between';
-      } else if (this.status === 'between') {
-        this.list.pop();
-        this.status = 'between';
+      } else if (current_status === 'preamble') {
+        this.count.write('status', 'between');
+      } else if (current_status === 'between') {
+        this.count.pop();
+        this.count.write('status', 'between');
       }
-      this.update_count_string();
     }
 
-    update_count_string() {
-      if (this.status === 'empty' || this.list.length === 0) {
-        this.count = '';
-        return;
+    to_string(count_obj) {
+      if (!count_obj) return '';
+      
+      const status = count_obj.read('status');
+      if (status === 'empty') return '';
+      
+      let active_list;
+      if (this.mode === 'scoped' && status === 'between') {
+        active_list = count_obj.read('list', 'short');
+      } else {
+        active_list = count_obj.read('list');
       }
       
-      const formatted_list = this.list.map((val, index) => 
-        this.format_count(val, this.style, index)
-      );
+      // Safety check catches null or empty arrays
+      if (!active_list || active_list.length === 0) {
+        return '';
+      }
+
+      const formatted_list = active_list.map((val, depth) => {
+        const current_style = depth < this.style.length ? this.style[depth] : this.style[this.style.length - 1];
+        const method_name = `to_${current_style}`;
+        return typeof this[method_name] === 'function' ? this[method_name](val) : this.to_NaturalNumber(val);
+      });
       
       let count_str = formatted_list.join(this.separator);
       if (this.separator_placement === 'embedded-after') {
         count_str += this.separator;
       }
-      this.count = count_str;
+      return count_str;
     }
 
-    format_count(num, style, depth) {
-      if (style === 'roman') return this.to_roman(num).toLowerCase();
-      if (style === 'Roman') return this.to_roman(num);
-      if (style === 'Alpha') return String.fromCharCode(64 + num); 
-      if (style === 'alpha') return String.fromCharCode(96 + num);
-      
-      if (style === 'roman-outline') {
-        const levels = ['Roman', 'Alpha', 'CountingNumber', 'alpha', 'roman'];
-        const current_style = levels[depth % levels.length];
-        return this.format_count(num, current_style, 0); 
-      }
-      
-      if (style === 'CountingNumber') {
-        return (num + 1).toString();
-      }
-      
-      // Default behavior maps to NaturalNumber
-      return num.toString();
+    // --- Atomic Type Conversions ---
+
+    to_NaturalNumber(num) { return num.toString(); }
+    from_NaturalNumber(val) { 
+      const n = parseInt(val, 10);
+      return isNaN(n) ? 0 : n;
     }
 
-    to_roman(num) {
+    to_CountingNumber(num) { return (num + 1).toString(); }
+    from_CountingNumber(val) { 
+      const n = parseInt(val, 10);
+      return isNaN(n) ? 0 : Math.max(0, n - 1);
+    }
+
+    to_roman(num) { return this.to_Roman(num).toLowerCase(); }
+    from_roman(val) { return this.from_Roman(val.toUpperCase()); }
+
+    to_Roman(num) {
       if (num < 1) return num.toString();
       const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
       let roman = '';
@@ -104,63 +274,44 @@
       }
       return roman;
     }
-
-    clone() {
-      const copy = new CounterMachine(
-        this.first_step_val, 
-        this.style, 
-        this.separator, 
-        this.separator_placement
-      );
-      copy.list = [...this.list];
-      copy.status = this.status;
-      copy.count = this.count;
-      return copy;
-    }
-
-    static parse_first_step(val_str, style, counter_name) {
-      if (!val_str) return 0; // Defaulting to 0 to support preamble logic
-
-      let num = NaN;
-
-      if (style === 'alpha') {
-        if (/^[a-z]$/.test(val_str)) {
-          num = val_str.charCodeAt(0) - 96;
+    from_Roman(val) {
+      if (!/^M*(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/i.test(val)) return 0;
+      const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
+      let temp = val.toUpperCase();
+      let num = 0;
+      let i = 0;
+      while (i < temp.length) {
+        if (i + 1 < temp.length && lookup[temp.substring(i, i + 2)]) {
+          num += lookup[temp.substring(i, i + 2)];
+          i += 2;
+        } else {
+          num += lookup[temp[i]];
+          i++;
         }
-      } else if (style === 'Alpha') {
-        if (/^[A-Z]$/.test(val_str)) {
-          num = val_str.charCodeAt(0) - 64;
-        }
-      } else if (style === 'roman' || style === 'Roman' || style === 'roman-outline') {
-        let is_upper = (style === 'Roman' || style === 'roman-outline');
-        let regex = is_upper ? /^M*(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/ : /^m*(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$/;
-
-        if (regex.test(val_str)) {
-          const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
-          let temp = val_str.toUpperCase();
-          num = 0;
-          let i = 0;
-          while (i < temp.length) {
-            if (i + 1 < temp.length && lookup[temp.substring(i, i + 2)]) {
-              num += lookup[temp.substring(i, i + 2)];
-              i += 2;
-            } else {
-              num += lookup[temp[i]];
-              i++;
-            }
-          }
-        }
-      } else {
-        if (/^\d+$/.test(val_str)) {
-          num = parseInt(val_str, 10);
-        }
-      }
-
-      if (isNaN(num) || num < 0) {
-        console.error(`RT-Manuscript Layout Error: Type mismatch. Invalid 'on-first-step' value '${val_str}' for style '${style}' in counter '${counter_name}'.`);
-        return 0;
       }
       return num;
+    }
+
+    to_Alpha(num) { return String.fromCharCode(65 + num); }
+    from_Alpha(val) {
+      if (/^[A-Z]$/.test(val)) return val.charCodeAt(0) - 65;
+      return 0;
+    }
+
+    to_alpha(num) { return String.fromCharCode(97 + num); }
+    from_alpha(val) {
+      if (/^[a-z]$/.test(val)) return val.charCodeAt(0) - 97;
+      return 0;
+    }
+
+    clone() {
+      const copy = new CounterMachine();
+      copy.count = this.count.clone();
+      copy.style = [...this.style];
+      copy.separator = this.separator;
+      copy.separator_placement = this.separator_placement;
+      copy.mode = this.mode;
+      return copy;
     }
   }
 
@@ -179,26 +330,34 @@
       if (tag === 'rt·counter·make') {
         const name = node.getAttribute('counter');
         if (name) {
-          const style = node.getAttribute('style') || 'NaturalNumber';
+          const style_attr = node.getAttribute('style');
+          const parsed_style = style_attr ? style_attr.split(',').map(s => s.trim()) : ['NaturalNumber'];
+          
+          RT.dict_instance[name] = new CounterMachine({
+            style: parsed_style,
+            separator: node.getAttribute('separator') || '.',
+            separator_placement: node.getAttribute('separator-placement') || 'embedded',
+            mode: node.getAttribute('mode') || 'scoped'
+          });
+
           const on_first_step_str = node.getAttribute('on-first-step');
-          const separator = node.getAttribute('separator');
-          const separator_placement = node.getAttribute('separator-placement');
-          
-          let first_step_int = CounterMachine.parse_first_step(on_first_step_str, style, name);
-          
-          RT.dict_instance[name] = new CounterMachine(
-            first_step_int, 
-            style, 
-            separator, 
-            separator_placement
-          );
+          if (on_first_step_str) {
+            const top_style = parsed_style[0];
+            const method_name = `from_${top_style}`;
+            const active_machine = RT.dict_instance[name];
+            const initial_val = typeof active_machine[method_name] === 'function' 
+              ? active_machine[method_name](on_first_step_str) 
+              : active_machine.from_NaturalNumber(on_first_step_str);
+              
+            active_machine.first_step_val = initial_val;
+          }
         }
       } else if (tag === 'rt·counter·step') {
         const name = node.getAttribute('counter');
         if (name && RT.dict_instance[name]) {
           const active_machine = RT.dict_instance[name];
-          
-          active_machine.enter();
+          active_machine.enter(active_machine.first_step_val);
+          active_machine.first_step_val = undefined; // consume it
           machine_to_exit = active_machine;
         }
       } else if (tag === 'rt·counter·snapshot') {
@@ -208,7 +367,7 @@
         if (counter_name && snapshot_name && RT.dict_instance[counter_name]) {
           const active_machine = RT.dict_instance[counter_name];
 
-          if (active_machine.status === 'empty') {
+          if (active_machine.read('count', 'status') === 'empty') {
                console.error(`RT-Manuscript Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A step is required first.`);
           } else {
                RT.dict_snapshot[snapshot_name] = active_machine.clone();
@@ -230,16 +389,41 @@
     walk(root_node);
 
     const reads = root_node.querySelectorAll('RT·counter·read, rt·counter·read');
-    for (let i = 0; i < reads.length; i++) {
-      const snapshot_name = reads[i].getAttribute('snapshot');
-      const key = reads[i].getAttribute('key') || 'count'; 
+    
+    if (typeof TM !== 'undefined' && TM.loop) {
+        TM.loop(reads, function(node) {
+            process_read_node(node);
+        });
+    } else {
+        for (let i = 0; i < reads.length; i++) {
+            process_read_node(reads[i]);
+        }
+    }
+
+    function process_read_node(node) {
+      const snapshot_name = node.getAttribute('snapshot');
+      const key = node.getAttribute('key') || 'count'; 
       
       if (snapshot_name && RT.dict_snapshot[snapshot_name]) {
         const snapshot_machine = RT.dict_snapshot[snapshot_name];
-        const value = snapshot_machine[key];
-        reads[i].innerHTML = (value !== undefined) ? value : `[Missing key: ${key}]`;
+        
+        if (key === 'count') {
+          const raw_state = snapshot_machine.read('count');
+          node.innerHTML = snapshot_machine.to_string(raw_state);
+        } else {
+          const keys = key.split('.');
+          const value = snapshot_machine.read(...keys);
+          
+          if (value === null) {
+            node.innerHTML = 'null';
+          } else if (value !== undefined) {
+            node.innerHTML = Array.isArray(value) ? value.join(',') : value;
+          } else {
+            node.innerHTML = `[Missing key: ${key}]`;
+          }
+        }
       } else {
-        reads[i].innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
+        node.innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
         console.error(`RT-Manuscript Layout Error: <RT·counter·read> failed. No snapshot named '${snapshot_name}' found.`);
       }
     }
