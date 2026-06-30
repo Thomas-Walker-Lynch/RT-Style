@@ -170,7 +170,11 @@
     write(dict) {
       for (const [key, value] of Object.entries(dict)) {
         if (key === 'style') {
-          this.style = Array.isArray(value) ? value : [value];
+          let parsed = Array.isArray(value) ? value : [value];
+          if (parsed.length === 1 && parsed[0] === 'outline') {
+            parsed = ['Roman', 'Alpha', 'roman', 'alpha', 'CountingNumber'];
+          }
+          this.style = parsed;
         } else if (key === 'Count' || key === 'count') {
           // Support copying from another CounterMachine or Count object
           const source_count = value instanceof CounterMachine ? value.count : (value instanceof Count ? value : null);
@@ -263,13 +267,14 @@
     from_roman(val) { return this.from_Roman(val.toUpperCase()); }
 
     to_Roman(num) {
-      if (num < 1) return num.toString();
+      let n = num + 1; // 0-indexed to 1-indexed
+      if (n < 1) return n.toString();
       const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
       let roman = '';
       for (let i in lookup) {
-        while (num >= lookup[i]) {
+        while (n >= lookup[i]) {
           roman += i;
-          num -= lookup[i];
+          n -= lookup[i];
         }
       }
       return roman;
@@ -289,7 +294,7 @@
           i++;
         }
       }
-      return num;
+      return Math.max(0, num - 1); // 1-indexed to 0-indexed
     }
 
     to_Alpha(num) { return String.fromCharCode(65 + num); }
@@ -342,7 +347,7 @@
 
           const on_first_step_str = node.getAttribute('on-first-step');
           if (on_first_step_str) {
-            const top_style = parsed_style[0];
+            const top_style = RT.dict_instance[name].style[0];
             const method_name = `from_${top_style}`;
             const active_machine = RT.dict_instance[name];
             const initial_val = typeof active_machine[method_name] === 'function' 

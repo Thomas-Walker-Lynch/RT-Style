@@ -1,4 +1,4 @@
-// Theme/inverse_wheat_DS.js
+// Theme/inverse_wheat.js
 
 window.RT = window.RT || {};
 window.RT.theme_library = window.RT.theme_library || {};
@@ -6,7 +6,7 @@ window.RT.theme_library = window.RT.theme_library || {};
 window.RT.theme_library['inverse_wheat'] = {
   meta: {
     is_dark: true,
-    name: "inverse_wheat_DS"
+    name: "inverse_wheat"
   },
   surface: {
     0: "oklch(0.157 0 0)",

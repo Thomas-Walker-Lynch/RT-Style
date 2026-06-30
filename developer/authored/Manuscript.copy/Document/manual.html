@@ -17,7 +17,7 @@
 
       <RT·title 
         author="Thomas Walker Lynch" 
-        date="2026-06-26 09:35Z" 
+        date="2026-06-30 16:49Z" 
         title="RT Style System: Reference Manual"
         copyright="2026 Reasoning Technology">
       </RT·title>
@@ -90,10 +90,6 @@
             </td>
           </tr>
           <tr>
-            <td><RT·code>&lt;RT·term-index&gt;</RT·code></td>
-            <td>Inserts a list of the terms used in the paper and the pages they occur on.</td>
-          </tr>
-          <tr>
             <td><RT·code>&lt;RT·endnotes&gt;</RT·code></td>
             <td>Inserts a compiled list of the endnotes.</td>
           </tr>
@@ -120,18 +116,6 @@
             </td>
           </tr>
           <tr>
-            <td><RT·code>&lt;RT·term-em&gt;</RT·code></td>
-            <td>Forces visual emphasis for a term subsequent to its first occurrence.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·neologism&gt;</RT·code></td>
-            <td>Project specific vocabulary. Styled distinctly from conventional terms. Auto-generates an anchor ID prefixed with "def-neo-".</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·neologism-em&gt;</RT·code></td>
-            <td>Forces visual emphasis for a neologism subsequent to its first occurrence.</td>
-          </tr>
-          <tr>
             <td><RT·code>&lt;RT·code&gt;</RT·code></td>
             <td>Code span or pre formatted code block with theme aware borders. Automatically dedents block content.</td>
           </tr>
@@ -143,14 +127,13 @@
             <td><RT·code>&lt;RT·symbol&gt;</RT·code></td>
             <td>Technical symbol wrapper enforcing strict font weight and character spacing.</td>
           </tr>
-          <tr>
-            <td><RT·code>&lt;RT·constraint&gt;</RT·code></td>
-            <td>Highlights architectural limits or hard requirements in a distinct block.</td>
-          </tr>
         </tbody>
       </table>
 
       <h3>Declarative Counters</h3>
+      <p>
+        The counter object establishes an isolated state machine. It separates the strict numerical sequence data from the visual formatting layer, permitting precise state queries alongside heavily customizable output formatting.
+      </p>
       <table>
         <thead>
           <tr>
@@ -166,27 +149,18 @@
               <div class="attr-list">
                 <strong>Attributes:</strong><br>
                 <code>counter</code>: Required identifier.<br>
-                <code>style</code>: "Natural", "roman", "Roman", "alpha", "Alpha", or "roman-outline". (Default: "Natural")<br>
-                <code>on-first-step</code>: The starting value. (Default: "1")<br>
-                <code>separator</code>: The string separating depth counts. (Default: ".")<br>
-                <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")
+                <code>style</code>: A comma-separated list defining the formatting at each depth. Valid options: "NaturalNumber", "CountingNumber", "Roman", "roman", "Alpha", "alpha". The keyword "outline" maps to a standard mixed array. (Default: "NaturalNumber")<br>
+                <code>on-first-step</code>: The initial starting value, supplied in the format of the top-level style. (Default: "0")<br>
+                <code>separator</code>: The string joining depth sequence segments. (Default: ".")<br>
+                <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")<br>
+                <code>mode</code>: "scoped" (omits the rightmost sequence digit when reading outside a closed node) or "milestone" (reports the full completed sequence path). (Default: "scoped")
               </div>
             </td>
           </tr>
           <tr>
             <td><RT·code>&lt;RT·Counter·step&gt;</RT·code></td>
             <td>
-              Advances the counter from empty or increments to the next ordinal address.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>counter</code>: Required identifier.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·Counter·indent&gt;</RT·code></td>
-            <td>
-              Scope within tag pairs counts at a new depth. Must be closed with <code>&lt;/RT·Counter·indent&gt;</code>.<br>
+              Advances the counter state. When applied as a parent tag, the contents within its scope define a sub-level; the machine automatically pushes into a nested depth on entry and pops back to the parent container upon exit.<br>
               <div class="attr-list">
                 <strong>Attributes:</strong><br>
                 <code>counter</code>: Required identifier.
@@ -196,7 +170,7 @@
           <tr>
             <td><RT·code>&lt;RT·Counter·snapshot&gt;</RT·code></td>
             <td>
-              Deep copies the active count and styling parameters to a dictionary key.<br>
+              Clones the entire active state machine, including its current 0-indexed numerical array, operational status, and presentation configurations, saving it to a dictionary key.<br>
               <div class="attr-list">
                 <strong>Attributes:</strong><br>
                 <code>counter</code>: Required identifier.<br>
@@ -207,11 +181,11 @@
           <tr>
             <td><RT·code>&lt;RT·Counter·read&gt;</RT·code></td>
             <td>
-              Reads a field from a snapshot as innerHTML. A snapshot can be recalled from anywhere in the document.<br>
+              Recalls information from a snapshot and outputs it as innerHTML. A snapshot can be recalled from anywhere in the document.<br>
               <div class="attr-list">
                 <strong>Attributes:</strong><br>
                 <code>snapshot</code>: Required snapshot name.<br>
-                <code>key</code>: The state property to read. (Default: "count")
+                <code>key</code>: The state property to read. Dot-notation permits querying nested attributes (e.g., "count.status", "count.list"). Querying "count" outputs the style-mapped, separator-joined visual string. (Default: "count")
               </div>
             </td>
           </tr>
@@ -228,16 +202,8 @@
         </thead>
         <tbody>
           <tr>
-            <td><RT·code>&lt;RT·crossref&gt;</RT·code></td>
-            <td>Context aware internal anchor link. Visual styling applied automatically.</td>
-          </tr>
-          <tr>
             <td><RT·code>&lt;RT·endnote&gt;</RT·code></td>
             <td>Tag pair contents added as an item to the endnote list. Replaces the inline text with an anchor link.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·footnote&gt;</RT·code></td>
-            <td>Tag pair contents are automatically extracted and appended to the bottom of the active printed page container.</td>
           </tr>
         </tbody>
       </table>
