@@ -5,21 +5,23 @@
 */
 
 (function(){
-  const RT = window.RT = window.RT || {};
+
+   if (!window.RT) {
+    console.error("RT not defined - was RT-Manuscript_make run?");
+    return;
+  }
 
   // 1. The Explicit Element Roster 
   const required_elements = [
-    'counter',
-    'chapter',
-    'endnote',
-    'math',
-    'code',
-    'term',
-    'TOC',
-    'title',
-    'symbol',
-    'constraint',
-    'crossref'
+    'chapter'
+    ,'code'
+    ,'counter'
+    ,'endnote'
+    ,'math'
+    ,'symbol'
+    ,'term'
+    ,'title'
+    ,'TOC'
   ];
 
   // Shared utility functions
@@ -128,7 +130,20 @@
           height:   "auto", 
           display:  "block", 
           margin:   "1.5rem auto" 
+      }],
+
+      [ 'RT·article table', { 
+          width: "100%", 
+          borderCollapse: "collapse", 
+          marginBottom: "1.5rem" 
+      }],
+      
+      [ 'RT·article th, RT·article td', { 
+          verticalAlign: "top", 
+          padding: "0.75rem 1rem 0.75rem 0", 
+          textAlign: "left" 
       }]
+
     ];
 
     element_styles.forEach(rule => apply(rule[0], rule[1]));

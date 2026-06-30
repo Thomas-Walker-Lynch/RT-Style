@@ -11,7 +11,11 @@
 */
 
 (function(){
-  const RT = window.RT = window.RT || {};
+
+   if (!window.RT) {
+    console.error("RT not defined - was RT-Manuscript_make run?");
+    return;
+  }
 
   // 1. Declare Dependencies
   RT.load('Core/utility');

@@ -10,7 +10,11 @@ import pwd
 import grp
 import filecmp
 
-sys.path.insert(0, os.path.join(os.path.abspath("tool"), "build_component"))
+# Calculate the path relative to this script's location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Assumes this script is in developer/tool/
+# sync_engine is in developer/tool/build_component
+sys.path.insert(0, os.path.join(SCRIPT_DIR, "build_component"))
 import sync_engine
 
 HELP = """usage: promote {write|clean|ls|diff|help|dry write}
@@ -117,7 +121,6 @@ def list_tree(root_dp):
     print(f"{TM_perms}  {TM_ownergrp:<{ogw}}  {indent}{TM_name}")
 
 def cmd_write(dry=False):
-  assert_setup()
   dst_root = cpath()
   ensure_dir(dst_root, DEFAULT_DIR_MODE, dry=dry)
   src_root = dpath("scratchpad")
@@ -132,7 +135,6 @@ def cmd_write(dry=False):
   )
 
 def cmd_diff():
-  assert_setup()
   dst_root = cpath()
   src_root = dpath("scratchpad")
 
@@ -184,7 +186,6 @@ def cmd_diff():
     print("No differences found. Consumer matches developer scratchpad.")
 
 def cmd_clean():
-  assert_setup()
   consumer_root_dir = cpath()
   if not os.path.isdir(consumer_root_dir):
     return
@@ -199,6 +200,12 @@ def cmd_clean():
       except FileNotFoundError: pass
 
 def CLI():
+  assert_setup()
+  
+  repo_home = os.environ.get("REPO_HOME", ".")
+  dev_dir = os.path.join(repo_home, "developer")
+  os.chdir(dev_dir)
+
   if len(sys.argv) < 2:
     print(HELP)
     return
