@@ -1,6 +1,12 @@
 
 2026-06-28 17:14:07 Z
 
-The theme meta name field, must match the key the manifest uses to write the theme into the library. There is a third name, the file name. We should simplify this. If the names don't match then the theme selector, which accesses the 'read meta name' will fail to color in the selected theme.
+  The theme meta name field, must match the key the manifest uses to write the theme into the library. There is a third name, the file name. We should simplify this. If the names don't match then the theme selector, which accesses the 'read meta name' will fail to color in the selected theme.
 
-The RT = RT || {},  etc, should be replaced with checks and error messes, already done in some places. Things being missing is a problem.
+  The RT = RT || {},  etc, should be replaced with checks and error messes, already done in some places. Things being missing is a problem.
+
+2026-07-01 08:06:54 Z
+
+  Also paginate uses ad hoc page numbering, so it must be updated to make use of the counters.  I see a kink in the plan, as pages are generated it is not possible for a user to add cross reference that has a page number counter as its content.  I will add this to the 'todo.txt' notes, and we will punt this issue to a later versioin.
+
+  The Note tag should also do the duty of footnote and endnote. If cited in a list at the bottom of the page, it is a footnote.  If listed at the end of the document, it is an end note. Notes should then have path keys, so that footnotes and endnotes etc. can have order.

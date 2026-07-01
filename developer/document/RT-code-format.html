@@ -71,7 +71,7 @@
 
       <h2>Ad hoc namespacing</h2>
       <p>
-      Most parsers now a allow a center dot (<RT·code>·</RT·code>) in identifiers. In languages were namespaces are not explicitly available, we use the cdot to represent a namespace. Namespaces are closely related to module names, class names, interface names, and to type names,so all are written in PascalCase.  So for example, <RT·code>Math·rounded__x_coordinate</RT·code>, might be variable in the <RT·code>Math</RT·code> namespace, a function on the <RT·code>Math</RT·code> interface, etc.
+      Most parsers now a allow a typographical middle dot (<RT·code>·</RT·code>) in identifiers. In languages were namespaces are not explicitly available, we use the cdot to represent a namespace. Namespaces are closely related to module names, class names, interface names, and to type names,so all are written in PascalCase.  So for example, <RT·code>Math·rounded__x_coordinate</RT·code>, might be variable in the <RT·code>Math</RT·code> namespace, a function on the <RT·code>Math</RT·code> interface, etc.
 
       <h2>Component order</h2>
       <p>
@@ -191,6 +191,25 @@
       </ul>
       <p>Python enforces indentation syntactically. Use two-space indentation for all Python code, even though four is common in the wider ecosystem.</p>
 
+      <h1>Short stuff</h1>
+
+      <p>Generally if a compound statement fits on a single line in less 40 to 60 characters, put it on the single line. If dropping the containing braces can be done, do that also. As examples, the following forms are preferred over their extended box counterparts:</p>
+  
+      <RT·code>
+        if(x == 0) return 0;
+      </RT·code>
+
+      <RT·code>
+        if(x == 0) return 0;
+        else if(x == 1) return 10;
+        else if(x == 2) return 20;
+      </RT·code>
+
+      <RT·code>
+        while(i<=10){i++; pt++;}
+      </RT·code>
+
+
       <h1>The CLI vs. work function pattern</h1>
       <p>
         To avoid the "String Trap" (where logic is tightly coupled to the terminal and requires string serialization to reuse) executable modules must separate the Command Line Interface from the core logic.
@@ -211,29 +230,6 @@
         <li>Functions should document ownership of pointers and lifetimes.</li>
         <li>Prefer explicit <RT·code>*_count</RT·code> parameters over sentinel values when passing arrays.</li>
       </ul>
-
-      <h1>Automated formatting tools</h1>
-      <p>
-        To ensure consistency without manual drudgery, the Harmony skeleton provides a dedicated code formatter called <RT·code>RTfmt</RT·code>. A person can find this tool in the <RT·code>shared/tool/</RT·code> directory.
-      </p>
-
-      <h2>The RTfmt CLI</h2>
-      <p>
-        <RT·code>RTfmt</RT·code> is a shallow-tokenizing formatter written in Python. It parses source code into structural blocks (strings, comments, commas, and enclosures) without needing a full Abstract Syntax Tree. This architecture allows it to safely enforce RT formatting rules across multiple languages while preserving indentation and protecting native operators.
-      </p>
-      <ul>
-        <li><RT·code>RTfmt write &lt;file...&gt;</RT·code> : Formats files in place. It performs a content comparison before writing, leaving the file modification timestamp untouched if the file is already compliant.</li>
-        <li><RT·code>RT·formatter pipe</RT·code> : Reads from standard input and writes to standard output, making it ideal for editor integration.</li>
-        <li><RT·code>--lisp</RT·code> : A flag that instructs the formatter to skip the outermost enclosure padding rule, honoring the Lisp function call exception.</li>
-      </ul>
-
-      <h2>Emacs integration</h2>
-      <p>
-        For Emacs users, the <RT·code>RT·formatter.el</RT·code> file provides the <RT·code>RT·formatter-buffer</RT·code> interactive command.
-      </p>
-      <p>
-        This wrapper passes the current buffer through the <RT·code>RT·formatter pipe</RT·code> command. It automatically detects Lisp-derived modes to append the <RT·code>--lisp</RT·code> flag. Furthermore, it utilizes a non-destructive buffer replacement strategy. This ensures that a programmer's cursor position, selection marks, and window scroll state remain anchored exactly where they were before the formatting occurred.
-      </p>
 
       <h1>Exercises</h1>
       <h2>Exercise 1: Comma and function call formatting</h2>

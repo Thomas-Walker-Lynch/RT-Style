@@ -15,10 +15,8 @@
   const required_elements = [
     'chapter'
     ,'code'
-    ,'counter'
     ,'endnote'
     ,'math'
-    ,'symbol'
     ,'term'
     ,'title'
     ,'TOC'
@@ -171,7 +169,7 @@
   }
 
   //----------------------------------------
-  // Execution & Registration
+  // Registration upon load
   //
   
   // Load the element files

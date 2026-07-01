@@ -202,3 +202,5 @@ window.RT.load = function(module_path) {
 window.RT.load('Core/stage_manager');
 window.RT.load('Core/theme_make');
 window.RT.load('Theme/manifest.js')
+window.RT.load('Layout/counter');
+window.RT.load('Layout/note');

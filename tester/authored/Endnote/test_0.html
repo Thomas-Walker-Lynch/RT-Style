@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Endnote Integration Diagnostics</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+    <style>
+      .diagnostic { 
+        margin-left: 2rem; 
+        border-left: 2px solid #444; 
+        padding-left: 1rem; 
+        background-color: var(--RT·surface-1, rgba(0,0,0,0.05)); 
+        padding-top: 0.5rem; 
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .comment { color: #6a9955; font-family: monospace; }
+      .line { font-family: monospace; margin-bottom: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title 
+        author="Thomas Walker Lynch" 
+        date="2026-07-01 10:00Z" 
+        title="Endnote Integration Diagnostics">
+      </RT·title>
+
+      <p>
+        This document verifies the behavior of the refactored endnote module. The endnote system now relies on the underlying counter infrastructure. We can test this by creating an endnote here <RT·endnote>This is the first reference text, detailing a specific technical point.</RT·endnote> and then inspecting the generated snapshots.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic for Endnote 1</div>
+        <div class="comment">// The endnote script should have created snapshot: 'endnote_cite_1'</div>
+        <div class="line">
+          snapshot("endnote_cite_1") == (
+            <RT·counter·read snapshot="endnote_cite_1" key="count.status"></RT·counter·read> ,
+            [<RT·counter·read snapshot="endnote_cite_1" key="count.list"></RT·counter·read>] ,
+            "<RT·counter·read snapshot="endnote_cite_1" key="count"></RT·counter·read>"
+          )
+        </div>
+        <div class="comment">// Expected: ( preamble, [1], "1" )</div>
+      </div>
+
+      <p>
+        When a second endnote is encountered <RT·endnote>This is the second reference text, perhaps a book citation.</RT·endnote>, the counter should increment accordingly, maintaining a distinct state for the new snapshot.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic for Endnote 2</div>
+        <div class="comment">// The endnote script should have created snapshot: 'endnote_cite_2'</div>
+        <div class="line">
+          snapshot("endnote_cite_2") == (
+            <RT·counter·read snapshot="endnote_cite_2" key="count.status"></RT·counter·read> ,
+            [<RT·counter·read snapshot="endnote_cite_2" key="count.list"></RT·counter·read>] ,
+            "<RT·counter·read snapshot="endnote_cite_2" key="count"></RT·counter·read>"
+          )
+        </div>
+        <div class="comment">// Expected: ( preamble, [2], "2" )</div>
+      </div>
+
+      <p>
+        The endnote module will automatically generate the endnotes section at the bottom of the article, compiling these references and their bidirectional links using the exact same counter snapshot data read above.
+      </p>
+
+    </RT·article>
+  </body>
+</html>

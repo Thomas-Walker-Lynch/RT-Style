@@ -3,72 +3,112 @@
   Creates bidirectional links between inline citations and the generated endnotes list.
 */
 
-(function() {
+(function(){
 
-  if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
+  if(!window.RT){
+    console.error("RT not defined");
     return;
   }
-  if (!window.RT.Element) {
-    console.error("RT.Element not defined - was the state_manager run?");
+  if(!window.RT.Element){
+    console.error("RT.Element not defined");
     return;
   }
 
-  RT.Element.add( function() {
+  window.RT.Element.add(function(){
     const debug = window.RT.Debug || { log: function(){} };
-    if (debug.log) debug.log('endnote', 'Processing endnotes');
-
-    const citations = document.querySelectorAll('rt·cite');
-    if(citations.length === 0) return;
-
-    const article = document.querySelector('rt·article');
-    if(!article) return;
-
-    // 1. Ensure the H1 is a direct child of the article so the TOC can see it
-    let endnotesHeader = document.getElementById('endnotes-header');
-    if (!endnotesHeader) {
-      endnotesHeader = document.createElement('h1');
-      endnotesHeader.id = 'endnotes-header';
-      endnotesHeader.innerText = 'Endnotes';
-      article.appendChild(endnotesHeader);
+    if(debug.log){
+      debug.log('endnote' ,'Processing endnotes');
     }
 
-    // 2. Locate or generate the endnotes list container
-    let endnoteContainer = document.querySelector('rt·endnotes');
-    if(!endnoteContainer) {
-      endnoteContainer = document.createElement('rt·endnotes');
-      article.appendChild(endnoteContainer);
+    const endnotes = document.querySelectorAll('RT·endnote');
+    if(endnotes.length === 0){
+      return;
     }
-    
-    // 3. Ensure the list structure exists
-    if(!endnoteContainer.querySelector('ol')) {
-      endnoteContainer.innerHTML = '<ol></ol>';
-    }
-    
-    const list = endnoteContainer.querySelector('ol');
 
-    // Process each inline citation
-    citations.forEach((cite, index) => {
-      const refNum = index + 1;
-      const refText = cite.getAttribute('ref') || cite.innerHTML;
+    const article = document.querySelector('RT·article');
+    if(!article){
+      return;
+    }
+
+    let endnotes_header = document.getElementById('endnotes_header');
+    if(!endnotes_header){
+      endnotes_header = document.createElement('h1');
+      endnotes_header.id = 'endnotes_header';
+      endnotes_header.innerText = 'Endnotes';
+      article.appendChild(endnotes_header);
+    }
+
+    let endnote_container = document.querySelector('RT·endnotes');
+    if(!endnote_container){
+      endnote_container = document.createElement('RT·endnotes');
+      article.appendChild(endnote_container);
+    }
+
+    if(!endnote_container.querySelector('.RT_endnote_list')){
+      const list_container = document.createElement('div');
+      list_container.className = 'RT_endnote_list';
+      endnote_container.appendChild(list_container);
       
-      cite.innerHTML = `<a href="#note-${refNum}" id="cite-${refNum}">[${refNum}]</a>`;
-      cite.style.cursor = 'pointer';
-      cite.style.color = window.RT.theme('read', 'brand', 'link');
-      cite.style.textDecoration = 'none';
-
-      // Append the corresponding entry into the endnotes list
-      const li = document.createElement('li');
-      li.id = `note-${refNum}`;
-      li.innerHTML = `${refText} <a href="#cite-${refNum}" style="text-decoration:none;">&#8617;</a>`;
-      list.appendChild(li);
-    });
+      const counter_make = document.createElement('RT·counter·make');
+      counter_make.setAttribute('counter' ,'endnote');
+      counter_make.setAttribute('style' ,'CountingNumber'); 
+      article.insertBefore(counter_make ,article.firstChild);
+    }
     
-    // Style the container
-    endnoteContainer.style.display = 'block';
-    endnoteContainer.style.marginTop = '1rem';
-    endnoteContainer.style.borderTop = `1px solid ${window.RT.theme('read', 'surface', '3')}`;
-    endnoteContainer.style.paddingTop = '1rem';
+    const list = endnote_container.querySelector('.RT_endnote_list');
+
+    function process_endnote(node ,index){
+      const snapshot_name = 'endnote_cite_' + index;
+      const ref_text = node.innerHTML;
+      
+      const step = document.createElement('RT·counter·step');
+      step.setAttribute('counter' ,'endnote');
+      
+      const snapshot = document.createElement('RT·counter·snapshot');
+      snapshot.setAttribute('counter' ,'endnote');
+      snapshot.setAttribute('snapshot' ,snapshot_name);
+      
+      node.parentNode.insertBefore(step ,node);
+      step.appendChild(snapshot);
+      step.appendChild(node);
+
+      node.innerHTML = '<a href="#note_' + index + '" id="cite_' + index + '">[<RT·counter·read snapshot="' + snapshot_name + '"></RT·counter·read>]</a>';
+      node.style.cursor = 'pointer';
+      node.style.color = window.RT.theme('read' ,'brand' ,'link');
+      node.style.textDecoration = 'none';
+
+      const li = document.createElement('div');
+      li.id = 'note_' + index;
+      li.style.display = 'flex';
+      li.style.marginBottom = '0.5rem';
+      
+      const left_div = document.createElement('div');
+      left_div.style.marginRight = '0.5rem';
+      left_div.innerHTML = '[<RT·counter·read snapshot="' + snapshot_name + '"></RT·counter·read>]';
+      
+      const right_div = document.createElement('div');
+      const return_link = document.createElement('a');
+      return_link.href = '#cite_' + index;
+      return_link.style.textDecoration = 'none';
+      return_link.innerHTML = '&#8617;';
+      
+      right_div.innerHTML = ref_text + ' ';
+      right_div.appendChild(return_link);
+      
+      li.appendChild(left_div);
+      li.appendChild(right_div);
+      
+      list.appendChild(li);
+    }
+
+    for(let i = 0; i < endnotes.length; i++){
+      process_endnote(endnotes[i] ,i + 1);
+    }
+
+    endnote_container.style.display = 'block';
+    endnote_container.style.marginTop = '1rem';
+    endnote_container.style.borderTop = '1px solid ' + window.RT.theme('read' ,'surface' ,'3');
+    endnote_container.style.paddingTop = '1rem';
   });
 
 })();

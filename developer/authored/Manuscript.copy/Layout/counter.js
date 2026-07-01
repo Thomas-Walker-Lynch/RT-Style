@@ -320,7 +320,7 @@
     }
   }
 
-  RT.Element.add( function() {
+  counter = function(){
     const debug = RT.Debug || { log: function(){} };
     if (debug.log) debug.log('counter', 'Processing counters');
 
@@ -394,15 +394,9 @@
     walk(root_node);
 
     const reads = root_node.querySelectorAll('RT·counter·read, rt·counter·read');
-    
-    if (typeof TM !== 'undefined' && TM.loop) {
-        TM.loop(reads, function(node) {
-            process_read_node(node);
-        });
-    } else {
-        for (let i = 0; i < reads.length; i++) {
-            process_read_node(reads[i]);
-        }
+
+    for (let i = 0; i < reads.length; i++) {
+      process_read_node(reads[i]);
     }
 
     function process_read_node(node) {
@@ -432,6 +426,12 @@
         console.error(`RT-Manuscript Layout Error: <RT·counter·read> failed. No snapshot named '${snapshot_name}' found.`);
       }
     }
-  });
+  };
+
+  //------------------------------------------
+  // on module load
+  //
+
+  window.RT.counter = counter;
 
 })();

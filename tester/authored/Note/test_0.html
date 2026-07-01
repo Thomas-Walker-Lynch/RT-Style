@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Note Integration Diagnostics</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+    <style>
+      .diagnostic { 
+        margin-left: 2rem; 
+        border-left: 2px solid #444; 
+        padding-left: 1rem; 
+        background-color: var(--RT·surface-1, rgba(0,0,0,0.05)); 
+        padding-top: 0.5rem; 
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .comment { color: #6a9955; font-family: monospace; }
+      .line { font-family: monospace; margin-bottom: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title 
+        author="Thomas Walker Lynch" 
+        date="2026-07-01 17:00Z" 
+        title="Note Integration Diagnostics">
+      </RT·title>
+
+      <p>
+        This document verifies the behavior of the new cross reference module. We establish a note here <RT·Note·write key="target_alpha">Target Alpha Data</RT·Note·write> and then verify the read mechanism.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic 1: Default Content Read</div>
+        <div class="comment">// The script should render the inner HTML of the target.</div>
+        <div class="line">
+          Read default: <RT·Note·read key="target_alpha"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: Target Alpha Data</div>
+      </div>
+
+      <p>
+        We can verify the explicit field attribute.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic 2: Explicit Content Read</div>
+        <div class="line">
+          Read explicit: <RT·Note·read key="target_alpha" field="content"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: Target Alpha Data</div>
+      </div>
+
+      <p>
+        To verify page numbering metadata, we insert a manual page break tag to force a new layout container.
+      </p>
+      
+      <RT·page-break></RT·page-break>
+
+      <p>
+        Now on a new layout boundary, we establish a second note <RT·Note·write key="target_beta">Target Beta Data</RT·Note·write>.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic 3: Page Number Read</div>
+        <div class="comment">// The script must traverse the DOM, locate the page snapshot, and read the counter.</div>
+        <div class="line">
+          Target Alpha Page: <RT·Note·read key="target_alpha" field="page"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: 1</div>
+        <div class="line">
+          Target Beta Page: <RT·Note·read key="target_beta" field="page"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: 2</div>
+      </div>
+
+      <p>
+        Finally we verify error handling for incorrect parameters.
+      </p>
+
+      <div class="diagnostic">
+        <div class="comment">// Diagnostic 4: Error Handling</div>
+        <div class="line">
+          Unknown Note: <RT·Note·read key="target_gamma"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: [Unknown note: target_gamma]</div>
+        <div class="line">
+          Invalid Field: <RT·Note·read key="target_alpha" field="bogus_field"></RT·Note·read>
+        </div>
+        <div class="comment">// Expected: [Invalid field: bogus_field]</div>
+      </div>
+
+    </RT·article>
+  </body>
+</html>
+

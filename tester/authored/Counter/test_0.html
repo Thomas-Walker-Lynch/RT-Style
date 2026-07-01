@@ -79,7 +79,7 @@ snapshot() == (between,[1])
       <div class="line">
         snapshot() -> (
           <RT·Counter·snapshot counter="A" snapshot="s1"></RT·Counter·snapshot>
-          <RT·Counter·read snapshot="s1" key="status"></RT·Counter·read> ,
+          <RT·Counter·read snapshot="s1" key="count.status"></RT·Counter·read> ,
           [<RT·Counter·read snapshot="s1" key="count.list"></RT·Counter·read>] ,
           "<RT·Counter·read snapshot="s1" key="count"></RT·Counter·read>"
         )
@@ -91,7 +91,7 @@ snapshot() == (between,[1])
           <div class="line">
             snapshot() == (
               <RT·Counter·snapshot counter="A" snapshot="s2"></RT·Counter·snapshot>
-              <RT·Counter·read snapshot="s2" key="status"></RT·Counter·read> ,
+              <RT·Counter·read snapshot="s2" key="count.status"></RT·Counter·read> ,
               [<RT·Counter·read snapshot="s2" key="count.list"></RT·Counter·read>] ,
               "<RT·Counter·read snapshot="s2" key="count"></RT·Counter·read>"
             ) 
@@ -104,7 +104,7 @@ snapshot() == (between,[1])
               <div class="line">
                 snapshot() == (
                   <RT·Counter·snapshot counter="A" snapshot="s3"></RT·Counter·snapshot>
-                  <RT·Counter·read snapshot="s3" key="status"></RT·Counter·read> ,
+                  <RT·Counter·read snapshot="s3" key="count.status"></RT·Counter·read> ,
                   [<RT·Counter·read snapshot="s3" key="count.list"></RT·Counter·read>] ,
                   "<RT·Counter·read snapshot="s3" key="count"></RT·Counter·read>"
                 ) 
@@ -117,7 +117,7 @@ snapshot() == (between,[1])
           <div class="line">
             snapshot() == (
               <RT·Counter·snapshot counter="A" snapshot="s4"></RT·Counter·snapshot>
-              <RT·Counter·read snapshot="s4" key="status"></RT·Counter·read> ,
+              <RT·Counter·read snapshot="s4" key="count.status"></RT·Counter·read> ,
               [<RT·Counter·read snapshot="s4" key="count.list"></RT·Counter·read>] ,
               "<RT·Counter·read snapshot="s4" key="count"></RT·Counter·read>"
             ) 
@@ -130,7 +130,7 @@ snapshot() == (between,[1])
               <div class="line">
                 snapshot() == (
                   <RT·Counter·snapshot counter="A" snapshot="s5"></RT·Counter·snapshot>
-                  <RT·Counter·read snapshot="s5" key="status"></RT·Counter·read> ,
+                  <RT·Counter·read snapshot="s5" key="count.status"></RT·Counter·read> ,
                   [<RT·Counter·read snapshot="s5" key="count.list"></RT·Counter·read>] ,
                   "<RT·Counter·read snapshot="s5" key="count"></RT·Counter·read>"
                 ) 
@@ -143,7 +143,7 @@ snapshot() == (between,[1])
           <div class="line">
             snapshot() == (
               <RT·Counter·snapshot counter="A" snapshot="s6"></RT·Counter·snapshot>
-              <RT·Counter·read snapshot="s6" key="status"></RT·Counter·read> ,
+              <RT·Counter·read snapshot="s6" key="count.status"></RT·Counter·read> ,
               [<RT·Counter·read snapshot="s6" key="count.list"></RT·Counter·read>] ,
               "<RT·Counter·read snapshot="s6" key="count"></RT·Counter·read>"
             ) 
@@ -156,7 +156,7 @@ snapshot() == (between,[1])
       <div class="line">
         snapshot() == (
           <RT·Counter·snapshot counter="A" snapshot="s7"></RT·Counter·snapshot>
-          <RT·Counter·read snapshot="s7" key="status"></RT·Counter·read> ,
+          <RT·Counter·read snapshot="s7" key="count.status"></RT·Counter·read> ,
           [<RT·Counter·read snapshot="s7" key="count.list"></RT·Counter·read>] ,
           "<RT·Counter·read snapshot="s7" key="count"></RT·Counter·read>"
         ) <span class="comment">// Expected: ( between ,[0] , "" )</span>
@@ -168,7 +168,7 @@ snapshot() == (between,[1])
           <div class="line">
             snapshot() == (
               <RT·Counter·snapshot counter="A" snapshot="s8"></RT·Counter·snapshot>
-              <RT·Counter·read snapshot="s8" key="status"></RT·Counter·read> ,
+              <RT·Counter·read snapshot="s8" key="count.status"></RT·Counter·read> ,
               [<RT·Counter·read snapshot="s8" key="count.list"></RT·Counter·read>] ,
               "<RT·Counter·read snapshot="s8" key="count"></RT·Counter·read>"
             ) <span class="comment">// Expected: ( preamble ,[1] , "2" )</span>
@@ -180,7 +180,7 @@ snapshot() == (between,[1])
               <div class="line">
                 snapshot() == (
                   <RT·Counter·snapshot counter="A" snapshot="s9"></RT·Counter·snapshot>
-                  <RT·Counter·read snapshot="s9" key="status"></RT·Counter·read> ,
+                  <RT·Counter·read snapshot="s9" key="count.status"></RT·Counter·read> ,
                   [<RT·Counter·read snapshot="s9" key="count.list"></RT·Counter·read>] ,
                   "<RT·Counter·read snapshot="s9" key="count"></RT·Counter·read>"
                 ) <span class="comment">// Expected: ( preamble ,[1,0] , "2.1" )</span>
@@ -192,7 +192,7 @@ snapshot() == (between,[1])
           <div class="line">
             snapshot() == (
               <RT·Counter·snapshot counter="A" snapshot="s10"></RT·Counter·snapshot>
-              <RT·Counter·read snapshot="s10" key="status"></RT·Counter·read> ,
+              <RT·Counter·read snapshot="s10" key="count.status"></RT·Counter·read> ,
               [<RT·Counter·read snapshot="s10" key="count.list"></RT·Counter·read>] ,
               "<RT·Counter·read snapshot="s10" key="count"></RT·Counter·read>"
             ) <span class="comment">// Expected: ( between ,[1,0] , "2" )</span>
@@ -204,7 +204,7 @@ snapshot() == (between,[1])
               <div class="line">
                 snapshot() == (
                   <RT·Counter·snapshot counter="A" snapshot="s11"></RT·Counter·snapshot>
-                  <RT·Counter·read snapshot="s11" key="status"></RT·Counter·read> ,
+                  <RT·Counter·read snapshot="s11" key="count.status"></RT·Counter·read> ,
                   [<RT·Counter·read snapshot="s11" key="count.list"></RT·Counter·read>] ,
                   "<RT·Counter·read snapshot="s11" key="count"></RT·Counter·read>"
                 ) <span class="comment">// Expected: ( preamble ,[1,1] , "2.2" )</span>
@@ -219,7 +219,7 @@ snapshot() == (between,[1])
       <div class="line">
         snapshot() == (
           <RT·Counter·snapshot counter="A" snapshot="s12"></RT·Counter·snapshot>
-          <RT·Counter·read snapshot="s12" key="status"></RT·Counter·read> ,
+          <RT·Counter·read snapshot="s12" key="count.status"></RT·Counter·read> ,
           [<RT·Counter·read snapshot="s12" key="count.list"></RT·Counter·read>] ,
           "<RT·Counter·read snapshot="s12" key="count"></RT·Counter·read>"
         ) <span class="comment">// Expected: ( between ,[1] , "" )</span>

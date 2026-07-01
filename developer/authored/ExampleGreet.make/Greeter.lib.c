@@ -9,8 +9,8 @@ void ExampleGreet·Greeter·hello_loop(int count);
   #include <stdio.h>
 
   void ExampleGreet·Greeter·hello_loop(int count){ 
-    for(int TM = 0; TM < count; ++TM){
-      int current_count = ExampleGreet·Math·add(TM ,1);
+    for(int i = 0; i < count; ++i){
+      int current_count = ExampleGreet·Math·add(i ,1);
       printf("Hello iteration: %d\n" ,current_count);
     }
   }
