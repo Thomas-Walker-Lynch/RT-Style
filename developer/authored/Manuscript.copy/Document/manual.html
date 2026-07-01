@@ -44,7 +44,7 @@
       </p>
 
       
-      <h1>Manuscript Types</h1>
+      <h1>Manuscript types</h1>
       <p>
         These are the current top level semantic tag environments. They affect the formatting of scoped content. This includes the custom semantic tags, and can also include standard HTML tags.
       </p>
@@ -72,7 +72,7 @@
         </tbody>
       </table>
 
-      <h2>Article Manuscript</h2>
+      <h2>Article manuscript</h2>
 
       <p>Here is an example header for an article</p>
 
@@ -131,7 +131,7 @@
         </tbody>
       </table>
 
-      <h3>Layout Environments</h3>
+      <h3>Layout environments</h3>
       <p>
         This can be written inline with text, or as blocks.
         </p>
@@ -262,6 +262,42 @@
         </tbody>
       </table>
 
+      <h3>Cross reference</h3>
+      <p>
+        The Note tags provide a two pass mechanism for cross referencing content and page numbers throughout the document.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 25%;">Tag</th>
+            <th>Description & Arguments</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><RT·code>&lt;RT·Note·write&gt;</RT·code></td>
+            <td>
+              Records the scoped content and its resolved page number into the reference dictionary.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>key</code>: Required unique identifier for the note.
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><RT·code>&lt;RT·Note·read&gt;</RT·code></td>
+            <td>
+              Retrieves data from a previously recorded note and injects it as innerHTML.<br>
+              <div class="attr-list">
+                <strong>Attributes:</strong><br>
+                <code>key</code>: Required identifier matching a write tag.<br>
+                <code>field</code>: Selects the data to retrieve. Valid options are "content" (the original scoped HTML) or "page" (the computed page number). (Default: "content")
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
       <h3>Annotation</h3>
       <table>
         <thead>
@@ -316,7 +352,7 @@
         The <RT·code>&lt;RT·book&gt;</RT·code> container is reserved for multi chapter compilations. It introduces tags designed exclusively for macro level document orchestration. (Does not currently exist, rather using the Article Tech Ref format.)
       </p>
 
-      <h3>Book Specific Tags</h3>
+      <h3>Book specific tags</h3>
       <table>
         <thead>
           <tr>
@@ -332,7 +368,7 @@
         </tbody>
       </table>
 
-      <h1>Global Widgets</h1>
+      <h1>Global widgets</h1>
       <table>
         <thead>
           <tr>

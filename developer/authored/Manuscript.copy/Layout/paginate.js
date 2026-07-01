@@ -220,7 +220,7 @@
   // =========================================================
   // PAGINATE 0: CHUNKING & INJECTING STRUCTURE
   // =========================================================
-  paginate_0 = function(){
+  function paginate_0(){
     if(debug.log) debug.log('paginate_0' ,'Running initial document chunking');
 
     const article_seq = document.querySelectorAll('RT·article');
@@ -257,7 +257,7 @@
 
     function paginateArticle(article){
       const raw_element_seq = Array.from(article.children).filter(el =>
-        !['SCRIPT' ,'STYLE' ,'RT·PAGE'].includes(el.tagName)
+        !['SCRIPT' ,'STYLE' ,'RT·PAGE'].includes((el.tagName || '').toUpperCase())
       );
 
       if(raw_element_seq.length === 0) return;
@@ -294,10 +294,37 @@
               current_batch_seq.push(frame);
               i++; 
             } else {
-              page_seq.push(current_batch_seq);
-              current_batch_seq = [];
-              current_h = 0;
-              raw_element_seq[i] = rest || el; 
+              // Element is split but first chunk fails to fit. Evict any stranded headings.
+              let backtrack_seq = [];
+              let backtrack_h = 0;
+              
+              while(current_batch_seq.length > 0){
+                const last = current_batch_seq[current_batch_seq.length - 1];
+                if(!/^H[1-6]$/i.test(last.tagName)) break;
+                const popped = current_batch_seq.pop();
+                backtrack_seq.unshift(popped);
+                backtrack_h += getElHeight(popped);
+              }
+
+              if(current_batch_seq.length > 0){
+                page_seq.push(current_batch_seq);
+                current_batch_seq = backtrack_seq;
+                current_h = backtrack_h;
+                // Leave 'i' alone to re-evaluate 'el' against the fresh page sequence
+              } else {
+                // If only headings existed, accept the massive frame inline to avoid loops
+                const frame = document.createElement('RT·scroll-frame');
+                frame.style.display = 'block';
+                frame.style.overflowY = 'auto';
+                frame.style.maxHeight = page_height_limit + 'px';
+                frame.appendChild(el);
+                
+                current_batch_seq = backtrack_seq;
+                current_h = backtrack_h;
+                
+                current_batch_seq.push(frame);
+                i++;
+              }
             }
           }
           continue;
@@ -306,13 +333,25 @@
         const h = getElHeight(el);
         const is_RT_page_break = el.tagName && el.tagName.toLowerCase() === 'rt·page-break';
 
-        if( (is_RT_page_break || current_h + h > page_height_limit) && current_batch_seq.length > 0 ){
+        // Explicit Page Break Logic - Execute immediately without backward traversal
+        if(is_RT_page_break){
+          if(current_batch_seq.length > 0){
+            page_seq.push(current_batch_seq);
+            current_batch_seq = [];
+            current_h = 0;
+          }
+          i++;
+          continue; 
+        }
+
+        // Standard Dimension Overflow Logic - Check for orphaned headers
+        if( current_h + h > page_height_limit && current_batch_seq.length > 0 ){
           let backtrack_seq = [];
           let backtrack_h = 0;
           
           while(current_batch_seq.length > 0){
             const last = current_batch_seq[current_batch_seq.length - 1];
-            if(!/^H[1-6]/.test(last.tagName)) break;
+            if(!/^H[1-6]$/i.test(last.tagName)) break;
             const popped = current_batch_seq.pop();
             backtrack_seq.unshift(popped);
             backtrack_h += getElHeight(popped);
@@ -323,9 +362,9 @@
             current_batch_seq = backtrack_seq;
             current_h = backtrack_h;
           } else {
-            page_seq.push(backtrack_seq);
-            current_batch_seq = [];
-            current_h = 0;
+            // Document structure resolved entirely to sequential headings that breached bounds.
+            current_batch_seq = backtrack_seq;
+            current_h = backtrack_h;
           }
         }
 
@@ -424,12 +463,12 @@
       measureContainer.remove();
       measureContainer = null;
     }
-  };
+  }
 
   // =========================================================
   // PAGINATE 1: ABSORB DIMENSIONAL DELTA
   // =========================================================
-  paginate_1 = function(){
+  function paginate_1(){
     if(debug.log) debug.log('paginate_1' ,'Adjusting final page heights after component injections');
 
     const rendered_pages = document.querySelectorAll('RT·page');
@@ -439,7 +478,7 @@
         page.style.minHeight = actual_height + 'px';
       }
     });
-  };
+  }
 
   //----------------------------------------
   // Registration upon load
