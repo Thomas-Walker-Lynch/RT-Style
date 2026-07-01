@@ -7,6 +7,15 @@
 
 2026-07-01 08:06:54 Z
 
-  Also paginate uses ad hoc page numbering, so it must be updated to make use of the counters.  I see a kink in the plan, as pages are generated it is not possible for a user to add cross reference that has a page number counter as its content.  I will add this to the 'todo.txt' notes, and we will punt this issue to a later versioin.
+  Also paginate uses ad hoc page numbering, so it must be updated to make use of the counters.  I see a kink in the plan, as pages are generated it is not possible for a user to add cross reference that has a page number counter as its content.  I will add this to the 'todo.txt' notes, and we will punt this issue to a later version.
 
   The Note tag should also do the duty of footnote and endnote. If cited in a list at the bottom of the page, it is a footnote.  If listed at the end of the document, it is an end note. Notes should then have path keys, so that footnotes and endnotes etc. can have order.
+
+
+2026-07-01 10:31:25 Z
+
+  Should add a nestable scoped section tag, with a counter pre-fix. Since we have the nifty counters, and phased execution now.
+
+  So then: pages with headers and footers that can be notated (page number wrapped in a note write, for example), generalize the notes to handle footnotes and endnotes, and nestable scoped sections.
+
+  An what about the capital 'Count' and 'Note', and keys that are in places space separated paths, and in other places dot separated paths. We need to set a convention and apply it uniformly. 
