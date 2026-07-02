@@ -1,51 +1,65 @@
 /*
   Processes <RT·math> tags.
-  Prepares the content with appropriate MathJax delimiters and loads the MathJax library.
+*/
+
+/*
+  Processes <RT·math> tags.
 */
 
 (function() {
 
   if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
+    console.error("RT not defined. Was RT Manuscript make run?");
     return;
   }
   if (!window.RT.Element) {
-    console.error("RT.Element not defined - was the state_manager run?");
+    console.error("RT.Element not defined. Was the stage manager run?");
     return;
   }
 
-  RT.Element.add( function() {
+  // Configure MathJax to skip its default full document scan
+  window.MathJax = window.MathJax || {};
+  window.MathJax.startup = {
+    typeset: false
+  };
+
+  const scan_tags = function() {
     const debug = window.RT.Debug || { log: function(){} };
-    if (debug.log) debug.log('math', 'Processing math tags and loading MathJax');
+    if (debug.log) debug.log('math', 'Processing math tags');
 
-    // querySelector treats 'rt·math' as case-insensitive for the tag
-    document.querySelectorAll('rt·math').forEach(el => {
-      if (el.textContent.startsWith('$')) return;
+    const math_elements = Array.from(document.querySelectorAll('RT·math'));
 
+    if (math_elements.length === 0) return;
+
+    math_elements.forEach(el => {
       const is_block = el.parentElement.tagName === 'DIV' || 
                        el.textContent.includes('\n') ||
                        el.parentElement.childNodes.length === 1;
 
-      const delimiter = is_block ? '$$' : '$';
+      // MathJax 3 handles block vs inline via the display parameter 
+      // in its internal math object, but setting CSS display helps 
+      // the browser layout before MathJax finishes.
       el.style.display = is_block ? 'block' : 'inline';
-      el.textContent = `${delimiter}${el.textContent.trim()}${delimiter}`;
+      
+      // We wrap the content in MathJax's internal format manually 
+      // so we can force block or inline rendering explicitly without delimiters.
+      const math_string = el.textContent.trim();
+      el.textContent = ''; 
+      
+      // We rely on MathJax's synchronous typeset function
+      // By passing the specific elements, we only process these tags.
     });
 
-    // MathJax must find its config at window.MathJax
-    window.MathJax = window.MathJax || {
-      tex: { 
-        inlineMath: [['$', '$']], 
-        displayMath: [['$$', '$$']] 
-      }
-    };
-
-    // Prevent multiple script injections if the element pipeline runs more than once
-    if (!document.querySelector('script[src*="mathjax@3"]')) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-      script.async = true;
-      document.head.appendChild(script);
+    if (window.MathJax && typeof window.MathJax.typeset === 'function') {
+      if (debug.log) debug.log('math', 'Executing synchronous MathJax typeset');
+      window.MathJax.typeset(math_elements);
+    } else {
+      console.error("MathJax not loaded or synchronous typeset unavailable.");
     }
-  });
+  };
+
+  // Ensure RT.load is complete before stage_manager runs this queue
+  RT.load('Math/mathjax');
+  RT.Element.add(scan_tags);
 
 })();

@@ -1,7 +1,7 @@
 /*
   Core/stage_manager.js
-  Orchestrates the execution pipeline to resolve layout dependencies,
-  manages MathJax async typesetting, and handles scroll restoration.
+  Orchestrates the execution pipeline to resolve layout dependencies
+  and handles scroll restoration.
 */
 
 (function(){
@@ -26,7 +26,7 @@
 
      The document can only be walked for counters after the pages are added, because pages have page numbers. (Even if the document is not paginated, the counters can not be processed until after the endnote generators, or any other elements that have counters, run.)
 
-     The pageinate_0 breaks the document into <page> ... </page> elements. It will break some elements, but not others. As examples, it breaks lists and tables, but does not break paragraphs. It has a target length, but will lengthen or shorten a page so that the content fits.
+     The paginate_0 breaks the document into <page> ... </page> elements. It will break some elements, but not others. As examples, it breaks lists and tables, but does not break paragraphs. It has a target length, but will lengthen or shorten a page so that the content fits.
 
      Not breaking paragraphs simplifies pagination, especially in light of the possible embedding of other elements. It is also nice to read a paragraph without page breaks in them. Footnotes can change page length a small amount due to being formatted. This is handled during pagination_0.
 
@@ -34,7 +34,7 @@
 
      Cross reference targets can have counters in them, so they are handled after counters.
 
-     Adding counter values and cross references can cause the content of a page to lengthen. Rather than having that cascade, which could change page number cross reference text, We merely lengthen pages as requierd.
+     Adding counter values and cross references can cause the content of a page to lengthen. Rather than having that cascade, which could change page number cross reference text, We merely lengthen pages as required.
   */
   window.RT.Element = new Set();      // expand generators, style elements
   window.RT.paginate_0 = null;        // add the <page> ... </page> pairs
@@ -152,82 +152,59 @@
       }
     }
 
-    // Define the continuation (Phases 2 through 7 + Scroll) to run after MathJax resolves
-    const run_post_math_phases = () => {
-      
-      // Phase 2: Pagination Part 0
-      debug.log('stage_manager' ,'Phase 2: Executing paginate_0');
-      if(typeof window.RT.paginate_0 === 'function'){
-        try{ window.RT.paginate_0(); } 
-        catch(e){ debug.error('stage_manager' ,"paginate_0 failed: " + e); }
-      }
-      else {
-        debug.log('stage_manager' ,'No paginate_0 function registered. Skipping.');
-      }
-
-      // Phase 3: Page Styling
-      debug.log('stage_manager' ,'Phase 3: Executing PageStyle tasks');
-      if(window.RT.PageStyle.size > 0){
-        for(const style_fn of window.RT.PageStyle){
-          if(typeof style_fn === 'function'){
-            try{ style_fn(); } 
-            catch(e){ debug.error('stage_manager' ,"PageStyle task failed: " + e); }
-          }
-        }
-      }
-
-      // Phase 4: Counters
-      debug.log('stage_manager' ,'Phase 4: Executing counter processing');
-      if(typeof window.RT.counter === 'function'){
-        try{ window.RT.counter(); } 
-        catch(e){ debug.error('stage_manager' ,"Counter processing failed: " + e); }
-      }
-
-      // Phase 5: Cross Reference
-      debug.log('stage_manager' ,'Phase 5: Executing note processing');
-      if(typeof window.RT.note === 'function'){
-        try{ window.RT.note(); } 
-        catch(e){ debug.error('stage_manager' ,"Cross reference processing failed: " + e); }
-      }
-
-      // Phase 6: Pagination Part 1
-      debug.log('stage_manager' ,'Phase 6: Executing paginate_1');
-      if(typeof window.RT.paginate_1 === 'function'){
-        try{ window.RT.paginate_1(); } 
-        catch(e){ debug.error('stage_manager' ,"paginate_1 failed: " + e); }
-      }
-
-      // Final Step: Resolve Scroll Target
-      debug.log('scroll' ,`Pipeline execution complete. Enforcing scroll target.`);
-      let final_target = target_y;
-      let use_hash = false;
-      
-      if(window.location.hash && !is_reload){
-          const hash_target = document.getElementById(window.location.hash.substring(1));
-          if(hash_target) use_hash = true;
-      }
-
-      enforce_scroll(final_target ,use_hash ,0);
-    };
-
-    // MathJax Intercept: Await typeset before paginating
-    if(window.MathJax){
-      if(typeof window.MathJax.typesetPromise === 'function'){
-        window.MathJax.typesetPromise().then(run_post_math_phases).catch((err) => {
-          debug.error('stage_manager' ,'MathJax typeset failed: ' + err);
-          run_post_math_phases();
-        });
-      }
-      else if( window.MathJax.Hub && window.MathJax.Hub.Queue ){
-        window.MathJax.Hub.Queue(["Typeset" ,window.MathJax.Hub] ,run_post_math_phases);
-      }
-      else {
-        run_post_math_phases();
-      }
+    // Phase 2: Pagination Part 0
+    debug.log('stage_manager' ,'Phase 2: Executing paginate_0');
+    if(typeof window.RT.paginate_0 === 'function'){
+      try{ window.RT.paginate_0(); } 
+      catch(e){ debug.error('stage_manager' ,"paginate_0 failed: " + e); }
     }
     else {
-      run_post_math_phases();
+      debug.log('stage_manager' ,'No paginate_0 function registered. Skipping.');
     }
+
+    // Phase 3: Page Styling
+    debug.log('stage_manager' ,'Phase 3: Executing PageStyle tasks');
+    if(window.RT.PageStyle.size > 0){
+      for(const style_fn of window.RT.PageStyle){
+        if(typeof style_fn === 'function'){
+          try{ style_fn(); } 
+          catch(e){ debug.error('stage_manager' ,"PageStyle task failed: " + e); }
+        }
+      }
+    }
+
+    // Phase 4: Counters
+    debug.log('stage_manager' ,'Phase 4: Executing counter processing');
+    if(typeof window.RT.counter === 'function'){
+      try{ window.RT.counter(); } 
+      catch(e){ debug.error('stage_manager' ,"Counter processing failed: " + e); }
+    }
+
+    // Phase 5: Cross Reference
+    debug.log('stage_manager' ,'Phase 5: Executing note processing');
+    if(typeof window.RT.note === 'function'){
+      try{ window.RT.note(); } 
+      catch(e){ debug.error('stage_manager' ,"Cross reference processing failed: " + e); }
+    }
+
+    // Phase 6: Pagination Part 1
+    debug.log('stage_manager' ,'Phase 6: Executing paginate_1');
+    if(typeof window.RT.paginate_1 === 'function'){
+      try{ window.RT.paginate_1(); } 
+      catch(e){ debug.error('stage_manager' ,"paginate_1 failed: " + e); }
+    }
+
+    // Final Step: Resolve Scroll Target
+    debug.log('scroll' ,`Pipeline execution complete. Enforcing scroll target.`);
+    let final_target = target_y;
+    let use_hash = false;
+    
+    if(window.location.hash && !is_reload){
+        const hash_target = document.getElementById(window.location.hash.substring(1));
+        if(hash_target) use_hash = true;
+    }
+
+    enforce_scroll(final_target ,use_hash ,0);
   }
 
   // =========================================================
