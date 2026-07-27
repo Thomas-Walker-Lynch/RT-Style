@@ -33,7 +33,7 @@
         It is too much of an ask to remove the word 'object' from the English language, and then set it aside and give it a esoteric technical meaning. This is why the term is often misused. So we instead talk about an <RT·term>interface</RT·term> as being a set of functions that share one or more state variables. The term <RT·term>instance</RT·term> is then a collection of such state variables and their values sitting in memory. Interface functions are usually grouped within a named container, and state variables are often grouped into a single named data structure.
       </p>
       <p>
-        In some languages the instance occurs to the left of a lower dot (period) operator and is referred to as <RT·code>this</RT·code> from inside the interface functions.  In other languages there is a convention where the instance is passed in as the first parameter to interface functions.  There can also be interface functions that accept multiple instances of the same type. Bridge interfaces can be created that accept two instances potentially of different types.
+        In some languages the instance occurs to the left of a lower dot (period) operator and is referred to as <RT·code>this</RT·code> from inside the interface functions.  In other languages there is a convention where the instance is passed in as the first parameter to interface functions.  There can also be interface functions that are given multiple instances of the same type. Bridge interfaces can be created that are given two instances potentially of different types.
       </p>
       <p>
         Since we have released <RT·term>object</RT·term> from captivity,  a programmer can talk about math objects, as things found in mathematics, and C objects, as things found in the C language, even though they are not instantiated from classes, or might not even be data. For example, the <RT·term>for loop</RT·term> is a C object.
@@ -215,7 +215,7 @@
         To avoid the "String Trap" (where logic is tightly coupled to the terminal and requires string serialization to reuse) executable modules must separate the Command Line Interface from the core logic.
       </p>
       <ul>
-        <li><strong>Work Functions:</strong> Implement core logic. They accept and return native instances (ints, lists, paths), never look at <RT·code>sys.argv</RT·code> (or equivalent), and do not depend on being run from a command line.</li>
+        <li><strong>Work Functions:</strong> Implement core logic. They are given and return native instances (ints, lists, paths), never look at <RT·code>sys.argv</RT·code> (or equivalent), and do not depend on being run from a command line.</li>
         <li><strong>CLI Function:</strong> The bridge between the OS and the Work Function. It is always named <RT·code>CLI()</RT·code>. It parses string arguments into native types, calls the Work Function, formats the output for the user, and translates exceptions into exit codes.</li>
       </ul>
 
