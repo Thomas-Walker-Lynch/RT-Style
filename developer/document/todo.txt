@@ -19,3 +19,7 @@
   So then: pages with headers and footers that can be notated (page number wrapped in a note write, for example), generalize the notes to handle footnotes and endnotes, and nestable scoped sections.
 
   An what about the capital 'Count' and 'Note', and keys that are in places space separated paths, and in other places dot separated paths. We need to set a convention and apply it uniformly. 
+
+2026-07-31 03:39:54 Z
+  The line formatting is inserting spaces into inline RT blocks when ext is justified.
+  The tables need work, perhaps a selection of table types. Both vertical formatting and justification.
