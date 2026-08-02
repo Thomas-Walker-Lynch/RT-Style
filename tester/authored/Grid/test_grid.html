@@ -19,11 +19,34 @@
       <p>Validates the underlying sparse array generation, major axis auto-incrementing, and coordinate overrides.</p>
       
       <RT·grid major="x">
-        <RT·e type="column-header" x="1" y="0">Cycles</RT·e>
-        <RT·e type="row-header" x="0" y="1">Row 1</RT·e>
-        <RT·e type="data" x="1-2" y="1">Spanning Data</RT·e>
-        <RT·e type="data" x="1" y="2">Offset Data</RT·e>
+        <RT·e type="x-label" y="0" x="1"   >Cycles</RT·e>
+        <RT·e type="x-label"               >Period</RT·e>
+        <RT·e type="x-label"           "   >rightmost column</RT·e>
+
+        <RT·e type="y-label" y="1" x="0"   >Row 1</RT·e>
+        <RT·e type="data"          x="1-2" >Spanning Data</RT·e>
+        <RT·e type="data"                  >(1,3)</RT·e>
+
+        <RT·e type="data"    y="2" x="1"   >field 1</RT·e>
+        <RT·e type="data"                  >field 2</RT·e>
+        <RT·e type="data"                  >field 3</RT·e>
+
+        <RT·e type="y-label" y="3"         >row 3</RT·e>
+        <RT·e type="data"                  >(3,1)</RT·e>
+        <RT·e type="data"          x="3"   >(3,3)</RT·e>
       </RT·grid>
+
+      <!-- expected
+
+          in current layout scheme borders do not print
+
+           |          | Cycles  |         | rightmost column  |
+           |  Row 1   |   Spanning Data   |     (1,3)         |
+           |          | field 1 | field 2 |    field 3        |
+           |  row 3   |  (3,1)  | (3,2)   |     (3,3)         | 
+
+     -->
+
     </RT·article>
   </body>
 </html>

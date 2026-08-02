@@ -31,22 +31,41 @@
     }
   }
 
-  // 2. The Physical Projection Engine (Tier 2 -> Tier 3)
+// 2. The Projection Dispatcher (Tier 2 -> Tier 3)
   function project_grid(container_node, grid_state, model, options = {}) {
     const debug = window.RT.Debug || { log: function(){}, error: function(){} };
-    
+
+    switch (model) {
+      case 'html-grid-direct':
+        return render_model_html_standard(container_node, grid_state, options, false);
+      case 'html-grid-transpose':
+        return render_model_html_standard(container_node, grid_state, options, true);
+      case 'html-grid-dictionary':
+        return render_model_html_dictionary(container_node, grid_state, options);
+      default:
+        debug.error('Grid', `Unknown projection model requested: ${model}. Defaulting to direct.`);
+        return render_model_html_standard(container_node, grid_state, options, false);
+    }
+  }
+
+  // 2a. Standard & Transposed Cartesian Layout
+  function render_model_html_standard(container_node, grid_state, options, is_transposed) {
+    const debug = window.RT.Debug || { log: function(){}, error: function(){} };
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
+    wrapper.style.gridAutoColumns = 'max-content';
+    wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
 
     if (options.delimiters) {
       wrapper.style.borderLeft = '2px solid var(--RT·content-main)';
       wrapper.style.borderRight = '2px solid var(--RT·content-main)';
-      wrapper.style.borderRadius = '5px'; // Simulates matrix brackets
-      wrapper.style.padding = '0.5rem';
+      wrapper.style.borderRadius = '5px'; 
+      wrapper.style.padding = '0.2rem';
+      wrapper.style.margin = '1rem 0';
+    } else {
+      wrapper.style.margin = '1.5rem 0';
     }
-
-    const is_transposed = model === 'html-grid-transpose';
 
     grid_state.cells.forEach(cell => {
       let render_x = is_transposed ? cell.y : cell.x;
@@ -56,35 +75,99 @@
 
       const el = cell.element;
       
-      // CSS Grid lines are 1-indexed. 
-      // Extent is the rightmost cell index. End line is rightmost index + 2.
       el.style.gridColumn = `${render_x + 1} / ${render_x_extent + 2}`;
       el.style.gridRow = `${render_y + 1} / ${render_y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
       
-      // Base geometric formatting
-      el.style.padding = '0.5rem 1rem';
-      if (cell.type === 'column-header' || cell.type === 'row-header') {
+      // Tightened baseline geometry & CSS collision defense
+      el.style.padding = '0.25rem 0.5rem';
+      el.style.margin = '0';
+      el.style.lineHeight = '1.3';
+
+      if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
         el.style.fontWeight = '600';
-        if (cell.type === 'column-header') el.style.borderBottom = '2px solid var(--RT·border-strong)';
       }
+      
+      if (cell.type === (is_transposed ? 'y-label' : 'x-label')) {
+         el.style.borderBottom = '2px solid var(--RT·border-strong)';
+      }
+      
       if (cell.type === 'name') {
-        el.style.fontWeight = '500';
         el.style.borderRight = '1px solid var(--RT·border-faint)';
       }
 
-      // Matrix forces rigidity
+      if (cell.type === 'data') el.style.textAlign = 'center';
+      if (cell.type === 'x-label') el.style.textAlign = 'center';
+      
+      if (cell.type === (is_transposed ? 'x-label' : 'y-label') || cell.type === 'name') {
+        el.style.textAlign = 'right';
+        el.style.paddingRight = '0.5rem'; 
+      }
+
       if (options.no_wrap) {
         el.style.whiteSpace = 'nowrap';
-        el.style.padding = '0.25rem 0.5rem';
+        el.style.padding = '0.15rem 0.5rem';
       }
 
       wrapper.appendChild(el);
     });
 
     container_node.replaceWith(wrapper);
+    execute_two_pass_measurement(wrapper, options, debug);
+  }
 
-    // Two-Pass Measurement & Overflow Validation
+  // 2b. Typographic Dictionary Layout
+  function render_model_html_dictionary(container_node, grid_state, options) {
+    const debug = window.RT.Debug || { log: function(){}, error: function(){} };
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'grid';
+    wrapper.style.gridAutoColumns = 'max-content';
+    wrapper.style.justifyContent = 'start';
+    wrapper.className = `RT_grid_container ${options.css_class || ''}`;
+    wrapper.style.margin = '1.5rem 0';
+
+    grid_state.cells.forEach(cell => {
+      const el = cell.element;
+      
+      el.style.gridColumn = `${cell.x + 1} / ${cell.x_extent + 2}`;
+      el.style.gridRow = `${cell.y + 1} / ${cell.y_extent + 2}`;
+      el.className = `RT_grid_${cell.type}`;
+      
+      // Tightened baseline geometry & CSS collision defense
+      el.style.padding = '0.25rem 0.75rem';
+      el.style.margin = '0';
+      el.style.lineHeight = '1.3';
+
+      if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
+        el.style.fontWeight = '600';
+      }
+      
+      if (cell.type === 'x-label') {
+         el.style.borderBottom = '2px solid var(--RT·border-strong)';
+      }
+      
+      if (cell.type === 'name') {
+        el.style.borderRight = '1px solid var(--RT·border-faint)';
+        el.style.textAlign = 'right';
+      }
+      
+      if (cell.type === 'data') {
+        el.style.textAlign = 'left';
+      }
+
+      if (options.no_wrap) {
+        el.style.whiteSpace = 'nowrap';
+      }
+
+      wrapper.appendChild(el);
+    });
+
+    container_node.replaceWith(wrapper);
+    execute_two_pass_measurement(wrapper, options, debug);
+  }
+
+  // 2c. Common Measurement Logic
+  function execute_two_pass_measurement(wrapper, options, debug) {
     requestAnimationFrame(() => {
       if (options.wrap_check) {
         const data_cells = wrapper.querySelectorAll('.RT_grid_data, .RT_grid_name');
@@ -92,9 +175,12 @@
           const computed = window.getComputedStyle(cell);
           const line_height = parseFloat(computed.lineHeight) || (parseFloat(computed.fontSize) * 1.2);
           
-          // Structural wrap detection
-          if (cell.scrollHeight > line_height * 1.5) {
-            cell.style.paddingBottom = '1.5rem'; // Enforce visual row separation
+          const pTop = parseFloat(computed.paddingTop) || 0;
+          const pBot = parseFloat(computed.paddingBottom) || 0;
+          const content_height = cell.scrollHeight - pTop - pBot;
+          
+          if (content_height > line_height * 1.5) {
+            cell.style.paddingBottom = '1.25rem'; 
           }
         });
       }
@@ -131,11 +217,11 @@
         const attr_x = e.getAttribute('x');
         const attr_y = e.getAttribute('y');
         
-        // Carriage return logic
+        // Carriage return logic with state-aware redundancy check
         if (major_axis === 'x') {
-          if (attr_y && !attr_x) cursor_x = 0;
+          if (attr_y && !attr_x && attr_y !== String(cursor_y)) cursor_x = 0;
         } else {
-          if (attr_x && !attr_y) cursor_y = 0;
+          if (attr_x && !attr_y && attr_x !== String(cursor_x)) cursor_y = 0;
         }
 
         const parsed_x = parse_coordinate(attr_x, cursor_x);
@@ -164,29 +250,29 @@
       const key_label = node.getAttribute('key');
       const def_label = node.getAttribute('definition');
       
+      let y = 0;
+
       if (key_label || def_label) {
         const h1 = document.createElement('RT·e'); h1.textContent = key_label || '';
         const h2 = document.createElement('RT·e'); h2.textContent = def_label || '';
-        state.insert({ element: h1, type: 'column-header', x: 0, y: 0, x_extent: 0, y_extent: 0 });
-        state.insert({ element: h2, type: 'column-header', x: 1, y: 0, x_extent: 1, y_extent: 0 });
+        state.insert({ element: h1, type: 'x-label', x: 0, y: y, x_extent: 0, y_extent: y });
+        state.insert({ element: h2, type: 'x-label', x: 1, y: y, x_extent: 1, y_extent: y });
+        y++;
       }
-
-      let y = (key_label || def_label) ? 1 : 0;
 
       node.querySelectorAll('RT·entry, rt·entry').forEach(entry => {
         const k = document.createElement('RT·e');
         k.textContent = entry.getAttribute('key') || '';
-        k.style.textAlign = 'right';
         
         const v = document.createElement('RT·e');
         v.innerHTML = entry.innerHTML;
         
-        state.insert({ element: k, type: 'name', x: 0, y: y, x_extent: 0, y_extent: 0 });
-        state.insert({ element: v, type: 'data', x: 1, y: y, x_extent: 1, y_extent: 0 });
+        state.insert({ element: k, type: 'name', x: 0, y: y, x_extent: 0, y_extent: y });
+        state.insert({ element: v, type: 'data', x: 1, y: y, x_extent: 1, y_extent: y });
         y++;
       });
 
-      project_grid(node, state, 'html-grid-direct', { wrap_check: true });
+      project_grid(node, state, 'html-grid-dictionary', { wrap_check: true });
     });
 
     // --- C. Relation Parser ---
@@ -198,22 +284,22 @@
       let offset_x = 0;
       let offset_y = 0;
 
-      const col_head = node.querySelector('RT·column-header, rt·column-header');
+      const col_head = node.querySelector('RT·x-label, rt·x-label');
       if (col_head) {
         offset_y = 1;
-        let cx = node.querySelector('RT·row-header') || node.querySelector('RT·name') ? 1 : 0;
+        let cx = node.querySelector('RT·y-label, rt·y-label') || node.querySelector('RT·name, rt·name') ? 1 : 0;
         col_head.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'column-header', x: cx, y: 0, x_extent: cx, y_extent: 0 });
+          state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
           cx++;
         });
       }
 
-      const row_head = node.querySelector('RT·row-header, rt·row-header');
+      const row_head = node.querySelector('RT·y-label, rt·y-label');
       if (row_head) {
         offset_x = 1;
         let ry = offset_y;
         row_head.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'row-header', x: 0, y: ry, x_extent: 0, y_extent: ry });
+          state.insert({ element: e.cloneNode(true), type: 'y-label', x: 0, y: ry, x_extent: 0, y_extent: ry });
           ry++;
         });
       }
@@ -246,12 +332,12 @@
       let offset_x = 0;
       let offset_y = 0;
 
-      const col_head = node.querySelector('RT·column-header, rt·column-header');
+      const col_head = node.querySelector('RT·x-label, rt·x-label');
       if (col_head) {
         offset_y = 1;
-        let cx = node.querySelector('RT·name') ? 1 : 0;
+        let cx = node.querySelector('RT·name, rt·name') ? 1 : 0;
         col_head.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'column-header', x: cx, y: 0, x_extent: cx, y_extent: 0 });
+          state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
           cx++;
         });
       }
