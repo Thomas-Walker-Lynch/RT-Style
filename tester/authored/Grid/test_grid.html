@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test: RT Grid Primitive</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/grid');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <h1>Grid Primitive Translation</h1>
+      <p>Validates the underlying sparse array generation, major axis auto-incrementing, and coordinate overrides.</p>
+      
+      <RT·grid major="x">
+        <RT·e type="column-header" x="1" y="0">Cycles</RT·e>
+        <RT·e type="row-header" x="0" y="1">Row 1</RT·e>
+        <RT·e type="data" x="1-2" y="1">Spanning Data</RT·e>
+        <RT·e type="data" x="1" y="2">Offset Data</RT·e>
+      </RT·grid>
+    </RT·article>
+  </body>
+</html>

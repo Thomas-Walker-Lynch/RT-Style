@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test: RT Matrix</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/grid');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <h1>Matrix Semantic Wrapper</h1>
+      <p>Validates rigid formatting constraints, mathematical delimiter injection bounds, and exclusion of outer labels.</p>
+      
+      <RT·matrix layout-intention="row-vector">
+        <RT·column-header>
+          <RT·e>X</RT·e>
+          <RT·e>Y</RT·e> 
+        </RT·column-header>
+
+        <RT·vector>
+          <RT·name>V0</RT·name>
+          <RT·e>1</RT·e>
+          <RT·e>0</RT·e>
+        </RT·vector>
+        
+        <RT·vector>
+          <RT·e>0</RT·e>
+          <RT·e>1</RT·e>
+        </RT·vector>
+      </RT·matrix>
+    </RT·article>
+  </body>
+</html>

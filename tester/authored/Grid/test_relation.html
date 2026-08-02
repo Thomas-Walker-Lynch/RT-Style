@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test: RT Relation</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/grid');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <h1>Relation Semantic Wrapper</h1>
+      <p>Validates multi-line text wrapping, row distinction gaps, and tuple-scoped named headers.</p>
+      
+      <RT·relation layout-intention="row-tuple">
+        <RT·column-header>
+          <RT·e>Instruction</RT·e>
+          <RT·e>Cycles</RT·e>
+        </RT·column-header>
+
+        <RT·tuple>
+          <RT·name>First instruction</RT·name>
+          <RT·e>ADD</RT·e>
+          <RT·e>1</RT·e>
+        </RT·tuple>
+        
+        <RT·tuple>
+          <RT·e>DIV</RT·e>
+          <RT·e>18. An extended multi-line string test designed to evaluate the physical height measurement of the layout engine and trigger the secondary structural padding pass.</RT·e>
+        </RT·tuple>
+      </RT·relation>
+    </RT·article>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test: RT Dictionary</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/grid');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <h1>Dictionary Semantic Wrapper</h1>
+      <p>Validates 1:1 mapping, automatic 2-column formatting, and metadata-driven header generation.</p>
+      
+      <RT·dictionary key="BCD" definition="binary">
+        <RT·entry key="0">0000</RT·entry>
+        <RT·entry key="1">0001</RT·entry>
+        <RT·entry key="2">0010</RT·entry>
+        <RT·entry key="3">0011</RT·entry>
+      </RT·dictionary>
+    </RT·article>
+  </body>
+</html>
