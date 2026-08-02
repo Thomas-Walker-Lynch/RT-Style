@@ -16,6 +16,7 @@
     'chapter'
     ,'code'
     ,'endnote'
+    ,'grid'
     ,'math'
     ,'term'
     ,'title'
@@ -57,7 +58,7 @@
       display: "block",
       fontFamily: "'Noto Sans JP', Arial, sans-serif",
       fontSize: "16px",
-      lineHeight: "1.8",
+      lineHeight: "1.4",
       fontWeight: font_weight,
       maxWidth: "46.875rem !important",
       margin: "0 auto",

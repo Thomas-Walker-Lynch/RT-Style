@@ -8,7 +8,6 @@
       window.RT.theme_preference('inverse_wheat');
       window.RT.load('Layout/paginate');
       window.RT.load('Layout/article_tech_ref');
-      window.RT.load('Element/grid');
       window.RT.load('Element/theme_selector');
     </script>
   </head>
@@ -19,10 +18,10 @@
       <p>Validates multi-line text wrapping, row distinction gaps, and tuple-scoped named headers.</p>
       
       <RT·relation layout-intention="row-tuple">
-        <RT·column-header>
+        <RT·tuple-meta>
           <RT·e>Instruction</RT·e>
           <RT·e>Cycles</RT·e>
-        </RT·column-header>
+        </RT·tuple-meta>
 
         <RT·tuple>
           <RT·name>First instruction</RT·name>
@@ -35,6 +34,7 @@
           <RT·e>18. An extended multi-line string test designed to evaluate the physical height measurement of the layout engine and trigger the secondary structural padding pass.</RT·e>
         </RT·tuple>
       </RT·relation>
+
     </RT·article>
   </body>
 </html>

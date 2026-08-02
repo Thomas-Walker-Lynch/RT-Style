@@ -118,6 +118,7 @@ Next heading 2                3
       const topList = document.createElement('ul');
       topList.style.listStyle = 'none';
       topList.style.paddingLeft = '0';
+      topList.style.marginBottom = '0';
       container.appendChild(topList);
 
       // Stack of <ul> elements; index 0 = top-level list
@@ -137,10 +138,12 @@ Next heading 2                3
         while (listStack.length - 1 < depth) {
           const parentList = listStack[listStack.length - 1];
           const lastLi = parentList.lastElementChild;
+
           if (lastLi) {
             const subList = document.createElement('ul');
             subList.style.listStyle = 'none';
-            subList.style.paddingLeft = '1.5rem';   // indentation for nested items
+            subList.style.paddingLeft = '1.5rem';
+            subList.style.marginBottom = '0';
             lastLi.appendChild(subList);
             listStack.push(subList);
           } else {
@@ -149,9 +152,11 @@ Next heading 2                3
           }
         }
 
+
         // Create the <li> for this heading
         const li = document.createElement('li');
-        li.style.marginBottom = '0.5rem';
+        li.style.marginBottom = '0';
+        li.style.marginTop = depth === 0 ? '1.25rem' : '0.25rem';
 
         const a = document.createElement('a');
         a.href = `#${item.el.id}`;

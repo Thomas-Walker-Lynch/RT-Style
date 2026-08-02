@@ -8,7 +8,6 @@
       window.RT.theme_preference('inverse_wheat');
       window.RT.load('Layout/paginate');
       window.RT.load('Layout/article_tech_ref');
-      window.RT.load('Element/grid');
       window.RT.load('Element/theme_selector');
     </script>
   </head>
@@ -19,10 +18,10 @@
       <p>Validates rigid formatting constraints, mathematical delimiter injection bounds, and exclusion of outer labels.</p>
       
       <RT·matrix layout-intention="row-vector">
-        <RT·column-header>
-          <RT·e>X</RT·e>
-          <RT·e>Y</RT·e> 
-        </RT·column-header>
+        <RT·vector-meta>
+          <RT·label>X</RT·label>
+          <RT·label>Y</RT·label> 
+        </RT·vector-meta>
 
         <RT·vector>
           <RT·name>V0</RT·name>

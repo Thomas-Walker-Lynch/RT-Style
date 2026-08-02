@@ -53,7 +53,7 @@
     const debug = window.RT.Debug || { log: function(){}, error: function(){} };
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
-    wrapper.style.gridAutoColumns = 'max-content';
+    // REMOVED: wrapper.style.gridAutoColumns = 'max-content';
     wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
 
@@ -284,23 +284,13 @@
       let offset_x = 0;
       let offset_y = 0;
 
-      const col_head = node.querySelector('RT·x-label, rt·x-label');
+      const col_head = node.querySelector('RT·tuple-meta, rt·tuple-meta');
       if (col_head) {
         offset_y = 1;
-        let cx = node.querySelector('RT·y-label, rt·y-label') || node.querySelector('RT·name, rt·name') ? 1 : 0;
+        let cx = node.querySelector('RT·name, rt·name') ? 1 : 0;
         col_head.querySelectorAll('RT·e, rt·e').forEach(e => {
           state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
           cx++;
-        });
-      }
-
-      const row_head = node.querySelector('RT·y-label, rt·y-label');
-      if (row_head) {
-        offset_x = 1;
-        let ry = offset_y;
-        row_head.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'y-label', x: 0, y: ry, x_extent: 0, y_extent: ry });
-          ry++;
         });
       }
 
@@ -329,37 +319,38 @@
       const layout_intent = node.getAttribute('layout-intention') || 'row-vector';
       const model = layout_intent === 'column-vector' ? 'html-grid-transpose' : 'html-grid-direct';
 
-      let offset_x = 0;
-      let offset_y = 0;
+      let offset_j = 0;
+      let offset_i = 0;
 
-      const col_head = node.querySelector('RT·x-label, rt·x-label');
-      if (col_head) {
-        offset_y = 1;
-        let cx = node.querySelector('RT·name, rt·name') ? 1 : 0;
-        col_head.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
-          cx++;
+      const vector_meta = node.querySelector('RT·vector-meta, rt·vector-meta');
+      if (vector_meta) {
+        offset_i = 1;
+        let cj = node.querySelector('RT·name, rt·name') ? 1 : 0;
+        vector_meta.querySelectorAll('RT·label, rt·label').forEach(e => {
+          state.insert({ element: e.cloneNode(true), type: 'x-label', x: cj, y: 0, x_extent: cj, y_extent: 0 });
+          cj++;
         });
       }
 
-      let y = offset_y;
+      let i = offset_i;
       node.querySelectorAll('RT·vector, rt·vector').forEach(vec => {
-        let x = 0;
+        let j = 0;
         const name = vec.querySelector('RT·name, rt·name');
         if (name) {
-          offset_x = 1;
-          state.insert({ element: name.cloneNode(true), type: 'name', x: 0, y: y, x_extent: 0, y_extent: y });
+          offset_j = 1;
+          state.insert({ element: name.cloneNode(true), type: 'name', x: 0, y: i, x_extent: 0, y_extent: i });
         }
-        x = offset_x;
+        j = offset_j;
         vec.querySelectorAll('RT·e, rt·e').forEach(e => {
-          state.insert({ element: e.cloneNode(true), type: 'data', x: x, y: y, x_extent: x, y_extent: y });
-          x++;
+          state.insert({ element: e.cloneNode(true), type: 'data', x: j, y: i, x_extent: j, y_extent: i });
+          j++;
         });
-        y++;
+        i++;
       });
 
       project_grid(node, state, model, { wrap_check: false, no_wrap: true, delimiters: true });
     });
+
   });
 
 })();
