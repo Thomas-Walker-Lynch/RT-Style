@@ -20,23 +20,25 @@ Next heading 2                3
 
 (function() {
 
-  if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
-    return;
-  }
-  if (!window.RT.Element) {
-    console.error("RT.Element not defined - was the state_manager run?");
-    return;
-  }
+  if (!window.RT) return;
+
+  const apply_style = function(a, config) {
+    a.style.textDecoration = 'none';
+    a.style.color = 'inherit';
+    a.style.display = 'block';
+
+    a.onmouseover = () => a.style.color = config.brand_primary || '#000';
+    a.onmouseout  = () => a.style.color = 'inherit';
+  };
 
   RT.Element.add( function() {
     const debug = window.RT.Debug || { log: function(){} };
-    const TOC_seq = document.querySelectorAll('rt·toc');
+    const config = window.RT.layout_config || {};
+    const TOC_seq = document.querySelectorAll('rt·toc, RT·TOC');
 
     TOC_seq.forEach( (container ,TOC_index) => {
       container.style.display = 'block';
 
-      // 1. Parse attribute: single number N or range A-B
       const attr_val = container.getAttribute('level');
       let start_level, end_level;
 
@@ -48,23 +50,16 @@ Next heading 2                3
           if (a >= 1 && a <= 6 && b >= 1 && b <= 6 && a <= b) {
             start_level = a;
             end_level   = b;
-            if (debug.log) debug.log('TOC', `TOC #${TOC_index} range: H${a}-H${b}`);
-          } else {
-            if (debug.log) debug.log('TOC', `Invalid range "${attr_val}" -> implicit mode`);
-          }
+          } 
         } else {
           const single = parseInt(attr_val);
           if (!isNaN(single) && single >= 1 && single <= 6) {
             start_level = single;
             end_level   = single;
-            if (debug.log) debug.log('TOC', `TOC #${TOC_index} single level: H${single}`);
-          } else {
-            if (debug.log) debug.log('TOC', `Invalid level "${attr_val}" -> implicit mode`);
-          }
+          } 
         }
       }
 
-      // 2. Implicit mode (no attribute or invalid)
       if (start_level === undefined || end_level === undefined) {
         let context_level = 0;
         let prev = container.previousElementSibling;
@@ -79,10 +74,8 @@ Next heading 2                3
         const target_level = Math.min(context_level + 1, 6);
         start_level = target_level;
         end_level   = target_level;
-        if (debug.log) debug.log('TOC', `TOC #${TOC_index} implicit target: H${target_level}`);
       }
 
-      // 3. Collect all matching headings until a higher-level heading stops us
       const headings = [];
       let next_el = container.nextElementSibling;
       while (next_el) {
@@ -90,12 +83,9 @@ Next heading 2                3
         if (match) {
           const found_level = parseInt(match[1]);
 
-          // Stop if we hit a heading that is a parent of the lowest level we collect
           if (found_level < start_level) break;
 
-          // Collect if within the requested range
           if (found_level >= start_level && found_level <= end_level) {
-            // Ensure it has an id
             if (!next_el.id) {
               next_el.id = `TOC-ref-${TOC_index}-${found_level}-${headings.length}`;
             }
@@ -105,36 +95,29 @@ Next heading 2                3
         next_el = next_el.nextElementSibling;
       }
 
-      // 4. Build the container (title + list)
       container.innerHTML = '';
       const title = document.createElement('h1');
       title.textContent = start_level === 1 ? 'Table of Contents' : 'Section Contents';
       title.style.textAlign = 'center';
       container.appendChild(title);
 
-      if (headings.length === 0) return; // nothing to show
+      if (headings.length === 0) return; 
 
-      // Top-level list
       const topList = document.createElement('ul');
       topList.style.listStyle = 'none';
       topList.style.paddingLeft = '0';
       topList.style.marginBottom = '0';
       container.appendChild(topList);
 
-      // Stack of <ul> elements; index 0 = top-level list
       const listStack = [topList];
 
       for (const item of headings) {
-        // Depth relative to start_level
-        const depth = item.level - start_level;   // 0 = top-level, 1 = sub-level, etc.
+        const depth = item.level - start_level;   
 
-        // Ensure we have the correct nesting depth
         while (listStack.length - 1 > depth) {
-          // Pop until we are at the right depth
           listStack.pop();
         }
 
-        // If we need to go deeper, open new sub-lists inside the last <li>
         while (listStack.length - 1 < depth) {
           const parentList = listStack[listStack.length - 1];
           const lastLi = parentList.lastElementChild;
@@ -147,13 +130,10 @@ Next heading 2                3
             lastLi.appendChild(subList);
             listStack.push(subList);
           } else {
-            // No parent <li> yet - stay at current depth (flatten)
             break;
           }
         }
 
-
-        // Create the <li> for this heading
         const li = document.createElement('li');
         li.style.marginBottom = '0';
         li.style.marginTop = depth === 0 ? '1.25rem' : '0.25rem';
@@ -161,15 +141,10 @@ Next heading 2                3
         const a = document.createElement('a');
         a.href = `#${item.el.id}`;
         a.textContent = item.el.textContent;
-        a.style.textDecoration = 'none';
-        a.style.color = 'inherit';
-        a.style.display = 'block';
-
-        a.onmouseover = () => a.style.color = 'var(--RT·brand-primary)';
-        a.onmouseout  = () => a.style.color = 'inherit';
+        
+        apply_style(a, config);
 
         li.appendChild(a);
-        // Add to the current deepest list
         listStack[listStack.length - 1].appendChild(li);
       }
     });

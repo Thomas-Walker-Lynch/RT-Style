@@ -1,21 +1,11 @@
 /*
   Element/grid.js
-  Compiles semantic tabular structures into a Cartesian GridState, 
-  then projects them using CSS Grid layout models.
+  Compiles semantic tabular structures into a Cartesian GridState.
 */
 
 (function() {
+  if (!window.RT) return;
 
-  if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
-    return;
-  }
-  if (!window.RT.Element) {
-    console.error("RT.Element not defined - was the state_manager run?");
-    return;
-  }
-
-  // 1. Internal Sparse Array Representation
   class GridState {
     constructor() {
       this.cells = [];
@@ -24,42 +14,64 @@
     }
 
     insert(cell_data) {
-      // cell_data: { element, type, x, y, x_extent, y_extent }
       this.cells.push(cell_data);
       if (cell_data.x_extent > this.max_x) this.max_x = cell_data.x_extent;
       if (cell_data.y_extent > this.max_y) this.max_y = cell_data.y_extent;
     }
   }
 
-// 2. The Projection Dispatcher (Tier 2 -> Tier 3)
-  function project_grid(container_node, grid_state, model, options = {}) {
-    const debug = window.RT.Debug || { log: function(){}, error: function(){} };
+  const apply_style = function(el, cell, is_transposed, options, config) {
+    el.style.padding = '0.25rem 0.5rem';
+    el.style.margin = '0';
+    el.style.lineHeight = '1.3';
 
+    if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
+      el.style.fontWeight = '600';
+    }
+    
+    if (cell.type === (is_transposed ? 'y-label' : 'x-label')) {
+       el.style.borderBottom = '2px solid ' + (config.border_strong || '#000');
+    }
+    
+    if (cell.type === 'name') {
+      el.style.borderRight = '1px solid ' + (config.border_faint || '#ccc');
+    }
+
+    if (cell.type === 'data') el.style.textAlign = 'center';
+    if (cell.type === 'x-label') el.style.textAlign = 'center';
+    
+    if (cell.type === (is_transposed ? 'x-label' : 'y-label') || cell.type === 'name') {
+      el.style.textAlign = 'right';
+      el.style.paddingRight = '0.5rem'; 
+    }
+
+    if (options && options.no_wrap) {
+      el.style.whiteSpace = 'nowrap';
+      el.style.padding = '0.15rem 0.5rem';
+    }
+  };
+
+  function project_grid(container_node, grid_state, model, options = {}) {
+    const config = window.RT.layout_config || {};
     switch (model) {
       case 'html-grid-direct':
-        return render_model_html_standard(container_node, grid_state, options, false);
+        return render_model_html_standard(container_node, grid_state, options, false, config);
       case 'html-grid-transpose':
-        return render_model_html_standard(container_node, grid_state, options, true);
+        return render_model_html_standard(container_node, grid_state, options, true, config);
       case 'html-grid-dictionary':
-        return render_model_html_dictionary(container_node, grid_state, options);
-      default:
-        debug.error('Grid', `Unknown projection model requested: ${model}. Defaulting to direct.`);
-        return render_model_html_standard(container_node, grid_state, options, false);
+        return render_model_html_dictionary(container_node, grid_state, options, config);
     }
   }
 
-  // 2a. Standard & Transposed Cartesian Layout
-  function render_model_html_standard(container_node, grid_state, options, is_transposed) {
-    const debug = window.RT.Debug || { log: function(){}, error: function(){} };
+  function render_model_html_standard(container_node, grid_state, options, is_transposed, config) {
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
-    // REMOVED: wrapper.style.gridAutoColumns = 'max-content';
     wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
 
     if (options.delimiters) {
-      wrapper.style.borderLeft = '2px solid var(--RT·content-main)';
-      wrapper.style.borderRight = '2px solid var(--RT·content-main)';
+      wrapper.style.borderLeft = '2px solid ' + (config.content_main || '#000');
+      wrapper.style.borderRight = '2px solid ' + (config.content_main || '#000');
       wrapper.style.borderRadius = '5px'; 
       wrapper.style.padding = '0.2rem';
       wrapper.style.margin = '1rem 0';
@@ -79,46 +91,15 @@
       el.style.gridRow = `${render_y + 1} / ${render_y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
       
-      // Tightened baseline geometry & CSS collision defense
-      el.style.padding = '0.25rem 0.5rem';
-      el.style.margin = '0';
-      el.style.lineHeight = '1.3';
-
-      if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
-        el.style.fontWeight = '600';
-      }
-      
-      if (cell.type === (is_transposed ? 'y-label' : 'x-label')) {
-         el.style.borderBottom = '2px solid var(--RT·border-strong)';
-      }
-      
-      if (cell.type === 'name') {
-        el.style.borderRight = '1px solid var(--RT·border-faint)';
-      }
-
-      if (cell.type === 'data') el.style.textAlign = 'center';
-      if (cell.type === 'x-label') el.style.textAlign = 'center';
-      
-      if (cell.type === (is_transposed ? 'x-label' : 'y-label') || cell.type === 'name') {
-        el.style.textAlign = 'right';
-        el.style.paddingRight = '0.5rem'; 
-      }
-
-      if (options.no_wrap) {
-        el.style.whiteSpace = 'nowrap';
-        el.style.padding = '0.15rem 0.5rem';
-      }
-
+      apply_style(el, cell, is_transposed, options, config);
       wrapper.appendChild(el);
     });
 
     container_node.replaceWith(wrapper);
-    execute_two_pass_measurement(wrapper, options, debug);
+    execute_two_pass_measurement(wrapper, options);
   }
 
-  // 2b. Typographic Dictionary Layout
-  function render_model_html_dictionary(container_node, grid_state, options) {
-    const debug = window.RT.Debug || { log: function(){}, error: function(){} };
+  function render_model_html_dictionary(container_node, grid_state, options, config) {
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
     wrapper.style.gridAutoColumns = 'max-content';
@@ -133,48 +114,23 @@
       el.style.gridRow = `${cell.y + 1} / ${cell.y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
       
-      // Tightened baseline geometry & CSS collision defense
-      el.style.padding = '0.25rem 0.75rem';
-      el.style.margin = '0';
-      el.style.lineHeight = '1.3';
-
-      if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
-        el.style.fontWeight = '600';
-      }
-      
-      if (cell.type === 'x-label') {
-         el.style.borderBottom = '2px solid var(--RT·border-strong)';
-      }
-      
-      if (cell.type === 'name') {
-        el.style.borderRight = '1px solid var(--RT·border-faint)';
-        el.style.textAlign = 'right';
-      }
-      
-      if (cell.type === 'data') {
-        el.style.textAlign = 'left';
-      }
-
-      if (options.no_wrap) {
-        el.style.whiteSpace = 'nowrap';
-      }
+      apply_style(el, cell, false, options, config);
+      if (cell.type === 'data') el.style.textAlign = 'left';
 
       wrapper.appendChild(el);
     });
 
     container_node.replaceWith(wrapper);
-    execute_two_pass_measurement(wrapper, options, debug);
+    execute_two_pass_measurement(wrapper, options);
   }
 
-  // 2c. Common Measurement Logic
-  function execute_two_pass_measurement(wrapper, options, debug) {
+  function execute_two_pass_measurement(wrapper, options) {
     requestAnimationFrame(() => {
       if (options.wrap_check) {
         const data_cells = wrapper.querySelectorAll('.RT_grid_data, .RT_grid_name');
         data_cells.forEach(cell => {
           const computed = window.getComputedStyle(cell);
           const line_height = parseFloat(computed.lineHeight) || (parseFloat(computed.fontSize) * 1.2);
-          
           const pTop = parseFloat(computed.paddingTop) || 0;
           const pBot = parseFloat(computed.paddingBottom) || 0;
           const content_height = cell.scrollHeight - pTop - pBot;
@@ -184,14 +140,9 @@
           }
         });
       }
-
-      if (wrapper.scrollWidth > wrapper.parentElement.clientWidth) {
-        debug.error('Grid', 'Structural bounds exceeded: Grid width extends beyond viewport limits.');
-      }
     });
   }
 
-  // 3. Coordinate Arithmetic Parser
   function parse_coordinate(attr_value, current_val) {
     if (!attr_value) return { start: current_val, extent: current_val };
     const parts = attr_value.split('-');
@@ -200,11 +151,7 @@
     return { start, extent };
   }
 
-  // 4. The Semantic Dispatchers
   RT.Element.add(function process_grids() {
-    const debug = window.RT.Debug || { log: function(){} };
-
-    // --- A. Native Grid Parser ---
     document.querySelectorAll('RT·grid, rt·grid').forEach(node => {
       const state = new GridState();
       const model = node.getAttribute('model') || 'html-grid-direct';
@@ -217,7 +164,6 @@
         const attr_x = e.getAttribute('x');
         const attr_y = e.getAttribute('y');
         
-        // Carriage return logic with state-aware redundancy check
         if (major_axis === 'x') {
           if (attr_y && !attr_x && attr_y !== String(cursor_y)) cursor_x = 0;
         } else {
@@ -244,7 +190,6 @@
       project_grid(node, state, model, { wrap_check: true });
     });
 
-    // --- B. Dictionary Parser ---
     document.querySelectorAll('RT·dictionary, rt·dictionary').forEach(node => {
       const state = new GridState();
       const key_label = node.getAttribute('key');
@@ -275,7 +220,6 @@
       project_grid(node, state, 'html-grid-dictionary', { wrap_check: true });
     });
 
-    // --- C. Relation Parser ---
     document.querySelectorAll('RT·relation, rt·relation').forEach(node => {
       const state = new GridState();
       const layout_intent = node.getAttribute('layout-intention') || 'row-tuple';
@@ -313,7 +257,6 @@
       project_grid(node, state, model, { wrap_check: true });
     });
 
-    // --- D. Matrix Parser ---
     document.querySelectorAll('RT·matrix, rt·matrix').forEach(node => {
       const state = new GridState();
       const layout_intent = node.getAttribute('layout-intention') || 'row-vector';
@@ -350,7 +293,6 @@
 
       project_grid(node, state, model, { wrap_check: false, no_wrap: true, delimiters: true });
     });
-
   });
 
 })();

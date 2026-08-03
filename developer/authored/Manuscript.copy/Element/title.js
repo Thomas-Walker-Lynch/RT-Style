@@ -1,84 +1,77 @@
 /*
-  Processes <RT·title> tags.
-  Generates a standard document header block.
-  
-  Usage: 
-  <RT·title title="..." author="..." date="..." copyright="..."></RT·title>
+  Element/title.js
+  Processes <RT·title> tags and isolates internal styling logic.
 */
 
-(function() {
+(function(){
 
-  if (!window.RT) {
-    console.error("RT not defined - was RT-Manuscript_make run?");
-    return;
-  }
-  if (!window.RT.Element) {
-    console.error("RT.Element not defined - was the state_manager run?");
-    return;
-  }
+  if(!window.RT) return;
 
-  RT.Element.add( function() {
-    const debug = window.RT.Debug || { log: function(){} };
+  const apply_style = function(container ,h1 ,meta ,copy_div ,config){
+    container.style.textAlign = 'center';
+    container.style.marginBottom = '3rem';
+    container.style.marginTop = '2rem';
+    container.style.borderBottom = '1px solid ' + config.border_default;
+    container.style.paddingBottom = '1.5rem';
+
+    h1.style.margin = '0 0 0.8rem 0';
+    h1.style.border = 'none';
+    h1.style.padding = '0';
+    h1.style.color = config.brand_primary;
+    h1.style.fontSize = '2.5em';
+    h1.style.lineHeight = '1.1';
+    h1.style.letterSpacing = '-0.03em';
+
+    if(meta){
+      meta.style.color = config.content_muted;
+      meta.style.fontStyle = 'italic';
+      meta.style.fontSize = '1.1em';
+      meta.style.fontFamily = '"Georgia", "Times New Roman", serif';
+    }
+
+    if(copy_div){
+      copy_div.style.color = config.content_muted;
+      copy_div.style.fontSize = '0.9em';
+      copy_div.style.marginTop = '0.5rem';
+    }
+  };
+
+  RT.Element.add(function(){
+    const config = window.RT.layout_config || {};
+    const nodes = document.querySelectorAll('rt·title, RT·title');
     
-    document.querySelectorAll('rt·title').forEach(el => {
+    for(let i = 0; i < nodes.length; i++){
+      const el = nodes[i];
       const title = el.getAttribute('title') || 'Untitled Document';
       const author = el.getAttribute('author');
       const date = el.getAttribute('date');
       const copyright = el.getAttribute('copyright');
 
-      if (debug.log) debug.log('title', `Generating title block: ${title}`);
-
-      // Container
       const container = document.createElement('div');
-      container.style.textAlign = 'center';
-      container.style.marginBottom = '3rem';
-      container.style.marginTop = '2rem';
-      container.style.borderBottom = '1px solid var(--RT·border-default)';
-      container.style.paddingBottom = '1.5rem';
-
-      // Main Title (H1)
       const h1 = document.createElement('h1');
       h1.textContent = title;
-      h1.style.margin = '0 0 0.8rem 0';
-      h1.style.border = 'none'; // Override standard H1 border
-      h1.style.padding = '0';
-      h1.style.color = 'var(--RT·brand-primary)';
-      h1.style.fontSize = '2.5em';
-      h1.style.lineHeight = '1.1';
-      h1.style.letterSpacing = '-0.03em';
-
       container.appendChild(h1);
 
-      // Metadata Row (Author | Date)
-      if (author || date) {
-        const meta = document.createElement('div');
-        meta.style.color = 'var(--RT·content-muted)';
-        meta.style.fontStyle = 'italic';
-        meta.style.fontSize = '1.1em';
-        meta.style.fontFamily = '"Georgia", "Times New Roman", serif'; // Classy serif
-
+      let meta = null;
+      if(author || date){
+        meta = document.createElement('div');
         const parts = [];
-        if (author) parts.push(`<span style="font-weight:600; color:var(--RT·brand-secondary)">${author}</span>`);
-        if (date) parts.push(date);
-
+        if(author) parts.push(`<span style="font-weight:600; color:${config.brand_secondary}">${author}</span>`);
+        if(date) parts.push(date);
         meta.innerHTML = parts.join(' &nbsp;&mdash;&nbsp; ');
         container.appendChild(meta);
       }
 
-      // Copyright Row
-      if (copyright) {
-        const copy_div = document.createElement('div');
-        copy_div.style.color = 'var(--RT·content-muted)';
-        copy_div.style.fontSize = '0.9em';
-        copy_div.style.marginTop = '0.5rem';
-        // Automatically injects the copyright symbol
+      let copy_div = null;
+      if(copyright){
+        copy_div = document.createElement('div');
         copy_div.innerHTML = `&copy; ${copyright}`; 
         container.appendChild(copy_div);
       }
 
-      // Replace the raw tag with the generated block
+      apply_style(container ,h1 ,meta ,copy_div ,config);
       el.replaceWith(container);
-    });
+    }
   });
 
 })();

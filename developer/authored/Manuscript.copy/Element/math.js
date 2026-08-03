@@ -3,66 +3,38 @@
 */
 
 (function(){
+  if(!window.RT) return;
 
-  if(!window.RT){
-    console.error("RT not defined. Was RT Manuscript make run?");
-    return;
-  }
-  if(!window.RT.Element){
-    console.error("RT.Element not defined. Was the stage manager run?");
-    return;
-  }
-
-  window.MathJax = window.MathJax || {};
-  
-  window.MathJax.startup = {
-    typeset: false
-  };
-
-  window.MathJax.options = {
-    // Disable the screen-reader block to prevent duplicate text rendering
-    enableAssistiveMml: false
-  };
-
-  window.MathJax.svg = {
-    // Force paths to draw directly instead of referencing a global cache
-    fontCache: 'none' 
+  const apply_style = function(el, is_block, config) {
+    el.style.display = is_block ? 'block' : 'inline';
   };
 
   const scan_tags = function(){
-    const debug = window.RT.Debug || { log: function(){} };
-    if(debug.log) debug.log('math' ,'Processing math tags directly');
-
+    const config = window.RT.layout_config || {};
     const math_elements = Array.from(document.querySelectorAll('RT·math'));
 
     if(math_elements.length === 0) return;
 
-    if(!window.MathJax || typeof window.MathJax.tex2svg !== 'function'){
-      console.error("MathJax not loaded or synchronous tex2svg unavailable.");
-      return;
-    }
+    if(!window.MathJax || typeof window.MathJax.tex2svg !== 'function') return;
 
     math_elements.forEach(el => {
       const is_block = el.parentElement.tagName === 'DIV' || 
                        el.textContent.includes('\n') ||
                        el.parentElement.childNodes.length === 1;
 
-      el.style.display = is_block ? 'block' : 'inline';
+      apply_style(el, is_block, config);
       
       const raw_math = el.textContent;
-      const svg_node = window.MathJax.tex2svg(raw_math ,{display: is_block});
+      const svg_node = window.MathJax.tex2svg(raw_math, {display: is_block});
       
-      // Safety net: Strip the block manually if the config fails to catch it
       const assistive = svg_node.querySelector('mjx-assistive-mml');
       if(assistive) assistive.remove();
 
       el.innerHTML = '';
       el.appendChild(svg_node);
     });
-
   };
 
   RT.load('Math/mathjax_svg');
   RT.Element.add(scan_tags);
-
 })();
