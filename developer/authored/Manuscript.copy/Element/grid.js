@@ -20,6 +20,30 @@
     }
   }
 
+  function pad_headers(grid_state) {
+    const headers = grid_state.cells.filter(c => c.type === 'x-label');
+    if (headers.length === 0) return;
+
+    const max_x = Math.max(...grid_state.cells.map(c => c.x_extent));
+    const min_header_x = Math.min(...headers.map(c => c.x));
+    const existing_xs = new Set(headers.map(c => c.x));
+
+    for (let i = min_header_x; i <= max_x; i++) {
+      if (!existing_xs.has(i)) {
+        const empty_el = document.createElement('RT·e');
+        empty_el.innerHTML = '&nbsp;';
+        grid_state.insert({
+          element: empty_el,
+          type: 'x-label',
+          x: i,
+          y: 0,
+          x_extent: i,
+          y_extent: 0
+        });
+      }
+    }
+  }
+
   const apply_style = function(el, cell, is_transposed, options, config) {
     el.style.padding = '0.25rem 0.5rem';
     el.style.margin = '0';
@@ -28,9 +52,13 @@
     if (cell.type === 'x-label' || cell.type === 'y-label' || cell.type === 'name') {
       el.style.fontWeight = '600';
     }
-    
-    if (cell.type === (is_transposed ? 'y-label' : 'x-label')) {
-       el.style.borderBottom = '2px solid ' + (config.border_strong || '#000');
+
+    if (cell.type === 'x-label') {
+      if (is_transposed) {
+        el.style.borderRight = '2px solid ' + (config.border_strong || '#000');
+      } else {
+        el.style.borderBottom = '2px solid ' + (config.border_strong || '#000');
+      }
     }
     
     if (cell.type === 'name') {
@@ -86,7 +114,6 @@
       let render_y_extent = is_transposed ? cell.x_extent : cell.y_extent;
 
       const el = cell.element;
-      
       el.style.gridColumn = `${render_x + 1} / ${render_x_extent + 2}`;
       el.style.gridRow = `${render_y + 1} / ${render_y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
@@ -109,7 +136,6 @@
 
     grid_state.cells.forEach(cell => {
       const el = cell.element;
-      
       el.style.gridColumn = `${cell.x + 1} / ${cell.x_extent + 2}`;
       el.style.gridRow = `${cell.y + 1} / ${cell.y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
@@ -187,6 +213,7 @@
         else cursor_y = parsed_y.extent + 1;
       });
 
+      pad_headers(state);
       project_grid(node, state, model, { wrap_check: true });
     });
 
@@ -217,6 +244,7 @@
         y++;
       });
 
+      pad_headers(state);
       project_grid(node, state, 'html-grid-dictionary', { wrap_check: true });
     });
 
@@ -254,6 +282,7 @@
         y++;
       });
 
+      pad_headers(state);
       project_grid(node, state, model, { wrap_check: true });
     });
 
@@ -291,6 +320,7 @@
         i++;
       });
 
+      pad_headers(state);
       project_grid(node, state, model, { wrap_check: false, no_wrap: true, delimiters: true });
     });
   });

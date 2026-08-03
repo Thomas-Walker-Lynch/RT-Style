@@ -65,10 +65,17 @@
     return h;
   }
 
-  // =========================================================
+// =========================================================
   // Splitting Logic
   // =========================================================
   function isSplittable(el){
+    // Component Dictionary Execution
+    const componentId = el.getAttribute('data-rt-component');
+    if (componentId && window.RT.Component && window.RT.Component[componentId] && window.RT.Component[componentId].split) {
+      return (remaining) => window.RT.Component[componentId].split(el, remaining, measureFragment);
+    }
+
+    // Native HTML Fallbacks
     const tag = el.tagName;
     if(tag === 'UL' || tag === 'OL'){
       const items = Array.from(el.children).filter(c => c.tagName === 'LI');

@@ -17,6 +17,9 @@
     list_container.style.marginTop = '1rem';
     list_container.style.borderTop = '1px solid ' + (config.surface_3 || '#ccc');
     list_container.style.paddingTop = '1rem';
+    list_container.style.listStyle = 'none';
+    list_container.style.paddingLeft = '0';
+    list_container.style.margin = '0';
   };
 
   function process_endnotes(){
@@ -31,7 +34,6 @@
     initial_make.setAttribute('on-first-step', '0');
     article.insertBefore(initial_make, article.firstChild);
 
-    // Defensively targets both the standard RT namespace block and the unmigrated hyphen blocks.
     const nodes = document.querySelectorAll('RT·endnote, rt·endnote, RT-endnote, rt-endnote, RT·endnotes, rt·endnotes, RT-endnotes, rt-endnotes');
     
     let endnote_buffer = [];
@@ -73,24 +75,23 @@
           continue;
         }
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'RT_endnotes_section';
+        const frag = document.createDocumentFragment();
 
         const pb = document.createElement('RT·page-break');
-        wrapper.appendChild(pb);
+        frag.appendChild(pb);
 
         const header = document.createElement('h1');
         header.innerText = 'Endnotes';
-        wrapper.appendChild(header);
+        frag.appendChild(header);
 
-        const list_container = document.createElement('div');
+        const list_container = document.createElement('ul');
         list_container.className = 'RT_endnote_list';
         apply_list_style(list_container, config);
 
         for(let j = 0; j < endnote_buffer.length; j++){
           const item = endnote_buffer[j];
 
-          const li = document.createElement('div');
+          const li = document.createElement('li');
           li.id = 'note_' + item.id;
           li.style.display = 'flex';
           li.style.marginBottom = '0.5rem';
@@ -114,15 +115,16 @@
           list_container.appendChild(li);
         }
 
-        wrapper.appendChild(list_container);
+        frag.appendChild(list_container);
 
         const counter_reset = document.createElement('RT·counter·make');
         counter_reset.setAttribute('counter', 'EndNoteCounter');
         counter_reset.setAttribute('style', 'CountingNumber');
         counter_reset.setAttribute('on-first-step', '0');
-        wrapper.appendChild(counter_reset);
+        frag.appendChild(counter_reset);
 
-        node.parentNode.replaceChild(wrapper, node);
+        // Unpack fragment directly into the article context to enable native UL splitting
+        node.parentNode.replaceChild(frag, node);
 
         endnote_buffer = [];
       }
