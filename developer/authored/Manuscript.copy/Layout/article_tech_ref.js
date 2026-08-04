@@ -10,7 +10,7 @@
   window.RT.layout_config = {};
 
   const required_elements = [
-    'chapter'
+    'section'
     ,'code'
     ,'endnote'
     ,'grid'

@@ -1,77 +1,143 @@
 /*
-  Element/title.js
-  Processes <RT·title> tags and isolates internal styling logic.
+  Element/TOC.js
+  Processes <RT·TOC> tags.
+  Iterates nested <RT·section> boundaries, evaluates tree depth, 
+  and duplicates the title payload for automated navigation.
 */
 
-(function(){
+(function() {
 
-  if(!window.RT) return;
+  if (!window.RT) return;
 
-  const apply_style = function(container ,h1 ,meta ,copy_div ,config){
-    container.style.textAlign = 'center';
-    container.style.marginBottom = '3rem';
-    container.style.marginTop = '2rem';
-    container.style.borderBottom = '1px solid ' + config.border_default;
-    container.style.paddingBottom = '1.5rem';
+  const apply_style = function(a ,config) {
+    a.style.textDecoration = 'none';
+    a.style.color = 'inherit';
+    a.style.display = 'block';
 
-    h1.style.margin = '0 0 0.8rem 0';
-    h1.style.border = 'none';
-    h1.style.padding = '0';
-    h1.style.color = config.brand_primary;
-    h1.style.fontSize = '2.5em';
-    h1.style.lineHeight = '1.1';
-    h1.style.letterSpacing = '-0.03em';
-
-    if(meta){
-      meta.style.color = config.content_muted;
-      meta.style.fontStyle = 'italic';
-      meta.style.fontSize = '1.1em';
-      meta.style.fontFamily = '"Georgia", "Times New Roman", serif';
-    }
-
-    if(copy_div){
-      copy_div.style.color = config.content_muted;
-      copy_div.style.fontSize = '0.9em';
-      copy_div.style.marginTop = '0.5rem';
-    }
+    a.onmouseover = () => a.style.color = config.brand_primary || '#000';
+    a.onmouseout  = () => a.style.color = 'inherit';
   };
 
-  RT.Element.add(function(){
-    const config = window.RT.layout_config || {};
-    const nodes = document.querySelectorAll('rt·title, RT·title');
+  RT.Element.add( function() {
+    const debug = window.RT.Debug || { log: function(){} };
+    if (debug.log) debug.log('TOC' ,'Generating Table of Contents from nested sections');
     
-    for(let i = 0; i < nodes.length; i++){
-      const el = nodes[i];
-      const title = el.getAttribute('title') || 'Untitled Document';
-      const author = el.getAttribute('author');
-      const date = el.getAttribute('date');
-      const copyright = el.getAttribute('copyright');
+    const config = window.RT.layout_config || {};
+    const TOC_seq = document.querySelectorAll('rt·toc, RT·TOC');
 
-      const container = document.createElement('div');
-      const h1 = document.createElement('h1');
-      h1.textContent = title;
-      container.appendChild(h1);
+    TOC_seq.forEach( (container ,TOC_index) => {
+      container.style.display = 'block';
 
-      let meta = null;
-      if(author || date){
-        meta = document.createElement('div');
-        const parts = [];
-        if(author) parts.push(`<span style="font-weight:600; color:${config.brand_secondary}">${author}</span>`);
-        if(date) parts.push(date);
-        meta.innerHTML = parts.join(' &nbsp;&mdash;&nbsp; ');
-        container.appendChild(meta);
+      const attr_val = container.getAttribute('level');
+      let start_level = 1;
+      let end_level = 6; 
+      
+      if (attr_val) {
+        const rangeMatch = attr_val.match(/^(\d)-(\d)$/);
+        if (rangeMatch) {
+          start_level = parseInt(rangeMatch[1]);
+          end_level   = parseInt(rangeMatch[2]);
+        } else {
+          const single = parseInt(attr_val);
+          if (!isNaN(single)) {
+            start_level = single;
+            end_level   = single;
+          } 
+        }
       }
 
-      let copy_div = null;
-      if(copyright){
-        copy_div = document.createElement('div');
-        copy_div.innerHTML = `&copy; ${copyright}`; 
-        container.appendChild(copy_div);
-      }
+      const sections = [];
+      const all_sections = document.querySelectorAll('rt·section, RT·section');
+      
+      all_sections.forEach(section => {
+        let depth = 0;
+        let curr = section.parentElement;
+        
+        while (curr) {
+          if (curr.tagName && curr.tagName.toLowerCase() === 'rt·section') {
+            depth++;
+          }
+          curr = curr.parentElement;
+        }
+        
+        const level = depth + 1;
+        if (level >= start_level && level <= end_level) {
+          let title_node = null;
+          for (let i = 0; i < section.children.length; i++) {
+             if (section.children[i].className === 'RT·section-title') {
+                 title_node = section.children[i];
+                 break;
+             }
+          }
+          
+          if (title_node) {
+            sections.push({ 
+               id: section.id
+               ,level: level
+               ,html: title_node.innerHTML 
+            });
+          }
+        }
+      });
 
-      apply_style(container ,h1 ,meta ,copy_div ,config);
-      el.replaceWith(container);
-    }
+      container.innerHTML = '';
+      const title = document.createElement('div');
+      title.className = 'RT·TOC-title';
+      title.textContent = start_level === 1 ? 'Table of Contents' : 'Section Contents';
+      title.style.textAlign = 'center';
+      title.style.fontWeight = '600';
+      title.style.fontSize = '1.5em';
+      title.style.marginBottom = '1.5rem';
+      title.style.color = config.brand_primary || '#000';
+      container.appendChild(title);
+
+      if (sections.length === 0) return; 
+
+      const topList = document.createElement('ul');
+      topList.style.listStyle = 'none';
+      topList.style.paddingLeft = '0';
+      topList.style.marginBottom = '0';
+      container.appendChild(topList);
+
+      const listStack = [topList];
+
+      for (const item of sections) {
+        const depth = item.level - start_level;   
+
+        while (listStack.length - 1 > depth) {
+          listStack.pop();
+        }
+
+        while (listStack.length - 1 < depth) {
+          const parentList = listStack[listStack.length - 1];
+          const lastLi = parentList.lastElementChild;
+
+          if (lastLi) {
+            const subList = document.createElement('ul');
+            subList.style.listStyle = 'none';
+            subList.style.paddingLeft = '1.5rem';
+            subList.style.marginBottom = '0';
+            lastLi.appendChild(subList);
+            listStack.push(subList);
+          } else {
+            break;
+          }
+        }
+
+        const li = document.createElement('li');
+        li.style.marginBottom = '0';
+        li.style.marginTop = depth === 0 ? '1.25rem' : '0.25rem';
+
+        const a = document.createElement('a');
+        a.href = `#${item.id}`;
+        a.innerHTML = item.html; 
+        
+        apply_style(a ,config);
+
+        li.appendChild(a);
+        listStack[listStack.length - 1].appendChild(li);
+      }
+    });
   });
 
 })();

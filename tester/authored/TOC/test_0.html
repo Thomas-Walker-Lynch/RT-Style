@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Test 0: Table of Contents</title>
+    <!-- Adjust the locator path relative to the specific tester/authored subdirectory -->
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title 
+        title="TOC Execution and Section Scoping" 
+        author="Thomas Walker Lynch" 
+        date="2026-08-04 14:57Z">
+      </RT·title>
+
+      <RT·TOC level="1-3"></RT·TOC>
+
+      <RT·section>
+        <RT·name>System Architecture</RT·name>
+        <p>This evaluates the primary execution scope and top-level numbering sequence.</p>
+
+        <RT·section>
+          <RT·name>Memory Hierarchy</RT·name>
+          <p>First nested scope. The state machine must append the depth index.</p>
+          
+          <RT·section>
+            <RT·name>L1 Cache Mechanics</RT·name>
+            <p>Second nested scope. Evaluates terminal TOC depth bounds if configured for level 1-2.</p>
+          </RT·section>
+          
+          <RT·section>
+            <RT·name>L2 Shared Resources</RT·name>
+            <p>Sibling to the L1 scope. Validates sequential incrementing at identical depth.</p>
+          </RT·section>
+        </RT·section>
+        
+        <RT·section>
+          <RT·name>Out-of-Order Execution</RT·name>
+          <p>Returns to the first nested depth to validate boundary exit and state popping.</p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Pipeline Mechanics</RT·name>
+        <p>Second primary execution scope. Validates milestone incrementing across the outer boundary.</p>
+        
+        <RT·section>
+          <RT·name>Branch Prediction</RT·name>
+          <p>Nested evaluation.</p>
+          
+          <RT·section>
+            <RT·name>Speculative States</RT·name>
+            <p>Deep nested evaluation.</p>
+          </RT·section>
+        </RT·section>
+      </RT·section>
+
+    </RT·article>
+  </body>
+</html>
