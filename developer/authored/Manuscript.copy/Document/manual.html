@@ -47,28 +47,17 @@
         Top-level semantic environments. These boundaries enforce the rendering constraints for all scoped content, encompassing both custom RT elements and standard HTML tags.
       </p>
       
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·article&gt;</RT·code></td>
-            <td>Standard technical document architecture.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·memo&gt;</RT·code></td>
-            <td>Strict print layout constraint (6.5-inch width boundary, serif typography, monochrome execution).</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·book&gt;</RT·code></td>
-            <td>Multi-chapter architecture. (Implementation pending; currently routes through the article layout).</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·article&gt;">
+          Standard technical document architecture.
+        </RT·entry>
+        <RT·entry key="&lt;RT·memo&gt;">
+          Strict print layout constraint (6.5-inch width boundary, serif typography, monochrome execution).
+        </RT·entry>
+        <RT·entry key="&lt;RT·book&gt;">
+          Multi-chapter architecture. (Implementation pending; currently routes through the article layout).
+        </RT·entry>
+      </RT·dictionary>
 
       <h2>Article manuscript</h2>
 
@@ -98,319 +87,201 @@
       </RT·code>
 
       <h3>Decorators</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·term&gt;</RT·code></td>
-            <td>
-              Semantic anchor for technical terminology. Formats the initial occurrence and registers the element ID for index generation. Authors must mark all occurrences of the term.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>id</code>: (Default: Auto-generated slug, e.g., "def-my-term")
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·neologism&gt;</RT·code></td>
-            <td>
-              Semantic anchor for a novel term coined within the current document boundaries. Registers the ID for index generation.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>id</code>: (Default: Auto-generated slug, e.g., "def-neo-my-term")
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·term&gt;">
+          Semantic anchor for technical terminology. Formats the initial occurrence and registers the element ID for index generation. Authors must mark all occurrences of the term.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>id</code>: (Default: Auto-generated slug, e.g., "def-my-term")
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·neologism&gt;">
+          Semantic anchor for a novel term coined within the current document boundaries. Registers the ID for index generation.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>id</code>: (Default: Auto-generated slug, e.g., "def-neo-my-term")
+          </div>
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Layout environments</h3>
       <p>
         Context-aware formatting blocks. Valid inline or as distinct structural segments.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·code&gt;</RT·code></td>
-            <td>Code span or pre-formatted code block. Automatically dedents structural alignment spaces and inherits theme boundaries.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·math&gt;</RT·code></td>
-            <td>Injects mathematical layout evaluation via the MathJax rendering engine.</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·code&gt;">
+          Code span or pre-formatted code block. Automatically dedents structural alignment spaces and inherits theme boundaries.
+        </RT·entry>
+        <RT·entry key="&lt;RT·math&gt;">
+          Injects mathematical layout evaluation via the MathJax rendering engine.
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Grid environments</h3>
       <p>
         These structures map semantic data into an internal Cartesian grid state prior to CSS projection, isolating the markup from physical layout mechanics.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·grid&gt;</RT·code></td>
-            <td>
-              Base Cartesian coordinate grid. Projects child <RT·code>&lt;RT·e&gt;</RT·code> elements based on explicitly defined <em>x</em> and <em>y</em> index geometries.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>model</code>: Projection strategy. "html-grid-direct" or "html-grid-transpose". (Default: "html-grid-direct")<br>
-                <code>major</code>: Carriage return trigger direction. "x" or "y". (Default: "x")<br>
-                <br>
-                <strong>Child Element:</strong> <RT·code>&lt;RT·e&gt;</RT·code><br>
-                <code>x</code>: Target <em>x</em>-axis index or index range (e.g., "0-2", where 2 is the maximum index extent).<br>
-                <code>y</code>: Target <em>y</em>-axis index or index range.<br>
-                <code>type</code>: Decoration type. "data", "x-label", "y-label", or "name". (Default: "data")
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·dictionary&gt;</RT·code></td>
-            <td>
-              Two-column associative layout mapping explicitly declared keys to their scoped definitions.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>key</code>: Header text for the identifier column.<br>
-                <code>definition</code>: Header text for the data payload column.<br>
-                <br>
-                <strong>Child Element:</strong> <RT·code>&lt;RT·entry&gt;</RT·code><br>
-                <code>key</code>: The term being defined. The scoped HTML of the entry forms the definition value.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·relation&gt;</RT·code></td>
-            <td>
-              Relational algebra layout formatter. Enforces multi-line text wrapping limits, calculates row distinction boundaries, and restricts column headers to the tuple scope.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>layout-intention</code>: "row-tuple" or "column-tuple". (Default: "row-tuple")<br>
-                <br>
-                <strong>Child Elements:</strong><br>
-                <RT·code>&lt;RT·tuple-meta&gt;</RT·code>: Container for <RT·code>&lt;RT·e&gt;</RT·code> elements establishing the tuple field headers.<br>
-                <RT·code>&lt;RT·tuple&gt;</RT·code>: Data tuple boundaries. Permits an <RT·code>&lt;RT·name&gt;</RT·code> identifier, followed by <RT·code>&lt;RT·e&gt;</RT·code> field values.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·matrix&gt;</RT·code></td>
-            <td>
-              Linear algebraic matrix representation. Enforces rigid structural padding, brackets mathematical delimiters, and suppresses the exterior grid coordinate layout.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>layout-intention</code>: "row-vector" or "column-vector". (Default: "row-vector")<br>
-                <br>
-                <strong>Child Elements:</strong><br>
-                <RT·code>&lt;RT·vector-meta&gt;</RT·code>: Container for <RT·code>&lt;RT·label&gt;</RT·code> elements defining the vector components/basis.<br>
-                <RT·code>&lt;RT·vector&gt;</RT·code>: Vector boundary. Permits an <RT·code>&lt;RT·name&gt;</RT·code> identifier, followed by <RT·code>&lt;RT·e&gt;</RT·code> scalar values.
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·grid&gt;">
+          Base Cartesian coordinate grid. Projects child <RT·code>&lt;RT·e&gt;</RT·code> elements based on explicitly defined <em>x</em> and <em>y</em> index geometries.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>model</code>: Projection strategy. "html-grid-direct" or "html-grid-transpose". (Default: "html-grid-direct")<br>
+            <code>major</code>: Carriage return trigger direction. "x" or "y". (Default: "x")<br>
+            <br>
+            <strong>Child Element:</strong> <RT·code>&lt;RT·e&gt;</RT·code><br>
+            <code>x</code>: Target <em>x</em>-axis index or index range (e.g., "0-2", where 2 is the maximum index extent). Default when no y value, is to auto increment, default with a y value is to reset to 0.<br>
+            <code>y</code>: Target <em>y</em>-axis index or index range. Default is to keep the prior value.<br>
+            <code>type</code>: Decoration type. "data", "x-label", "y-label", or "name". (Default: "data")
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·dictionary&gt;">
+          Two-column associative layout mapping explicitly declared keys to their scoped definitions.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>key</code>: Header text for the identifier column.<br>
+            <code>definition</code>: Header text for the data payload column.<br>
+            <br>
+            <strong>Child Element:</strong> <RT·code>&lt;RT·entry&gt;</RT·code><br>
+            <code>key</code>: The term being defined. The scoped HTML of the entry forms the definition value.
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·relation&gt;">
+          Relational algebra layout formatter. Enforces multi-line text wrapping limits, calculates row distinction boundaries, and restricts column headers to the tuple scope.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>layout-intention</code>: "row-tuple" or "column-tuple". (Default: "row-tuple")<br>
+            <br>
+            <strong>Child Elements:</strong><br>
+            <RT·code>&lt;RT·tuple-meta&gt;</RT·code>: Describes the components rather than providing them. E.g.<RT·code>&lt;RT·label&gt;</RT·code> provides a component label.<br>
+            <RT·code>&lt;RT·tuple&gt;</RT·code>: Container for components. Each  <RT·code>&lt;RT·name&gt;</RT·code> is taken as a first component. If there is more than one  <RT·code>&lt;RT·name&gt;</RT·code>, they are concatenated with a newline separator. If any tupple has a <RT·code>&lt;RT·name&gt;</RT·code>, then the name column is reserved. Missing names in the name column are given a visual placeholder value of '•'. Component data values are given in <RT·code>&lt;RT·e&gt;</RT·code> tags, these are taken in the order they occur.
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·matrix&gt;">
+          Linear algebraic matrix representation. Enforces rigid structural padding, brackets mathematical delimiters, and suppresses the exterior grid coordinate layout.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>layout-intention</code>: "row-vector" or "column-vector". (Default: "row-vector")<br>
+            <br>
+            <strong>Child Elements:</strong><br>
+            <RT·code>&lt;RT·vector-meta&gt;</RT·code>: Describes the components rather than providing them. E.g. <RT·code>&lt;RT·label&gt;</RT·code> provides a component label.<br>
+            <RT·code>&lt;RT·vector&gt;</RT·code>: Container for components. Each <RT·code>&lt;RT·name&gt;</RT·code> is taken as a first component. If there is more than one <RT·code>&lt;RT·name&gt;</RT·code>, they are concatenated with a newline separator. If any vector has a <RT·code>&lt;RT·name&gt;</RT·code>, then the name column is reserved. Missing names in the name column are given a visual placeholder value of '•'. Component scalar values are given in <RT·code>&lt;RT·e&gt;</RT·code> tags, these are taken in the order they occur.
+          </div>
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Generators</h3>
 
       <p>Data-injection nodes. These elements do not wrap content; execution is governed strictly by the attributes provided.</p>
 
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·title&gt;</RT·code></td>
-            <td>
-              Constructs the primary document header block.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>title</code>: (Default: "Untitled Document")<br>
-                <code>author</code>: (Default: None)<br>
-                <code>date</code>: (Default: None)<br>
-                <code>copyright</code>: (Default: None)
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·TOC&gt;</RT·code></td>
-            <td>
-              Compiles an automated Table of Contents by scanning the document's header hierarchy depth.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>level</code>: Target heading index "N" or range "A-B". (Default: Context-aware. Scans backward for the nearest heading H(N) and evaluates targets at H(N+1)).
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·endnotes&gt;</RT·code></td>
-            <td>Generates the numeric list of endnote payloads. Replaces all inline endnote citations with bracketed indices.</td>
-          </tr>
-        </tbody>
-      </table>
-
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·title&gt;">
+          Constructs the primary document header block.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>title</code>: (Default: "Untitled Document")<br>
+            <code>author</code>: (Default: None)<br>
+            <code>date</code>: (Default: None)<br>
+            <code>copyright</code>: (Default: None)
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·TOC&gt;">
+          Compiles an automated Table of Contents by scanning the document's header hierarchy depth.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>level</code>: Target heading index "N" or range "A-B". (Default: Context-aware. Scans backward for the nearest heading H(N) and evaluates targets at H(N+1)).
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·endnotes&gt;">
+          Generates the numeric list of endnote payloads. Replaces all inline endnote citations with bracketed indices.
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Counters</h3>
       <p>
         Counters operate as explicit state machines. Initialization requires a unique identifier. Execution evaluates scope depth and increments the state. The layout engine maintains a single internal representation but maps it to multiple visual styles upon request.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·Counter·make&gt;</RT·code></td>
-            <td>
-              Initializes the named counter state machine.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>counter</code>: Required state identifier.<br>
-                <code>style</code>: Single style string, or comma-separated hierarchy defining formats at each nesting depth. The terminal format applies to all deeper nestings. Valid arguments: "NaturalNumber", "CountingNumber", "Roman", "roman", "Alpha", "alpha". The "outline" flag translates to a standard mixed document array. (Default: "NaturalNumber")<br>
-                <code>on-first-step</code>: The initial base value. (Default: "0")<br>
-                <code>separator</code>: String appended between depth sequence levels. (Default: ".")<br>
-                <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")<br>
-                <code>mode</code>: "scoped" (content embedded between count boundaries receives the parent scope's value) or "milestone" (state carries forward sequentially irrespective of lexical depth).
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <RT·code>&lt;RT·Counter·step&gt;</RT·code>
-            </td>
-            <td>
-              Increments the counter block. Executing a step inside an existing step boundary pushes the state to the next depth index.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>counter</code>: Required state identifier.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·Counter·snapshot&gt;</RT·code></td>
-            <td>
-              Clones the active count variables into the lookup dictionary. Snapshot processing operates independently of the layout pass, allowing global retrieval regardless of physical placement.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>counter</code>: Required state identifier.<br>
-                <code>snapshot</code>: Required dictionary assignment key.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·Counter·read&gt;</RT·code></td>
-            <td>
-              Retrieves the stored snapshot and projects it as innerHTML.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>snapshot</code>: Required dictionary assignment key.<br>
-                <code>key</code>: Sub-state query property. Resolves dot-notation parameters (e.g., "count.status", "count.list"). Querying "count" triggers the style formatter and separator join parameters. (Default: "count")
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·Counter·make&gt;">
+          Initializes the named counter state machine.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>counter</code>: Required state identifier.<br>
+            <code>style</code>: Single style string, or comma-separated hierarchy defining formats at each nesting depth. The terminal format applies to all deeper nestings. Valid arguments: "NaturalNumber", "CountingNumber", "Roman", "roman", "Alpha", "alpha". The "outline" flag translates to a standard mixed document array. (Default: "NaturalNumber")<br>
+            <code>on-first-step</code>: The initial base value. (Default: "0")<br>
+            <code>separator</code>: String appended between depth sequence levels. (Default: ".")<br>
+            <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")<br>
+            <code>mode</code>: "scoped" (content embedded between count boundaries receives the parent scope's value) or "milestone" (state carries forward sequentially irrespective of lexical depth).
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·Counter·step&gt;">
+          Increments the counter block. Executing a step inside an existing step boundary pushes the state to the next depth index.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>counter</code>: Required state identifier.
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·Counter·snapshot&gt;">
+          Clones the active count variables into the lookup dictionary. Snapshot processing operates independently of the layout pass, allowing global retrieval regardless of physical placement.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>counter</code>: Required state identifier.<br>
+            <code>snapshot</code>: Required dictionary assignment key.
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·Counter·read&gt;">
+          Retrieves the stored snapshot and projects it as innerHTML.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>snapshot</code>: Required dictionary assignment key.<br>
+            <code>key</code>: Sub-state query property. Resolves dot-notation parameters (e.g., "count.status", "count.list"). Querying "count" triggers the style formatter and separator join parameters. (Default: "count")
+          </div>
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Cross reference</h3>
       <p>
         A two-pass structural mechanism bridging logical content with its physically paginated layout geometry.
       </p>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·Note·write&gt;</RT·code></td>
-            <td>
-              Registers the scoped content and its finalized layout page index into the reference dictionary.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>key</code>: Required mapping identifier.
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·Note·read&gt;</RT·code></td>
-            <td>
-              Queries the reference dictionary and injects the output.<br>
-              <div class="attr-list">
-                <strong>Attributes:</strong><br>
-                <code>key</code>: Target mapping identifier.<br>
-                <code>field</code>: Data extraction parameter. Valid targets are "content" (the original HTML payload) or "page" (the evaluated layout page number). (Default: "content")
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·Note·write&gt;">
+          Registers the scoped content and its finalized layout page index into the reference dictionary.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>key</code>: Required mapping identifier.
+          </div>
+        </RT·entry>
+        <RT·entry key="&lt;RT·Note·read&gt;">
+          Queries the reference dictionary and injects the output.<br>
+          <div class="attr-list">
+            <br><strong>Attributes:</strong><br>
+            <code>key</code>: Target mapping identifier.<br>
+            <code>field</code>: Data extraction parameter. Valid targets are "content" (the original HTML payload) or "page" (the evaluated layout page number). (Default: "content")
+          </div>
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Annotation</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <RT·code>&lt;RT·endnote&gt;</RT·code>
-            </td>
-            <td>Marks the scoped content for extraction and placement in the endnotes block.</td>
-          </tr>
-          <tr>
-            <td>
-              <RT·code>&lt;RT·footnote&gt;</RT·code>
-            </td>
-            <td>Marks the scoped content for layout relocation to the active page's footer.</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·endnote&gt;">
+          Marks the scoped content for extraction and placement in the endnotes block.
+        </RT·entry>
+        <RT·entry key="&lt;RT·footnote&gt;">
+          Marks the scoped content for layout relocation to the active page's footer.
+        </RT·entry>
+      </RT·dictionary>
 
       <h3>Pagination</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·page&gt;</RT·code></td>
-            <td>Physical document boundary generated dynamically by the paginator. Not for manual insertion.</td>
-          </tr>
-          <tr>
-            <td><RT·code>&lt;RT·page-break&gt;</RT·code></td>
-            <td>Explicit directive terminating the current <RT·code>&lt;RT·page&gt;</RT·code> evaluation and pushing subsequent data to the next boundary.</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·page&gt;">
+          Physical document boundary generated dynamically by the paginator. Not for manual insertion.
+        </RT·entry>
+        <RT·entry key="&lt;RT·page-break&gt;">
+          Explicit directive terminating the current <RT·code>&lt;RT·page&gt;</RT·code> evaluation and pushing subsequent data to the next boundary.
+        </RT·entry>
+      </RT·dictionary>
 
       <h2>Memo environment</h2>
       <p>
@@ -423,36 +294,18 @@
       </p>
 
       <h3>Book specific tags</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·chapter&gt;</RT·code></td>
-            <td>Chapter delimiter. Triggers an immediate page break, escalates to H1 typography, and writes a top-level node to the TOC sequence. Retains any authored <code>class</code> attributes.</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·chapter&gt;">
+          Chapter delimiter. Triggers an immediate page break, escalates to H1 typography, and writes a top-level node to the TOC sequence. Retains any authored <code>class</code> attributes.
+        </RT·entry>
+      </RT·dictionary>
 
       <h1>Global widgets</h1>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 25%;">Tag</th>
-            <th>Description & Arguments</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><RT·code>&lt;RT·theme-selector&gt;</RT·code></td>
-            <td>Injects a floating overlay permitting real-time CSS theme execution. Writes the selection to the browser's <code>localStorage</code>.</td>
-          </tr>
-        </tbody>
-      </table>
+      <RT·dictionary key="Tag" definition="Description & Arguments">
+        <RT·entry key="&lt;RT·theme-selector&gt;">
+          Injects a floating overlay permitting real-time CSS theme execution. Writes the selection to the browser's <code>localStorage</code>.
+        </RT·entry>
+      </RT·dictionary>
 
     </RT·article>
   </body>

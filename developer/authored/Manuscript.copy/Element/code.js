@@ -37,7 +37,7 @@
 
     for(let i = 0; i < nodes.length; i++){
       const el = nodes[i];
-      const is_block = U.Dom.is_block_content(el);
+      const is_block = el.innerHTML.includes('\n');
       const computed = window.getComputedStyle(el);
       
       const is_text_light = U.Color.is_light(config.content_main);

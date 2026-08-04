@@ -3,10 +3,10 @@
   Compiles semantic tabular structures into a Cartesian GridState.
 */
 
-
-
 (function() {
   if (!window.RT) return;
+
+  const debug = window.RT.Debug || { log: function(){}, warn: function(){}, error: function(){} };
 
   class GridState {
     constructor() {
@@ -116,8 +116,9 @@
   function render_model_html_dictionary(container_node, grid_state, options, config) {
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
-    wrapper.style.gridAutoColumns = 'max-content';
-    wrapper.style.justifyContent = 'start';
+    wrapper.style.gridTemplateColumns = 'max-content auto';
+    wrapper.style.width = 'fit-content';
+    wrapper.style.maxWidth = '100%';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
     wrapper.style.margin = '1.5rem 0';
 
@@ -165,6 +166,7 @@
   }
 
   RT.Element.add(function process_grids() {
+    if(debug.log) debug.log('grid', 'Processing grid structures');
 
     // 1. Native Grid
     document.querySelectorAll('RT·grid').forEach(node => {
@@ -238,6 +240,8 @@
 
     // 3. Relation
     document.querySelectorAll('RT·relation').forEach(node => {
+      if(debug.log) debug.log('grid', '<RT·relation> node evaluated');
+      
       const state = new GridState();
       const layout_intent = node.getAttribute('layout-intention') || 'row-tuple';
       const model = layout_intent === 'column-tuple' ? 'html-grid-transpose' : 'html-grid-direct';
