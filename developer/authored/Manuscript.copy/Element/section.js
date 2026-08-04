@@ -1,7 +1,8 @@
 /*
   Element/section.js
   Processes <RT·section> tags.
-  Extracts <RT·name> payloads, manages outline numbering, and injects the formatted title.
+  Applies counting hierarchical numbering, conditional alignment/indents, 
+  subdued dark red borders for top-level elements, and universal page breaks for chapters.
 */
 
 (function() {
@@ -9,26 +10,33 @@
   if (!window.RT) return;
 
   const apply_style = function(title_node ,depth ,config) {
-    // Top-level sections start large; scale down based on nesting depth
     const base_size = 2.25;
     const size = Math.max(1.1 ,base_size - (depth * 0.35));
+    const fade_opacity = Math.max(0.5 ,1 - (depth * 0.2));
+
+    if (depth === 0) {
+      title_node.style.textAlign = 'center';
+      title_node.style.paddingLeft = '0';
+      // Firebrick provides sufficient chroma contrast against dark backgrounds
+      title_node.style.borderBottom = '2px solid #B22222'; 
+      title_node.style.paddingBottom = '0.5rem';
+    } else {
+      title_node.style.textAlign = 'left';
+      title_node.style.paddingLeft = (depth * 1.5) + 'rem';
+    }
 
     title_node.style.fontSize = size + 'em';
     title_node.style.fontWeight = '600';
     title_node.style.color = config.brand_primary || '#000';
+    title_node.style.opacity = fade_opacity.toString();
     title_node.style.marginTop = depth === 0 ? '3rem' : '2rem';
     title_node.style.marginBottom = '1rem';
     title_node.style.lineHeight = '1.2';
-    
-    if(depth === 0) {
-      title_node.style.borderBottom = '1px solid ' + (config.border_faint || '#ccc');
-      title_node.style.paddingBottom = '0.5rem';
-    }
   };
 
   RT.Element.add(function() {
     const debug = window.RT.Debug || { log: function(){} };
-    if (debug.log) debug.log('section' ,'Processing scoped sections');
+    if (debug.log) debug.log('section' ,'Processing scoped sections with counting numbering');
 
     const config = window.RT.layout_config || {};
     const section_seq = document.querySelectorAll('RT·section, rt·section');
@@ -39,7 +47,8 @@
     if (article && !document.querySelector('rt·counter·make[counter="RT_section"]')) {
       const make = document.createElement('rt·counter·make');
       make.setAttribute('counter' ,'RT_section');
-      make.setAttribute('style' ,'outline');
+      // Utilizing CountingNumber to output 1.1.1 rather than 0.0.0
+      make.setAttribute('style' ,'CountingNumber');
       make.setAttribute('mode' ,'scoped');
       make.setAttribute('on-first-step' ,'0');
       article.insertBefore(make ,article.firstChild);
@@ -59,6 +68,14 @@
         curr = curr.parentElement;
       }
 
+      // Force ALL top-level sections to start on a new page
+      if (depth === 0) {
+        if (!section.previousElementSibling?.tagName?.toLowerCase().includes('page-break')) {
+          const pb = document.createElement('rt·page-break');
+          section.parentNode.insertBefore(pb, section);
+        }
+      }
+
       const names = [];
       const children = Array.from(section.children);
       children.forEach(child => {
@@ -73,6 +90,10 @@
       const step = document.createElement('rt·counter·step');
       step.setAttribute('counter' ,'RT_section');
 
+      while (section.firstChild) {
+        step.appendChild(section.firstChild);
+      }
+
       const snap_id = 'section_snap_' + section_idx++;
       const snap = document.createElement('rt·counter·snapshot');
       snap.setAttribute('counter' ,'RT_section');
@@ -80,15 +101,13 @@
 
       const title_node = document.createElement('div');
       title_node.className = 'RT·section-title';
-      
-      // Map identifier for TOC routing
       if (!section.id) section.id = snap_id; 
 
       const read = document.createElement('rt·counter·read');
       read.setAttribute('snapshot' ,snap_id);
       
       const title_content = document.createElement('span');
-      title_content.style.marginLeft = '1rem';
+      title_content.style.marginLeft = '0.75rem';
       title_content.innerHTML = title_text;
 
       title_node.appendChild(read);
@@ -96,9 +115,10 @@
 
       apply_style(title_node ,depth ,config);
 
-      section.insertBefore(title_node ,section.firstChild);
-      section.insertBefore(snap ,section.firstChild);
-      section.insertBefore(step ,section.firstChild);
+      step.insertBefore(title_node ,step.firstChild);
+      step.insertBefore(snap ,step.firstChild);
+
+      section.appendChild(step);
     });
   });
 
