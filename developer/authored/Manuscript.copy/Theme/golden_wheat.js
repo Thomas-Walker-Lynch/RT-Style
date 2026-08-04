@@ -67,7 +67,7 @@
       shadow: "0 4px 15px rgba(0,0,0,0.1)"
     },
     custom_css: `
-    rt-article p, rt-article li { text-shadow: 0px 0px 0.5px rgba(0,0,0, 0.2); }
+    RT-article p, RT-article li { text-shadow: 0px 0px 0.5px rgba(0,0,0, 0.2); }
     .MathJax, .MathJax_Display, .mjx-chtml {
         color: oklch(0.20 0.02 25) !important;
         fill: oklch(0.20 0.02 25) !important;

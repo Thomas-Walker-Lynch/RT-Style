@@ -67,8 +67,14 @@
       shadow: "0 4px 15px rgba(0,0,0,0.1)"
     },
     custom_css: `
-    img.rt-diagram { filter: invert(1) hue-rotate(180deg); }
-  `
+    img.RT-diagram { 
+      filter: invert(1) hue-rotate(180deg); 
+      max-width: 100%; 
+      height: auto; 
+    }
+    `
+
+
   };
 
 })();

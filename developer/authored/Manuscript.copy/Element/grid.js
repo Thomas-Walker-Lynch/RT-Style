@@ -1,25 +1,20 @@
 /*
   Element/grid.js
   Compiles semantic tabular structures into a Cartesian GridState.
-  [INSTRUMENTED DIAGNOSTIC BUILD]
 */
+
+
 
 (function() {
   if (!window.RT) return;
 
-  console.warn(">>> [RT GRID DIAGNOSTIC] grid.js parsed by browser at: " + new Date().toISOString() + " <<<");
-
   class GridState {
     constructor() {
       this.cells = [];
-      this.max_x = 0;
-      this.max_y = 0;
     }
 
     insert(cell_data) {
       this.cells.push(cell_data);
-      if (cell_data.x_extent > this.max_x) this.max_x = cell_data.x_extent;
-      if (cell_data.y_extent > this.max_y) this.max_y = cell_data.y_extent;
     }
   }
 
@@ -32,7 +27,7 @@
     const border_strong = '2px solid ' + (config.border_strong || '#000');
     const border_faint = '1px solid ' + (config.border_faint || '#ccc');
 
-    if (type === 'x-label' || type === 'y-label' || type === 'name' || type === 'corner') {
+    if (type === 'x-label' || type === 'y-label' || type === 'corner') {
       el.style.fontWeight = '600';
     }
 
@@ -42,11 +37,6 @@
     }
     
     if (type === 'y-label') {
-      if (is_transposed) el.style.borderBottom = border_strong;
-      else el.style.borderRight = border_strong;
-    }
-    
-    if (type === 'name') {
       if (is_transposed) el.style.borderBottom = border_faint;
       else el.style.borderRight = border_faint;
     }
@@ -65,7 +55,7 @@
       el.style.textAlign = 'center';
     }
     
-    if ((is_transposed ? type === 'x-label' : type === 'y-label') || type === 'name' || type === 'corner') {
+    if ((is_transposed ? type === 'x-label' : type === 'y-label') || type === 'corner') {
       el.style.textAlign = 'right';
       el.style.paddingRight = '0.5rem'; 
     }
@@ -150,7 +140,7 @@
   function execute_two_pass_measurement(wrapper, options) {
     requestAnimationFrame(() => {
       if (options.wrap_check) {
-        const data_cells = wrapper.querySelectorAll('.RT_grid_data, .RT_grid_name');
+        const data_cells = wrapper.querySelectorAll('.RT_grid_data, .RT_grid_y-label');
         data_cells.forEach(cell => {
           const computed = window.getComputedStyle(cell);
           const line_height = parseFloat(computed.lineHeight) || (parseFloat(computed.fontSize) * 1.2);
@@ -175,10 +165,9 @@
   }
 
   RT.Element.add(function process_grids() {
-    console.error(">>> [RT GRID DIAGNOSTIC] process_grids() triggered by stage_manager <<<");
 
     // 1. Native Grid
-    document.querySelectorAll('RT·grid, rt·grid, RT-grid, rt-grid').forEach(node => {
+    document.querySelectorAll('RT·grid').forEach(node => {
       const state = new GridState();
       const model = node.getAttribute('model') || 'html-grid-direct';
       const major_axis = node.getAttribute('major') || 'x';
@@ -186,7 +175,7 @@
       let cursor_x = 0;
       let cursor_y = 0;
 
-      node.querySelectorAll('RT·e, rt·e, RT-e, rt-e').forEach(e => {
+      node.querySelectorAll('RT·e').forEach(e => {
         const attr_x = e.getAttribute('x');
         const attr_y = e.getAttribute('y');
         
@@ -217,7 +206,7 @@
     });
 
     // 2. Dictionary
-    document.querySelectorAll('RT·dictionary, rt·dictionary, RT-dictionary, rt-dictionary').forEach(node => {
+    document.querySelectorAll('RT·dictionary').forEach(node => {
       const state = new GridState();
       const key_label = node.getAttribute('key');
       const def_label = node.getAttribute('definition');
@@ -225,21 +214,21 @@
       let y = 0;
 
       if (key_label || def_label) {
-        const h1 = document.createElement('RT·e'); h1.textContent = key_label || 'X';
-        const h2 = document.createElement('RT·e'); h2.textContent = def_label || 'X';
+        const h1 = document.createElement('RT·e'); h1.textContent = key_label || '•';
+        const h2 = document.createElement('RT·e'); h2.textContent = def_label || '•';
         state.insert({ element: h1, type: 'x-label', x: 0, y: y, x_extent: 0, y_extent: y });
         state.insert({ element: h2, type: 'x-label', x: 1, y: y, x_extent: 1, y_extent: y });
         y++;
       }
 
-      node.querySelectorAll('RT·entry, rt·entry, RT-entry, rt-entry').forEach(entry => {
+      node.querySelectorAll('RT·entry').forEach(entry => {
         const k = document.createElement('RT·e');
-        k.textContent = entry.getAttribute('key') || 'X';
+        k.textContent = entry.getAttribute('key') || '•';
         
         const v = document.createElement('RT·e');
         v.innerHTML = entry.innerHTML;
         
-        state.insert({ element: k, type: 'name', x: 0, y: y, x_extent: 0, y_extent: y });
+        state.insert({ element: k, type: 'y-label', x: 0, y: y, x_extent: 0, y_extent: y });
         state.insert({ element: v, type: 'data', x: 1, y: y, x_extent: 1, y_extent: y });
         y++;
       });
@@ -248,46 +237,34 @@
     });
 
     // 3. Relation
-    document.querySelectorAll('RT·relation, rt·relation, RT-relation, rt-relation').forEach(node => {
-      console.warn(">>> [RT GRID DIAGNOSTIC] <RT·relation> node found <<<");
-      
+    document.querySelectorAll('RT·relation').forEach(node => {
       const state = new GridState();
       const layout_intent = node.getAttribute('layout-intention') || 'row-tuple';
       const model = layout_intent === 'column-tuple' ? 'html-grid-transpose' : 'html-grid-direct';
-      const tuples = node.querySelectorAll('RT·tuple, rt·tuple, RT-tuple, rt-tuple');
+      const tuples = node.querySelectorAll('RT·tuple');
 
-      let row_labels_debug = [];
       let has_any_name = false;
-
       tuples.forEach(tuple => {
-        const names = tuple.querySelectorAll('RT·name, rt·name, RT-name, rt-name');
-        if (names.length > 0) {
+        if (tuple.querySelectorAll('RT·name').length > 0) {
           has_any_name = true;
-          let sublist = [];
-          names.forEach(n => sublist.push(n.textContent.trim()));
-          row_labels_debug.push(sublist);
-        } else {
-          row_labels_debug.push(['X']);
         }
       });
-
-      console.error(`>>> [RT GRID DIAGNOSTIC] Relation row labels: ${JSON.stringify(row_labels_debug)} <<<`);
 
       let offset_x = has_any_name ? 1 : 0;
       let offset_y = 0;
 
-      const col_head = node.querySelector('RT·tuple-meta, rt·tuple-meta, RT-tuple-meta, rt-tuple-meta');
+      const col_head = node.querySelector('RT·tuple-meta');
       if (col_head) {
         offset_y = 1;
         let cx = offset_x;
-        col_head.querySelectorAll('RT·e, rt·e, RT-e, rt-e').forEach(e => {
+        col_head.querySelectorAll('RT·e').forEach(e => {
           state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
           cx++;
         });
         
         if (has_any_name) {
           const corner_el = document.createElement('RT·e');
-          corner_el.textContent = 'X';
+          corner_el.textContent = '•';
           state.insert({ element: corner_el, type: 'corner', x: 0, y: 0, x_extent: 0, y_extent: 0 });
         }
       }
@@ -295,18 +272,20 @@
       let y = offset_y;
       tuples.forEach(tuple => {
         if (has_any_name) {
-          const names = tuple.querySelectorAll('RT·name, rt·name, RT-name, rt-name');
+          const names = tuple.querySelectorAll('RT·name');
           const name_container = document.createElement('RT·e');
+          
           if (names.length > 0) {
-            names.forEach(n => name_container.appendChild(n.cloneNode(true)));
+            const name_texts = Array.from(names).map(n => n.textContent.trim());
+            name_container.innerHTML = name_texts.join('<br>');
           } else {
-            name_container.textContent = 'X';
+            name_container.textContent = '•';
           }
-          state.insert({ element: name_container, type: 'name', x: 0, y: y, x_extent: 0, y_extent: y });
+          state.insert({ element: name_container, type: 'y-label', x: 0, y: y, x_extent: 0, y_extent: y });
         }
         
         let x = offset_x;
-        tuple.querySelectorAll('RT·e, rt·e, RT-e, rt-e').forEach(e => {
+        tuple.querySelectorAll('RT·e').forEach(e => {
           state.insert({ element: e.cloneNode(true), type: 'data', x: x, y: y, x_extent: x, y_extent: y });
           x++;
         });
@@ -317,42 +296,34 @@
     });
 
     // 4. Matrix
-    document.querySelectorAll('RT·matrix, rt·matrix, RT-matrix, rt-matrix').forEach(node => {
+    document.querySelectorAll('RT·matrix').forEach(node => {
       const state = new GridState();
       const layout_intent = node.getAttribute('layout-intention') || 'row-vector';
       const model = layout_intent === 'column-vector' ? 'html-grid-transpose' : 'html-grid-direct';
-      const vectors = node.querySelectorAll('RT·vector, rt·vector, RT-vector, rt-vector');
+      const vectors = node.querySelectorAll('RT·vector');
 
-      let row_labels_debug = [];
       let has_any_name = false;
-
       vectors.forEach(vec => {
-        const names = vec.querySelectorAll('RT·name, rt·name, RT-name, rt-name');
-        if (names.length > 0) {
+        if (vec.querySelectorAll('RT·name').length > 0) {
           has_any_name = true;
-          let sublist = [];
-          names.forEach(n => sublist.push(n.textContent.trim()));
-          row_labels_debug.push(sublist);
-        } else {
-          row_labels_debug.push(['X']);
         }
       });
 
       let offset_x = has_any_name ? 1 : 0;
       let offset_y = 0;
 
-      const vector_meta = node.querySelector('RT·vector-meta, rt·vector-meta, RT-vector-meta, rt-vector-meta');
+      const vector_meta = node.querySelector('RT·vector-meta');
       if (vector_meta) {
         offset_y = 1;
         let cx = offset_x;
-        vector_meta.querySelectorAll('RT·label, rt·label, RT-label, rt-label').forEach(e => {
+        vector_meta.querySelectorAll('RT·label').forEach(e => {
           state.insert({ element: e.cloneNode(true), type: 'x-label', x: cx, y: 0, x_extent: cx, y_extent: 0 });
           cx++;
         });
         
         if (has_any_name) {
           const corner_el = document.createElement('RT·e');
-          corner_el.textContent = 'X';
+          corner_el.textContent = '•';
           state.insert({ element: corner_el, type: 'corner', x: 0, y: 0, x_extent: 0, y_extent: 0 });
         }
       }
@@ -360,18 +331,20 @@
       let y = offset_y;
       vectors.forEach(vec => {
         if (has_any_name) {
-          const names = vec.querySelectorAll('RT·name, rt·name, RT-name, rt-name');
+          const names = vec.querySelectorAll('RT·name');
           const name_container = document.createElement('RT·e');
+          
           if (names.length > 0) {
-            names.forEach(n => name_container.appendChild(n.cloneNode(true)));
+            const name_texts = Array.from(names).map(n => n.textContent.trim());
+            name_container.innerHTML = name_texts.join('<br>');
           } else {
-            name_container.textContent = 'X';
+            name_container.textContent = '•';
           }
-          state.insert({ element: name_container, type: 'name', x: 0, y: y, x_extent: 0, y_extent: y });
+          state.insert({ element: name_container, type: 'y-label', x: 0, y: y, x_extent: 0, y_extent: y });
         }
         
         let x = offset_x;
-        vec.querySelectorAll('RT·e, rt·e, RT-e, rt-e').forEach(e => {
+        vec.querySelectorAll('RT·e').forEach(e => {
           state.insert({ element: e.cloneNode(true), type: 'data', x: x, y: y, x_extent: x, y_extent: y });
           x++;
         });
