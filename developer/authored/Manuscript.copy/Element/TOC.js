@@ -1,15 +1,15 @@
 /*
   Element/TOC.js
   Processes <RT·TOC> tags.
-  Iterates nested <RT·section> boundaries, evaluates tree depth, 
+  Iterates nested RT_section boundaries, evaluates tree depth, 
   and duplicates the title payload for automated navigation.
 */
 
-(function() {
+(function(){
 
-  if (!window.RT) return;
+  if(!window.RT) return;
 
-  const apply_style = function(a ,config) {
+  const apply_style = function(a ,config){
     a.style.textDecoration = 'none';
     a.style.color = 'inherit';
     a.style.display = 'block';
@@ -18,28 +18,28 @@
     a.onmouseout  = () => a.style.color = 'inherit';
   };
 
-  RT.Element.add( function() {
+  RT.Element.add(function(){
     const debug = window.RT.Debug || { log: function(){} };
-    if (debug.log) debug.log('TOC' ,'Generating Table of Contents from nested sections');
+    if(debug.log) debug.log('TOC' ,'Generating Table of Contents from expanded section steps');
     
     const config = window.RT.layout_config || {};
-    const TOC_seq = document.querySelectorAll('rt·toc, RT·TOC');
+    const TOC_seq = document.querySelectorAll('RT·TOC, rt·toc');
 
-    TOC_seq.forEach( (container ,TOC_index) => {
+    TOC_seq.forEach((container ,TOC_index) => {
       container.style.display = 'block';
 
       const attr_val = container.getAttribute('level');
       let start_level = 1;
       let end_level = 6; 
       
-      if (attr_val) {
-        const rangeMatch = attr_val.match(/^(\d)-(\d)$/);
-        if (rangeMatch) {
-          start_level = parseInt(rangeMatch[1]);
-          end_level   = parseInt(rangeMatch[2]);
-        } else {
+      if(attr_val){
+        const range_match = attr_val.match(/^(\d)-(\d)$/);
+        if(range_match){
+          start_level = parseInt(range_match[1]);
+          end_level   = parseInt(range_match[2]);
+        }else{
           const single = parseInt(attr_val);
-          if (!isNaN(single)) {
+          if(!isNaN(single)){
             start_level = single;
             end_level   = single;
           } 
@@ -47,26 +47,25 @@
       }
 
       const sections = [];
-      const all_sections = document.querySelectorAll('rt·section, RT·section');
+      const all_sections = document.querySelectorAll('RT·counter·step[counter="RT_section"], rt·counter·step[counter="RT_section"]');
       
       all_sections.forEach(section => {
         let depth = 0;
         let curr = section.parentElement;
         
-        while (curr) {
-          if (curr.tagName && curr.tagName.toLowerCase() === 'rt·section') {
+        while(curr){
+          const tag = (curr.tagName || '').toLowerCase();
+          if(tag === 'rt·counter·step' && curr.getAttribute('counter') === 'RT_section'){
             depth++;
           }
           curr = curr.parentElement;
         }
         
         const level = depth + 1;
-        if (level >= start_level && level <= end_level) {
-          
-          // Use querySelector to safely find the title regardless of nested wrapper logic
+        if(level >= start_level && level <= end_level){
           const title_node = section.querySelector('.RT·section-title');
           
-          if (title_node) {
+          if(title_node){
             sections.push({ 
                id: section.id
                ,level: level
@@ -87,35 +86,35 @@
       title.style.color = config.brand_primary || '#000';
       container.appendChild(title);
 
-      if (sections.length === 0) return; 
+      if(sections.length === 0) return; 
 
-      const topList = document.createElement('ul');
-      topList.style.listStyle = 'none';
-      topList.style.paddingLeft = '0';
-      topList.style.marginBottom = '0';
-      container.appendChild(topList);
+      const top_list = document.createElement('ul');
+      top_list.style.listStyle = 'none';
+      top_list.style.paddingLeft = '0';
+      top_list.style.marginBottom = '0';
+      container.appendChild(top_list);
 
-      const listStack = [topList];
+      const list_stack = [top_list];
 
-      for (const item of sections) {
+      for(const item of sections){
         const depth = item.level - start_level;   
 
-        while (listStack.length - 1 > depth) {
-          listStack.pop();
+        while(list_stack.length - 1 > depth){
+          list_stack.pop();
         }
 
-        while (listStack.length - 1 < depth) {
-          const parentList = listStack[listStack.length - 1];
-          const lastLi = parentList.lastElementChild;
+        while(list_stack.length - 1 < depth){
+          const parent_list = list_stack[list_stack.length - 1];
+          const last_li = parent_list.lastElementChild;
 
-          if (lastLi) {
-            const subList = document.createElement('ul');
-            subList.style.listStyle = 'none';
-            subList.style.paddingLeft = '1.5rem';
-            subList.style.marginBottom = '0';
-            lastLi.appendChild(subList);
-            listStack.push(subList);
-          } else {
+          if(last_li){
+            const sub_list = document.createElement('ul');
+            sub_list.style.listStyle = 'none';
+            sub_list.style.paddingLeft = '1.5rem';
+            sub_list.style.marginBottom = '0';
+            last_li.appendChild(sub_list);
+            list_stack.push(sub_list);
+          }else{
             break;
           }
         }
@@ -131,7 +130,7 @@
         apply_style(a ,config);
 
         li.appendChild(a);
-        listStack[listStack.length - 1].appendChild(li);
+        list_stack[list_stack.length - 1].appendChild(li);
       }
     });
   });
