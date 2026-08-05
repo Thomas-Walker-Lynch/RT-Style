@@ -83,6 +83,7 @@
     wrapper.style.display = 'grid';
     wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
+    wrapper.setAttribute('splitable', 'true');
 
     if (options.delimiters) {
       wrapper.style.borderLeft = '2px solid ' + (config.content_main || '#000');
@@ -121,6 +122,7 @@
     wrapper.style.maxWidth = '100%';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
     wrapper.style.margin = '1.5rem 0';
+    wrapper.setAttribute('splitable', 'true');
 
     grid_state.cells.forEach(cell => {
       const el = cell.element;

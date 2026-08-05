@@ -18,6 +18,120 @@
 
   let measure_container = null;
 
+  // Initialize the Splitter namespace before assignment
+  RT.Splitter = RT.Splitter || {};
+
+  RT.Splitter['div'] = function(el, remaining, measure_fn, is_splittable_fn, force) {
+    if (!el.classList.contains('RT_grid_container')) {
+      return { first: el, rest: null, firstHeight: measure_fn(el) };
+    }
+
+    const children = Array.from(el.children);
+    const headers = [];
+    const data_cells = [];
+    let max_header_line = 0;
+
+    // 1. Separate headers and determine header boundary
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child.classList.contains('RT_grid_x-label') || child.classList.contains('RT_grid_corner')) {
+        headers.push(child);
+        const row_end = parseInt(child.style.gridRowEnd, 10);
+        if (!isNaN(row_end) && row_end > max_header_line) {
+          max_header_line = row_end;
+        }
+      } else {
+        data_cells.push(child);
+      }
+    }
+
+    // 2. Group data elements by their starting grid-row
+    const row_groups = new Map();
+    data_cells.forEach(cell => {
+      const row_start = parseInt(cell.style.gridRowStart, 10);
+      if (!row_groups.has(row_start)) {
+        row_groups.set(row_start, []);
+      }
+      row_groups.get(row_start).push(cell);
+    });
+
+    const sorted_rows = Array.from(row_groups.keys()).sort((a, b) => a - b);
+    const temp_container = el.cloneNode(false);
+    
+    headers.forEach(h => temp_container.appendChild(h.cloneNode(true)));
+    let base_height = measure_fn(temp_container);
+
+    if (base_height > remaining && !force) {
+      return { first: null, rest: el, firstHeight: 0 };
+    }
+
+    let best_count = 0;
+    let best_height = base_height;
+
+    // 3. Incrementally measure complete rows
+    for (let i = 0; i < sorted_rows.length; i++) {
+      const row_idx = sorted_rows[i];
+      const row_elements = row_groups.get(row_idx);
+
+      row_elements.forEach(cell => temp_container.appendChild(cell.cloneNode(true)));
+      const current_height = measure_fn(temp_container);
+
+      if (current_height <= remaining) {
+        best_count = i + 1;
+        best_height = current_height;
+      } else {
+        break;
+      }
+    }
+
+    if (best_count === sorted_rows.length) {
+      return { first: el, rest: null, firstHeight: best_height };
+    }
+
+    if (best_count === 0) {
+      if (force && sorted_rows.length > 0) {
+        best_count = 1;
+        const forced_elements = row_groups.get(sorted_rows[0]);
+        forced_elements.forEach(cell => temp_container.appendChild(cell.cloneNode(true)));
+        best_height = measure_fn(temp_container);
+      } else {
+        return { first: null, rest: el, firstHeight: 0 };
+      }
+    }
+
+    // 4. Construct the initial partition
+    const first = el.cloneNode(false);
+    headers.forEach(h => first.appendChild(h.cloneNode(true)));
+    for (let i = 0; i < best_count; i++) {
+      const row_idx = sorted_rows[i];
+      row_groups.get(row_idx).forEach(cell => first.appendChild(cell.cloneNode(true)));
+    }
+
+    // 5. Construct the continuation partition with mathematically shifted Cartesian strings
+    let rest = null;
+    if (best_count < sorted_rows.length) {
+      rest = el.cloneNode(false);
+      headers.forEach(h => rest.appendChild(h.cloneNode(true)));
+
+      const split_row = sorted_rows[best_count];
+      const shift_offset = split_row - max_header_line;
+
+      for (let i = best_count; i < sorted_rows.length; i++) {
+        const row_idx = sorted_rows[i];
+        row_groups.get(row_idx).forEach(cell => {
+          const clone = cell.cloneNode(true);
+          const start = parseInt(clone.style.gridRowStart, 10);
+          const end = parseInt(clone.style.gridRowEnd, 10);
+          clone.style.gridRow = `${start - shift_offset} / ${end - shift_offset}`;
+          rest.appendChild(clone);
+        });
+      }
+    }
+
+    return { first: first, rest: rest, firstHeight: best_height };
+  };
+
+
   function get_el_height(el){
     const was_in_DOM = el.parentNode !== null;
     if(!was_in_DOM) document.body.appendChild(el);
