@@ -30,53 +30,32 @@
       <RT·TOC level="1-2"></RT·TOC>
 
       <RT·section>
-        <RT·name>Core Philosophy</RT·name>
-        <p>
-          The RT Style framework fundamentally rejects static CSS class mapping. Instead, it relies on semantic DOM isolation. Authors define logical boundaries utilizing <code>RT·</code> tags, completely separating the data graph from its physical presentation.
-        </p>
-        <p>
-          Styling is executed dynamically at runtime. JavaScript closure functions (e.g., <code>apply_style</code>) intercept the parsed DOM tree, evaluate the active theme variables, calculate necessary dimensions, and inject inline styles directly into the elements.
-        </p>
-        <p>
-          <strong>Typography Note:</strong> The middle dot used as a namespace separator in tags is the middle dot of typography. On macOS: Option + Shift + 9. On Windows: Hold Alt and type 0183 on the numeric keypad. Linux: Compose Key followed by . and -.
-        </p>
-        <p>
-          <RT·term>Content</RT·term> is found between the opening HTML tag and the closing HTML tag. E.g. <RT·code>&lt;RT·noop&gt;This is content.&lt;/RT·noop&gt;</RT·code>.
-        </p>
-        <p>
-          An <RT·term>attribute</RT·term> is a name-value pair found within an opening HTML tag. E.g. <RT·code>&lt;RT·noop name="value"&gt;</RT·code>. Here the attribute name is <em>name</em> and the attribute value is <em>value</em>.
-        </p>
-      </RT·section>
+        <RT·name>Philosophical Approach</RT·name>
 
-      <RT·section>
-        <RT·name>Execution Pipeline Schedule</RT·name>
         <p>
-          Standard web developers utilize browser inspection tools assuming the rendered elements map directly to the authored HTML. In the RT framework, this is false. The layout engine routinely executes destructive, multi-pass operations—ripping out text arrays to synthesize coordinate grids or wrapping linear flows into soft-paginated boundaries.
-        </p>
-        <p>
-          RT-Style operates on a strictly phased, non-monotonic DOM evaluation schedule governed by the <code>stage_manager.js</code>. Developers writing custom elements must target the correct execution phase to prevent destructive collisions.
+          An RT-Style document follows an abstraction hierarchy. At the highest level there is <em>theme</em>. The current working theme is <RT·code>inverse_wheat</RT·code>. You are probably looking at it now. There are a couple of others that might or might not be working. Theme colors are set by the role played in the document; they do not refer to any DOM elements. The next layer down the abstraction stack is <em>layout</em>. The current working layout is <RT·code>article_tech_ref</RT·code>. The purpose of layout is to set the general size and placement of elements. <RT·code>article_tech_ref</RT·code> assumes the text will be laid out across pages and displayed in a browser. It allows page length to be flexible so that some elements can appear without breaks in them. Other layouts could do things differently. Then the RT semantic elements are placed in the layout. An RT semantic element is named by the role it plays in the document, such as title page, section, code, math, etc.
         </p>
 
-        <RT·dictionary key="Phase" definition="Operation">
-          <RT·entry key="Phase 1: Elements">
-            Evaluates raw 1D streams. Injects section wrappers, maps counter states, evaluates math tokens, and isolates explicit string payloads.
-          </RT·entry>
-          <RT·entry key="Phase 2: Paginate 0">
-            Initial document chunking. Slices the continuous DOM into discrete <code>&lt;RT·page&gt;</code> boundaries based on height configurations. Modifies the tree aggressively.
-          </RT·entry>
-          <RT·entry key="Phase 3: Page Style">
-            Applies geometric CSS configurations to the generated pages.
-          </RT·entry>
-          <RT·entry key="Phase 4: Counters">
-            Walks the tree to increment the state machines and populates snapshot variables. Must run after pagination to ensure page numbers exist.
-          </RT·entry>
-          <RT·entry key="Phase 5: Cross Reference">
-            Resolves mapping dictionaries bridging logical content with its physically paginated layout geometry.
-          </RT·entry>
-          <RT·entry key="Phase 6: Paginate 1">
-            Absorbs dimensional deltas. Expands page limits to accommodate space consumed by injected cross-references and generated indices.
-          </RT·entry>
-        </RT·dictionary>
+        <p>
+          There is no CSS file to edit. CSS is a miniature language for static styling. However, it lacks loops or conditionals, and even variables are an awkward addition. In RT-Style, style is painted onto elements from JavaScript functions. Each element has an <code>apply_style</code> function found at the top of its source code. It is not expected that an author of a document will edit these; rather, their values are computed dynamically from the theme settings. If something isn't working out in the presentation, this is considered to be a design problem, not a reason to be modifying style.
+        </p>
+
+        <p>
+          RT-Style uses the middle dot as a namespace separator in tags. This is the middle dot of typography, so it is supported as a text character in modern systems. On macOS: Option + Shift + 9. On Windows: Hold Alt and type 0183 on the numeric keypad. Linux: Compose Key followed by . and -.
+        </p>
+
+        <p>
+          As a quick review of terminology, note that <RT·term>content</RT·term> is found between the opening HTML tag and the closing HTML tag. E.g. <RT·code>&lt;RT·noop&gt;This is content.&lt;/RT·noop&gt;</RT·code>. Whereas an <RT·term>attribute</RT·term> is a name-value pair found within an opening HTML tag. E.g. <RT·code>&lt;RT·noop name="value"&gt;</RT·code>. Here the attribute name is <em>name</em> and the attribute value is <em>value</em>.
+        </p>
+
+        <p>
+          For RT-Style to work, the document will need to include a file that points it at the library, as discussed later in this manual.
+        </p>
+
+        <p>
+          For examples of using RT-Style, take a look at the source code for this document, and look in the project test directory.
+        </p>
+
       </RT·section>
 
       <RT·section>
@@ -133,18 +112,10 @@
           <RT·name>Decorators</RT·name>
           <RT·dictionary key="Tag" definition="Description & Arguments">
             <RT·entry key="&lt;RT·term&gt;">
-              Semantic anchor for technical terminology. Formats the initial occurrence and registers the element ID for index generation. Authors must mark all occurrences of the term.<br>
-              <div class="attr-list">
-                <br><strong>Attributes:</strong><br>
-                <code>id</code>: (Default: Auto-generated slug, e.g., "def-my-term")
-              </div>
+              Semantic anchor for technical terminology. Formats the initial occurrence and registers the element ID for index generation. Authors should decorate all occurrences of the term so that they can be indexed.<br>
             </RT·entry>
             <RT·entry key="&lt;RT·neologism&gt;">
-              Semantic anchor for a novel term coined within the current document boundaries. Registers the ID for index generation.<br>
-              <div class="attr-list">
-                <br><strong>Attributes:</strong><br>
-                <code>id</code>: (Default: Auto-generated slug, e.g., "def-neo-my-term")
-              </div>
+              Semantic anchor for a novel term coined within the current document boundaries. Again all instances should be decorated.<br>
             </RT·entry>
           </RT·dictionary>
         </RT·section>
@@ -156,19 +127,16 @@
           </p>
           <RT·dictionary key="Tag" definition="Description & Arguments">
             <RT·entry key="&lt;RT·section&gt;">
-              Establishes a scoped 1D execution boundary. Manages hierarchical counting numbering, page breaks for top-level scopes, and injects the formatted title.
-              <div class="attr-list">
-                <br><strong>Child Element:</strong> <RT·code>&lt;RT·name&gt;</RT·code> (Required: The title payload for the section).
-              </div>
+              Scoped nestable section marker. Each nesting level is styled differently.
             </RT·entry>
             <RT·entry key="&lt;RT·name&gt;">
-              The semantic title payload for a container. Evaluated by sections, grids, and relations. Multiple instances are concatenated with newlines.
+              Gives a name to the immediately container. Evaluated by sections to set the section heading, by relations to name a relation, and by matrices to name vectors, etc. Multiple instances are concatenated with newlines.
             </RT·entry>
             <RT·entry key="&lt;RT·code&gt;">
-              Code span or pre-formatted code block. Automatically dedents alignment spaces and inherits theme boundaries.
+              Code span or pre-formatted code block. If opening and closing tags are on the same line, content is considered to be inline span code. Otherwise, the content is considered to be a block of code. The left edge of the code is taken to the left edge of the tags. If code is found to the left of the tags, then the left edge is that of the source file.
             </RT·entry>
             <RT·entry key="&lt;RT·math&gt;">
-              Injects mathematical layout evaluation via the MathJax rendering engine.
+              Injects mathematical layout evaluation via the MathJax rendering engine. If opening and closing tags are on the same line, contents are considered to be inline span math. Otherwise, the contents is considered to be a block of math.
             </RT·entry>
           </RT·dictionary>
         </RT·section>
@@ -369,6 +337,37 @@
           </RT·entry>
         </RT·dictionary>
       </RT·section>
+
+      <RT·section>
+        <RT·name>Execution Pipeline Schedule</RT·name>
+
+        <p>
+          In the RT-Style framework when a page is rendered, the JS code associated with the semantic elements modifies the DOM. It does so in multiple passes so that page numbering, counters, and cross references function without need for forward referencing or concern about dependencies between them. Consequently what is seen in the element view of the browser debug window will not have a one to one correspondence with the elements found in the document.
+        </p>
+
+        <RT·dictionary key="Phase" definition="Operation">
+          <RT·entry key="Phase 1: Elements">
+            Evaluates raw 1D streams. Injects section wrappers, maps counter states, evaluates math tokens, and isolates explicit string payloads.
+          </RT·entry>
+          <RT·entry key="Phase 2: Paginate 0">
+            Initial document chunking. Slices the continuous DOM into discrete <code>&lt;RT·page&gt;</code> boundaries based on height configurations. Modifies the tree aggressively.
+          </RT·entry>
+          <RT·entry key="Phase 3: Page Style">
+            Applies geometric CSS configurations to the generated pages.
+          </RT·entry>
+          <RT·entry key="Phase 4: Counters">
+            Walks the tree to increment the state machines and populates snapshot variables. Must run after pagination to ensure page numbers exist.
+          </RT·entry>
+          <RT·entry key="Phase 5: Cross Reference">
+            Resolves mapping dictionaries bridging logical content with its physically paginated layout geometry.
+          </RT·entry>
+          <RT·entry key="Phase 6: Paginate 1">
+            Absorbs dimensional deltas. Expands page limits to accommodate space consumed by injected cross-references and generated indices.
+          </RT·entry>
+        </RT·dictionary>
+
+      </RT·section>
+
 
     </RT·article>
   </body>

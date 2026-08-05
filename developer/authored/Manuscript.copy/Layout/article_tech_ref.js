@@ -61,6 +61,7 @@
       style.backgroundColor = conf.surface_0;
       style.color = conf.content_main;
       style.boxSizing = "border-box";
+      style.textAlign = "justify";
       
       if(!article_seq[i].querySelector('RT·page')){
          style.padding = "3rem";
