@@ -18,7 +18,6 @@
 
   let measure_container = null;
 
-  // 1. DOM Measurement Utilities
   function get_el_height(el){
     const was_in_DOM = el.parentNode !== null;
     if(!was_in_DOM) document.body.appendChild(el);
@@ -63,17 +62,16 @@
     return h;
   }
 
-  // Splitting Logic
   function is_splittable(el){
     if(!el || el.nodeType !== Node.ELEMENT_NODE) return null;
 
     const component_id = el.getAttribute('data-rt-component');
     if(component_id && window.RT.Component && window.RT.Component[component_id] && window.RT.Component[component_id].split){
-      return (remaining) => window.RT.Component[component_id].split(el ,remaining ,measure_fragment);
+      return (remaining ,force) => window.RT.Component[component_id].split(el ,remaining ,measure_fragment ,force);
     }
 
     if(el.hasAttribute('splitable') && window.RT.Splitter && window.RT.Splitter[(el.tagName || '').toLowerCase()]){
-      return (remaining) => window.RT.Splitter[(el.tagName || '').toLowerCase()](el ,remaining ,measure_fragment ,is_splittable);
+      return (remaining ,force) => window.RT.Splitter[(el.tagName || '').toLowerCase()](el ,remaining ,measure_fragment ,is_splittable ,force);
     }
 
     const tag = (el.tagName || '').toUpperCase();
@@ -110,7 +108,7 @@
   }
 
   function make_list_splitter(el ,info){
-    return (remaining) => {
+    return (remaining ,force) => {
       const children = Array.from(el.children).filter(c => (c.tagName || '').toUpperCase() === 'LI');
       const start = info.offset;
 
@@ -131,7 +129,18 @@
         }
       }
 
-      if(best_count === 0) return { first: null ,rest: el ,firstHeight: 0 };
+      if(best_count === 0){
+        if(force && children.length > 0){
+          best_count = 1;
+          best_height = measure_fragment(children[0].cloneNode(true));
+        }else{
+          return { first: null ,rest: el ,firstHeight: 0 };
+        }
+      }
+
+      if(best_count === children.length){
+        return { first: el ,rest: null ,firstHeight: best_height };
+      }
 
       const first = el.cloneNode(false);
       for(let i = 0; i < best_count; i++){
@@ -172,7 +181,7 @@
       return shell;
     };
 
-    return (remaining) => {
+    return (remaining ,force) => {
       const tbody = el.querySelector('tbody');
       const rows = tbody ? Array.from(tbody.rows) : Array.from(el.rows);
       const start = info.offset;
@@ -194,7 +203,18 @@
         }
       }
 
-      if(best_count === 0) return { first: null ,rest: el ,firstHeight: 0 };
+      if(best_count === 0){
+        if(force && rows.length > 0){
+          best_count = 1;
+          best_height = measure_fragment(rows[0].cloneNode(true));
+        }else{
+          return { first: null ,rest: el ,firstHeight: 0 };
+        }
+      }
+
+      if(best_count === rows.length){
+        return { first: el ,rest: null ,firstHeight: best_height };
+      }
 
       const first = create_shell();
       const first_body = first.querySelector('tbody');
@@ -223,10 +243,9 @@
     };
   }
 
-  // RT ELEMENT SPLITTERS
   window.RT.Splitter = window.RT.Splitter || {};
 
-  window.RT.Splitter['rt·counter·step'] = function(el ,remaining ,measure_fn ,is_splittable_fn){
+  window.RT.Splitter['rt·counter·step'] = function(el ,remaining ,measure_fn ,is_splittable_fn ,force){
     const children = Array.from(el.childNodes);
     let best_count = 0;
     let best_height = 0;
@@ -254,7 +273,7 @@
         temp_container.removeChild(temp_container.lastChild);
         const child_splitter = child.nodeType === Node.ELEMENT_NODE ? is_splittable_fn(child) : null;
         if(child_splitter){
-          const child_split = child_splitter(remaining - best_height);
+          const child_split = child_splitter(remaining - best_height ,false);
           if(child_split && child_split.first){
             split_child_result = child_split;
             best_height += child_split.firstHeight;
@@ -265,8 +284,17 @@
       }
     }
 
+    if(best_count === children.length && !split_child_result && !forced_break){
+      return { first: el ,rest: null ,firstHeight: best_height };
+    }
+
     if(best_count === 0 && !split_child_result && !forced_break){
-      return { first: null ,rest: el ,firstHeight: 0 };
+      if(force && children.length > 0){
+        best_count = 1;
+        best_height = measure_fn(children[0].cloneNode(true));
+      }else{
+        return { first: null ,rest: el ,firstHeight: 0 };
+      }
     }
 
     const first = el.cloneNode(false);
@@ -307,7 +335,6 @@
     return { first: first ,rest: rest ,firstHeight: best_height };
   };
 
-  // PAGINATE 0: CHUNKING & INJECTING STRUCTURE
   function paginate_0(){
     if(debug.log) debug.log('paginate_0' ,'Running initial document chunking');
 
@@ -362,7 +389,13 @@
 
         if(splitter){
           const remaining = page_height_limit - current_h;
-          const { first ,rest ,firstHeight } = splitter(remaining);
+          let split_res = splitter(remaining ,false);
+          
+          if(!split_res.first && current_h === 0){
+            split_res = splitter(remaining ,true);
+          }
+
+          const { first ,rest ,firstHeight } = split_res;
 
           if(first){
             current_batch_seq.push(first);
@@ -386,42 +419,24 @@
               continue;
             }
           }else{
-            if(current_h === 0){
-              const frame = document.createElement('RT·scroll-frame');
-              frame.style.display = 'block';
-              frame.style.overflowY = 'auto';
-              frame.style.maxHeight = page_height_limit + 'px';
-              frame.appendChild(el);
-              current_batch_seq.push(frame);
-              i++; 
-            }else{
-              let backtrack_seq = [];
-              let backtrack_h = 0;
-              
-              while(current_batch_seq.length > 0){
-                const last = current_batch_seq[current_batch_seq.length - 1];
-                if(!last.tagName || !/^H[1-6]$/i.test(last.tagName)) break;
-                const popped = current_batch_seq.pop();
-                backtrack_seq.unshift(popped);
-                backtrack_h += get_el_height(popped);
-              }
+            let backtrack_seq = [];
+            let backtrack_h = 0;
+            
+            while(current_batch_seq.length > 0){
+              const last = current_batch_seq[current_batch_seq.length - 1];
+              if(!last.tagName || !/^H[1-6]$/i.test(last.tagName)) break;
+              const popped = current_batch_seq.pop();
+              backtrack_seq.unshift(popped);
+              backtrack_h += get_el_height(popped);
+            }
 
-              if(current_h - backtrack_h > 0){
-                page_seq.push(current_batch_seq);
-                current_batch_seq = backtrack_seq;
-                current_h = backtrack_h;
-              }else{
-                current_batch_seq.push(...backtrack_seq);
-                current_h += backtrack_h;
-                
-                const frame = document.createElement('RT·scroll-frame');
-                frame.style.display = 'block';
-                frame.style.overflowY = 'auto';
-                frame.style.maxHeight = page_height_limit + 'px';
-                frame.appendChild(el);
-                current_batch_seq.push(frame);
-                i++;
-              }
+            if(current_h - backtrack_h > 0){
+              page_seq.push(current_batch_seq);
+              current_batch_seq = backtrack_seq;
+              current_h = backtrack_h;
+            }else{
+              current_batch_seq.push(...backtrack_seq);
+              current_h += backtrack_h;
             }
           }
           continue;
