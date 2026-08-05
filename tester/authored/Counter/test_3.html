@@ -1,0 +1,107 @@
+<!-- 
+counter splits with continuations
+uses manual primitive page breaks and hard coded splits and continuations
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Counter 3-Page Continuation Test</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+
+      <!-- PAGE 1: Initial Scope Generation -->
+      <h1>Page 1: Initial Scope</h1>
+      <p>The state machine initializes. Scopes 1, 3, and 4 breach the page boundary and are suspended (<code>continued="true"</code>).</p>
+
+      <RT·counter·make counter="C" serial="1" style="outline" on-first-step="1"></RT·counter·make>
+
+      <RT·counter·step counter="C" continued="true"> <!-- Node 1: I -->
+        <RT·counter·snapshot counter="C" snapshot="n1"></RT·counter·snapshot>
+        <p>Node 1 execution: <strong><RT·counter·read snapshot="n1"></RT·counter·read></strong> (Expected: <strong>I</strong>)</p>
+
+        <RT·counter·step counter="C"> <!-- Node 2: I.A -->
+          <RT·counter·snapshot counter="C" snapshot="n2"></RT·counter·snapshot>
+          <p style="margin-left: 2rem;">Node 2 execution: <strong><RT·counter·read snapshot="n2"></RT·counter·read></strong> (Expected: <strong>I.A</strong>) - <em>Closes normally</em></p>
+        </RT·counter·step>
+
+        <RT·counter·step counter="C" continued="true"> <!-- Node 3: I.B -->
+          <RT·counter·snapshot counter="C" snapshot="n3"></RT·counter·snapshot>
+          <p style="margin-left: 2rem;">Node 3 execution: <strong><RT·counter·read snapshot="n3"></RT·counter·read></strong> (Expected: <strong>I.B</strong>)</p>
+
+          <RT·counter·step counter="C" continued="true"> <!-- Node 4: I.B.i -->
+            <RT·counter·snapshot counter="C" snapshot="n4"></RT·counter·snapshot>
+            <p style="margin-left: 4rem;">Node 4 execution: <strong><RT·counter·read snapshot="n4"></RT·counter·read></strong> (Expected: <strong>I.B.i</strong>)</p>
+            <p style="margin-left: 4rem; color: #B22222;">--- Page Boundary Reached ---</p>
+          </RT·counter·step>
+        </RT·counter·step>
+      </RT·counter·step>
+
+      <RT·page-break-primitive></RT·page-break-primitive>
+
+      <!-- PAGE 2: First Continuation -->
+      <h1>Page 2: First Continuation</h1>
+      <p>The graph is reassembled. Node 4 closes. Node 5 executes. The page boundary is breached again, forcing a second suspension of the outer scopes 1 and 3.</p>
+
+      <RT·counter·make counter="C" serial="2" continues="1"></RT·counter·make>
+
+      <!-- Node 1 Cont: Suspended again -->
+      <RT·counter·step counter="C" continuation="true" continued="true"> 
+        
+        <!-- Node 3 Cont: Suspended again -->
+        <RT·counter·step counter="C" continuation="true" continued="true"> 
+
+          <!-- Node 4 Cont: Closes -->
+          <RT·counter·step counter="C" continuation="true"> 
+            <RT·counter·snapshot counter="C" snapshot="n4_cont"></RT·counter·snapshot>
+            <p style="margin-left: 4rem;">Node 4 continued payload. Current state: <strong><RT·counter·read snapshot="n4_cont"></RT·counter·read></strong> (Expected: <strong>I.B.i</strong>) - <em>Closes normally</em></p>
+          </RT·counter·step> 
+
+          <RT·counter·step counter="C"> <!-- Node 5: I.B.ii -->
+            <RT·counter·snapshot counter="C" snapshot="n5"></RT·counter·snapshot>
+            <p style="margin-left: 4rem;">Node 5 execution: <strong><RT·counter·read snapshot="n5"></RT·counter·read></strong> (Expected: <strong>I.B.ii</strong>) - <em>Closes normally</em></p>
+            <p style="margin-left: 4rem; color: #B22222;">--- Page Boundary Reached ---</p>
+          </RT·counter·step>
+
+        </RT·counter·step>
+      </RT·counter·step>
+
+      <RT·page-break-primitive></RT·page-break-primitive>
+
+      <!-- PAGE 3: Second Continuation -->
+      <h1>Page 3: Second Continuation</h1>
+      <p>The final graph reassembly. Node 3 closes. Node 6 executes. Node 1 closes.</p>
+
+      <RT·counter·make counter="C" serial="3" continues="2"></RT·counter·make>
+
+      <!-- Node 1 Cont: Closes -->
+      <RT·counter·step counter="C" continuation="true"> 
+
+        <!-- Node 3 Cont: Closes -->
+        <RT·counter·step counter="C" continuation="true"> 
+          <RT·counter·snapshot counter="C" snapshot="n3_cont"></RT·counter·snapshot>
+          <p style="margin-left: 2rem;">Node 3 continued payload. Current state: <strong><RT·counter·read snapshot="n3_cont"></RT·counter·read></strong> (Expected: <strong>I.B</strong>) - <em>Closes normally</em></p>
+        </RT·counter·step> 
+
+        <RT·counter·step counter="C"> <!-- Node 6: I.C -->
+          <RT·counter·snapshot counter="C" snapshot="n6"></RT·counter·snapshot>
+          <p style="margin-left: 2rem;">Node 6 execution: <strong><RT·counter·read snapshot="n6"></RT·counter·read></strong> (Expected: <strong>I.C</strong>) - <em>Closes normally</em></p>
+        </RT·counter·step>
+
+        <RT·counter·snapshot counter="C" snapshot="n1_cont"></RT·counter·snapshot>
+        <p>Node 1 continued payload. Current state: <strong><RT·counter·read snapshot="n1_cont"></RT·counter·read></strong> (Expected: <strong>I</strong>) - <em>Closes normally</em></p>
+
+      </RT·counter·step> 
+
+    </RT·article>
+  </body>
+</html>

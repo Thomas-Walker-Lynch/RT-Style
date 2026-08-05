@@ -1,7 +1,7 @@
 /*
   Processes <RT·counter·*> tags.
   Calculates numbering, maintains the explicit status machine, manages snapshots, and outputs values for read tags.
-  Supports two modes: 'scoped' (default) and 'milestone'.
+  Supports 'scoped' and 'milestone' modes. Includes DOM continuation suspension architecture.
 */
 
 (function() {
@@ -18,7 +18,8 @@
   RT.Counter = RT.Counter || {};
   RT.dict_instance = RT.dict_instance || {};
   RT.dict_snapshot = RT.dict_snapshot || {};
-
+  RT.dict_serial = RT.dict_serial || {};
+  RT.serial_id_allocator = RT.serial_id_allocator || 1;
 
   class Count {
     constructor() {
@@ -44,7 +45,6 @@
         this.list = null;
       }
     }
-
 
     read(...path) {
       if (path.length === 0) return undefined;
@@ -125,7 +125,7 @@
       if (this.list && this.list.length > 0) {
         const val = this.list.pop();
         if (this.list.length === 0) {
-            this.list = null; // Revert to strict null state if emptied
+            this.list = null; 
         }
         return val;
       }
@@ -138,7 +138,6 @@
       c.list = this.list ? [...this.list] : null;
       return c;
     }
-
   }
 
   class CounterMachine {
@@ -147,7 +146,7 @@
       this.style = ['NaturalNumber']; 
       this.separator = '.';
       this.separator_placement = 'embedded';
-      this.mode = 'scoped'; // 'scoped', 'milestone'
+      this.mode = 'scoped';
 
       if (config) {
         this.write(config);
@@ -176,7 +175,6 @@
           }
           this.style = parsed;
         } else if (key === 'Count' || key === 'count') {
-          // Support copying from another CounterMachine or Count object
           const source_count = value instanceof CounterMachine ? value.count : (value instanceof Count ? value : null);
           if (source_count) {
             this.count = source_count.clone();
@@ -193,11 +191,10 @@
       const current_status = this.count.read('status');
       
       if (current_status === 'empty') {
-        // Transition state strictly before mutating the list
         this.count.write('status', 'preamble');
         this.count.push(first_step_val !== undefined ? first_step_val : 0);
       } else if (current_status === 'preamble') {
-        this.count.push(0); // indent appends 0
+        this.count.push(0); 
         this.count.write('status', 'preamble');
       } else if (current_status === 'between') {
         this.count.increment();
@@ -222,7 +219,10 @@
       if (!count_obj) return '';
       
       const status = count_obj.read('status');
-      if (status === 'empty') return '';
+      if (status === 'empty') {
+          console.error("RT-Manuscript Layout Error: Attempted to output an uninitialized empty counter.");
+          return '[Empty Counter]';
+      }
       
       let active_list;
       if (this.mode === 'scoped' && status === 'between') {
@@ -231,7 +231,6 @@
         active_list = count_obj.read('list');
       }
       
-      // Safety check catches null or empty arrays
       if (!active_list || active_list.length === 0) {
         return '';
       }
@@ -249,8 +248,6 @@
       return count_str;
     }
 
-    // --- Atomic Type Conversions ---
-
     to_NaturalNumber(num) { return num.toString(); }
     from_NaturalNumber(val) { 
       const n = parseInt(val, 10);
@@ -267,7 +264,7 @@
     from_roman(val) { return this.from_Roman(val.toUpperCase()); }
 
     to_Roman(num) {
-      let n = num + 1; // 0-indexed to 1-indexed
+      let n = num + 1; 
       if (n < 1) return n.toString();
       const lookup = {M:1000, CM:900, D:500, CD:400, C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
       let roman = '';
@@ -294,7 +291,7 @@
           i++;
         }
       }
-      return Math.max(0, num - 1); // 1-indexed to 0-indexed
+      return Math.max(0, num - 1); 
     }
 
     to_Alpha(num) { return String.fromCharCode(65 + num); }
@@ -335,34 +332,48 @@
       if (tag === 'rt·counter·make') {
         const name = node.getAttribute('counter');
         if (name) {
-          const style_attr = node.getAttribute('style');
-          const parsed_style = style_attr ? style_attr.split(',').map(s => s.trim()) : ['NaturalNumber'];
+          const continues_id = node.getAttribute('continues');
           
-          RT.dict_instance[name] = new CounterMachine({
-            style: parsed_style,
-            separator: node.getAttribute('separator') || '.',
-            separator_placement: node.getAttribute('separator-placement') || 'embedded',
-            mode: node.getAttribute('mode') || 'scoped'
-          });
+          if (continues_id && RT.dict_serial[continues_id]) {
+            RT.dict_instance[name] = RT.dict_serial[continues_id].clone();
+          } else {
+            const style_attr = node.getAttribute('style');
+            const parsed_style = style_attr ? style_attr.split(',').map(s => s.trim()) : ['NaturalNumber'];
+            
+            RT.dict_instance[name] = new CounterMachine({
+              style: parsed_style,
+              separator: node.getAttribute('separator') || '.',
+              separator_placement: node.getAttribute('separator-placement') || 'embedded',
+              mode: node.getAttribute('mode') || 'scoped'
+            });
 
-          const on_first_step_str = node.getAttribute('on-first-step');
-          if (on_first_step_str) {
-            const top_style = RT.dict_instance[name].style[0];
-            const method_name = `from_${top_style}`;
-            const active_machine = RT.dict_instance[name];
-            const initial_val = typeof active_machine[method_name] === 'function' 
-              ? active_machine[method_name](on_first_step_str) 
-              : active_machine.from_NaturalNumber(on_first_step_str);
-              
-            active_machine.first_step_val = initial_val;
+            const on_first_step_str = node.getAttribute('on-first-step');
+            if (on_first_step_str) {
+              const top_style = RT.dict_instance[name].style[0];
+              const method_name = `from_${top_style}`;
+              const active_machine = RT.dict_instance[name];
+              const initial_val = typeof active_machine[method_name] === 'function' 
+                ? active_machine[method_name](on_first_step_str) 
+                : active_machine.from_NaturalNumber(on_first_step_str);
+                
+              active_machine.first_step_val = initial_val;
+            }
           }
+
+          const serial = node.getAttribute('serial') || String(RT.serial_id_allocator++);
+          node.setAttribute('serial', serial);
+          RT.dict_serial[serial] = RT.dict_instance[name];
         }
       } else if (tag === 'rt·counter·step') {
         const name = node.getAttribute('counter');
+        const is_continuation = node.getAttribute('continuation') === 'true';
+
         if (name && RT.dict_instance[name]) {
           const active_machine = RT.dict_instance[name];
-          active_machine.enter(active_machine.first_step_val);
-          active_machine.first_step_val = undefined; // consume it
+          if (!is_continuation) {
+            active_machine.enter(active_machine.first_step_val);
+            active_machine.first_step_val = undefined; 
+          }
           machine_to_exit = active_machine;
         }
       } else if (tag === 'rt·counter·snapshot') {
@@ -387,7 +398,16 @@
       }
 
       if (machine_to_exit) {
-        machine_to_exit.exit();
+        const is_continued = node.getAttribute('continued') === 'true';
+        if (!is_continued) {
+          machine_to_exit.exit();
+        } else {
+          // Cache the suspended state dynamically via the paginator's injected ID
+          const split_id = node.getAttribute('split-id');
+          if (split_id) {
+            RT.dict_serial[split_id] = machine_to_exit.clone();
+          }
+        }
       }
     }
 
@@ -427,10 +447,6 @@
       }
     }
   };
-
-  //------------------------------------------
-  // on module load
-  //
 
   window.RT.counter = counter;
 

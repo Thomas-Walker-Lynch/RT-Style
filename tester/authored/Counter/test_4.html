@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Counter Split Continuation Test</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+
+      <h1>Page 1: Pre-Split</h1>
+      <p>This counter scope initiates normally and is deliberately severed by an explicit structural split break.</p>
+
+      <RT·counter·make counter="C" style="outline" on-first-step="1"></RT·counter·make>
+
+      <RT·counter·step counter="C" splitable="true"> 
+        <RT·counter·snapshot counter="C" snapshot="n1_pre"></RT·counter·snapshot>
+        <p>Pre-split evaluation: <strong><RT·counter·read snapshot="n1_pre"></RT·counter·read></strong> (Expected: 1)</p>
+
+        <RT·page-break></RT·page-break>
+
+        <h1>Page 2: Post-Split Continuation</h1>
+        <RT·counter·snapshot counter="C" snapshot="n1_post"></RT·counter·snapshot>
+        <p>Post-split evaluation: <strong><RT·counter·read snapshot="n1_post"></RT·counter·read></strong> (Expected: 1)</p>
+        <p>The array extent remains static across the boundary because the continuation flag successfully suppressed the step increment.</p>
+        
+        <RT·counter·step counter="C">
+          <RT·counter·snapshot counter="C" snapshot="n2_nested"></RT·counter·snapshot>
+          <p>Nested step evaluation: <strong><RT·counter·read snapshot="n2_nested"></RT·counter·read></strong> (Expected: 1.A)</p>
+        </RT·counter·step>
+
+      </RT·counter·step>
+
+    </RT·article>
+  </body>
+</html>

@@ -65,17 +65,24 @@
     return h;
   }
 
-// =========================================================
+  // =========================================================
   // Splitting Logic
   // =========================================================
   function isSplittable(el){
+
     // Component Dictionary Execution
     const componentId = el.getAttribute('data-rt-component');
     if (componentId && window.RT.Component && window.RT.Component[componentId] && window.RT.Component[componentId].split) {
       return (remaining) => window.RT.Component[componentId].split(el, remaining, measureFragment);
     }
 
+    // Custom RT splitable attribute delegation
+    if (el.hasAttribute('splitable') && window.RT.Splitter && window.RT.Splitter[el.tagName.toLowerCase()]) {
+      return (remaining) => window.RT.Splitter[el.tagName.toLowerCase()](el, remaining, measureFragment, isSplittable);
+    }
+
     // Native HTML Fallbacks
+
     const tag = el.tagName;
     if(tag === 'UL' || tag === 'OL'){
       const items = Array.from(el.children).filter(c => c.tagName === 'LI');
@@ -225,6 +232,85 @@
 
 
   // =========================================================
+  // RT ELEMENT SPLITTERS
+  // =========================================================
+  window.RT.Splitter = window.RT.Splitter || {};
+
+  window.RT.Splitter['rt·counter·step'] = function(el, remaining, measureFn, isSplittableFn) {
+    const children = Array.from(el.children);
+    let bestCount = 0;
+    let bestHeight = 0;
+    const tempContainer = el.cloneNode(false);
+    let splitChildResult = null;
+    let forcedBreak = false;
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+
+      // Break on explicit splitting break
+      if (child.tagName && child.tagName.toLowerCase() === 'rt·page-break') {
+        forcedBreak = true;
+        bestCount = i;
+        break;
+      }
+
+      tempContainer.appendChild(child.cloneNode(true));
+      const fragHeight = measureFn(tempContainer);
+
+      if (fragHeight <= remaining) {
+        bestCount = i + 1;
+        bestHeight = fragHeight;
+      } else {
+        tempContainer.removeChild(tempContainer.lastChild);
+        const childSplitter = isSplittableFn(child);
+        if (childSplitter) {
+          const childSplit = childSplitter(remaining - bestHeight);
+          if (childSplit && childSplit.first) {
+            splitChildResult = childSplit;
+            bestHeight += childSplit.firstHeight;
+            bestCount = i;
+          }
+        }
+        break;
+      }
+    }
+
+    if (bestCount === 0 && !splitChildResult && !forcedBreak) {
+      return { first: null, rest: el, firstHeight: 0 };
+    }
+
+    const first = el.cloneNode(false);
+    first.setAttribute('continued', 'true');
+    const splitId = 'split_' + Math.random().toString(36).substr(2, 9);
+    first.setAttribute('split-id', splitId);
+    
+    for (let i = 0; i < bestCount; i++) {
+      first.appendChild(children[i].cloneNode(true));
+    }
+    if (splitChildResult) first.appendChild(splitChildResult.first);
+
+    let rest = null;
+    if (bestCount < children.length || splitChildResult || forcedBreak) {
+      rest = el.cloneNode(false);
+      rest.setAttribute('continuation', 'true');
+      if (splitChildResult && splitChildResult.rest) rest.appendChild(splitChildResult.rest);
+
+      const startIndex = forcedBreak ? bestCount + 1 : (splitChildResult ? bestCount + 1 : bestCount);
+      for (let i = startIndex; i < children.length; i++) {
+        rest.appendChild(children[i].cloneNode(true));
+      }
+
+      const makeTag = document.createElement('rt·counter·make');
+      makeTag.setAttribute('counter', el.getAttribute('counter'));
+      makeTag.setAttribute('continues', splitId); 
+
+      rest = [makeTag, rest];
+    }
+
+    return { first, rest, firstHeight: bestHeight };
+  };
+
+  // =========================================================
   // PAGINATE 0: CHUNKING & INJECTING STRUCTURE
   // =========================================================
   function paginate_0(){
@@ -287,9 +373,19 @@
             current_h += firstHeight;
 
             if(rest){
-              raw_element_seq.splice(i ,1 ,rest);
+              if (Array.isArray(rest)) {
+                raw_element_seq.splice(i, 1, ...rest);
+              } else {
+                raw_element_seq.splice(i, 1, rest);
+              }
+              // Force page boundary push because element spanned boundary
+              page_seq.push(current_batch_seq);
+              current_batch_seq = [];
+              current_h = 0;
+              continue; 
             } else {
-              raw_element_seq.splice(i ,1);
+              raw_element_seq.splice(i, 1);
+              continue; 
             }
           } else {
             if(current_batch_seq.length === 0){
@@ -339,9 +435,10 @@
 
         const h = getElHeight(el);
         const is_RT_page_break = el.tagName && el.tagName.toLowerCase() === 'rt·page-break';
+        const is_RT_page_break_primitive = el.tagName && el.tagName.toLowerCase() === 'rt·page-break-primitive';
 
         // Explicit Page Break Logic - Execute immediately without backward traversal
-        if(is_RT_page_break){
+        if(is_RT_page_break || is_RT_page_break_primitive){
           if(current_batch_seq.length > 0){
             page_seq.push(current_batch_seq);
             current_batch_seq = [];

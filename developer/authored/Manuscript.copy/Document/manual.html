@@ -49,7 +49,7 @@
         </p>
 
         <p>
-          For RT-Style to work, the document will need to include a file that points it at the library, as discussed later in this manual.
+          For RT-Style to work, the document will need to include a file that points it at the library, as discussed in the <RT·Note·read key="env-setup" field="content"></RT·Note·read> section on page <RT·Note·read key="env-setup" field="page"></RT·Note·read>.
         </p>
 
         <p>
@@ -82,7 +82,7 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Article Environment</RT·name>
+        <RT·name><RT·Note·write key="env-setup">Article Environment</RT·Note·write></RT·name>
         <p>The standard operational header template for an article instance:</p>
 
         <RT·code>
@@ -234,13 +234,21 @@
             <RT·entry key="&lt;RT·Counter·make&gt;">
               Initializes the named counter state machine.<br>
               <div class="attr-list">
+
                 <br><strong>Attributes:</strong><br>
+
                 <code>counter</code>: Required state identifier.<br>
-                <code>style</code>: Single style string, or comma-separated hierarchy defining formats at each nesting depth. The terminal format applies to all deeper nestings. Valid arguments: "NaturalNumber", "CountingNumber", "Roman", "roman", "Alpha", "alpha". The "outline" flag translates to a standard mixed document array. (Default: "NaturalNumber")<br>
-                <code>on-first-step</code>: The initial base value. (Default: "0")<br>
-                <code>separator</code>: String appended between depth sequence levels. (Default: ".")<br>
-                <code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")<br>
-                <code>mode</code>: "scoped" (content embedded between count boundaries receives the parent scope's value) or "milestone" (state carries forward sequentially irrespective of lexical depth).
+
+                <br><code>style</code>: Single style string, or comma-separated hierarchy defining formats at each nesting depth. The terminal format applies to all deeper nestings. Valid arguments: "NaturalNumber", "CountingNumber", "Roman", "roman", "Alpha", "alpha". The "outline" flag translates to a standard mixed document array. (Default: "NaturalNumber")<br>
+
+                <br><code>on-first-step</code>: The value returned the first time the counter is stepped. The default is style specific: "NaturalNumber"(0), "CountingNumber"(1), "Roman"(I), "roman"(i), "Alpha"(A), "alpha"(a).<br>
+
+                <br><code>separator</code>: String appended between depth sequence levels. (Default: ".")<br>
+
+                <br><code>separator-placement</code>: "embedded" or "embedded-after". (Default: "embedded")<br>
+
+                <br><code>mode</code>: "scoped" (content embedded between count boundaries receives the parent scope's value) or "milestone" (state carries forward sequentially irrespective of lexical depth).
+
               </div>
             </RT·entry>
             <RT·entry key="&lt;RT·Counter·step&gt;">
@@ -263,7 +271,7 @@
               <div class="attr-list">
                 <br><strong>Attributes:</strong><br>
                 <code>snapshot</code>: Required dictionary assignment key.<br>
-                <code>key</code>: Sub-state query property. Resolves dot-notation parameters (e.g., "count.status", "count.list"). Querying "count" triggers the style formatter and separator join parameters. (Default: "count")
+                <code>key</code>: Sub-state query property. Resolves dot-notation parameters (e.g., "count.status", "count.list"). Querying "count" triggers the style formatter and separator join parameters. (Default: "count"). Reading an empty counter (before a first step) causes an error to the console.
               </div>
             </RT·entry>
           </RT·dictionary>
