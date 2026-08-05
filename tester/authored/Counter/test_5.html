@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Counter Named Step Test</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+
+      <h1>Page 1: Named Scope Initialization</h1>
+      <p>This counter scope is assigned an internal name during evaluation. It is then severed.</p>
+
+      <RT·counter·make counter="Sec" style="outline" on-first-step="1"></RT·counter·make>
+
+      <RT·counter·step counter="Sec" splitable="true">
+        <RT·name>Introduction to Systems Architecture</RT·name>
+        <RT·counter·snapshot counter="Sec" snapshot="s1_pre"></RT·counter·snapshot>
+        
+        <p>Count: <strong><RT·counter·read snapshot="s1_pre"></RT·counter·read></strong> (Expected: <strong>I</strong>)</p>
+        <p>Name: <strong><RT·counter·read snapshot="s1_pre" key="name"></RT·counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
+
+        <p style="color: #B22222; margin-top: 2rem;">--- Issuing Forced Split Break ---</p>
+        <RT·page-break></RT·page-break>
+        
+        <h1>Page 2: Continuation with Names</h1>
+        <RT·counter·snapshot counter="Sec" snapshot="s1_post"></RT·counter·snapshot>
+        <p>The state arrays, including the parallel name array, are successfully cloned across the page boundary.</p>
+        
+        <p>Count: <strong><RT·counter·read snapshot="s1_post"></RT·counter·read></strong> (Expected: <strong>I</strong>)</p>
+        <p>Name: <strong><RT·counter·read snapshot="s1_post" key="name"></RT·counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
+
+        <RT·counter·step counter="Sec">
+          <RT·name>Theoretical Foundations</RT·name>
+          <RT·counter·snapshot counter="Sec" snapshot="s2"></RT·counter·snapshot>
+          
+          <p style="margin-top: 1rem; margin-left: 2rem;">Count: <strong><RT·counter·read snapshot="s2"></RT·counter·read></strong> (Expected: <strong>I.A</strong>)</p>
+          <p style="margin-left: 2rem;">Name: <strong><RT·counter·read snapshot="s2" key="name"></RT·counter·read></strong> (Expected: <strong>Theoretical Foundations</strong>)</p>
+        </RT·counter·step>
+
+      </RT·counter·step>
+
+    </RT·article>
+  </body>
+</html>
