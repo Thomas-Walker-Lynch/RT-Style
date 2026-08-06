@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>RT Manuscript: Design & Implementation Manual</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+
+      <RT·title 
+        title="RT Style System: Design & Implementation"
+        author="Thomas Walker Lynch" 
+        date="2026-08-06 16:07Z" 
+        copyright="2026 Reasoning Technology">
+      </RT·title>
+
+      <RT·TOC level="1-2"></RT·TOC>
+
+      <RT·section>
+        <RT·name>Global Variable Methodology</RT·name>
+        <p>
+          The RT-Style layout engine enforces a strict global namespace architecture to manage layout state cleanly and prevent execution collision across asynchronous element evaluations.
+        </p>
+
+        <p>
+          <strong>The `window.RT` Root:</strong> All operational properties, layout configurations, execution queues, and registered semantic elements reside exclusively within the `window.RT` object. 
+        </p>
+
+        <p>
+          <strong>Element State Dictionaries:</strong> Every semantic element module registers its own specific namespace dictionary within the root object (e.g., `RT.Section = {}`). This allows individual modules to track their own initialization state across multiple execution phases. Consequently, an element evaluates its own object to determine if it has already been loaded, preventing duplicate instantiation when the layout engine iterates the DOM tree.
+        </p>
+
+        <p>
+          <strong>DOM Reference & Attribute Tracking:</strong> The element-specific dictionaries maintain explicit references to active layout mechanics, reducing the need for computationally expensive DOM traversal. For example, a section element maps its underlying `<RT·counter·make>` DOM node references by counter name directly into the `RT.Section` dictionary.
+        </p>
+        
+        <p>
+          By tracking the element's object within the dictionary, the semantic code dynamically references the exact attributes an element was created with. The presence of attributes such as `splitable` are stored directly within the counter's dictionary as a key (assigned an empty string or null value). The existence of the key itself acts as a boolean flag for the pagination engine to evaluate physical breaking limits.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Execution Pipeline Schedule</RT·name>
+        <p>
+          In the RT-Style framework when a page is rendered, the JS code associated with the semantic elements modifies the DOM. It does so in multiple passes so that page numbering, counters, and cross references function without need for forward referencing or concern about dependencies between them. Consequently what is seen in the element view of the browser debug window will not have a one to one correspondence with the elements found in the document.
+        </p>
+
+        <RT·dictionary key="Phase" definition="Operation">
+          <RT·entry key="Phase 1: Elements">
+            Evaluates raw 1D streams. Injects section wrappers, maps counter states, evaluates math tokens, and isolates explicit string payloads.
+          </RT·entry>
+          <RT·entry key="Phase 2: Paginate 0">
+            Initial document chunking. Slices the continuous DOM into discrete <code>&lt;RT·page&gt;</code> boundaries based on height configurations. Modifies the tree aggressively.
+          </RT·entry>
+          <RT·entry key="Phase 3: Page Style">
+            Applies geometric CSS configurations to the generated pages.
+          </RT·entry>
+          <RT·entry key="Phase 4: Counters">
+            Walks the tree to increment the state machines and populates snapshot variables. Must run after pagination to ensure page numbers exist.
+          </RT·entry>
+          <RT·entry key="Phase 5: Cross Reference">
+            Resolves mapping dictionaries bridging logical content with its physically paginated layout geometry.
+          </RT·entry>
+          <RT·entry key="Phase 6: Paginate 1">
+            Absorbs dimensional deltas. Expands page limits to accommodate space consumed by injected cross-references and generated indices.
+          </RT·entry>
+        </RT·dictionary>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Implementation Notes</RT·name>
+
+        <RT·dictionary key="Component" definition="Current Implementation Constraints">
+          <RT·entry key="Book Environment">
+            The <code>&lt;RT·book&gt;</code> element is a planned extension. We are deliberately delaying its separation from the <code>article</code> layout until the core engine's pagination and state machine logic are fully stabilized. Currently, book mechanics operate by triggering page breaks and section scoping within the standard article stream.
+          </RT·entry>
+          <RT·entry key="Memo Environment">
+            The <RT·code>&lt;RT·memo&gt;</RT·code> container inherits all layout functionality from the Article configuration but enforces a static, print-ready CSS environment. This layout model is currently maintained as a legacy execution branch. Continued parity with the core layout engine is not guaranteed.
+          </RT·entry>
+        </RT·dictionary>
+
+      </RT·section>
+
+    </RT·article>
+  </body>
+</html>

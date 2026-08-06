@@ -24,7 +24,8 @@
 
   function compile_configuration(){
     window.RT.layout_config = {
-      surface_0: t('surface' ,'0')
+      surface_screen: t('surface', 'screen')
+      ,surface_0: t('surface' ,'0')
       ,surface_code: t('surface' ,'code')
       ,content_main: t('content' ,'main')
       ,brand_primary: t('brand' ,'primary')
@@ -47,6 +48,13 @@
 
   function apply_macro_boundaries(){
     const conf = window.RT.layout_config;
+    
+    // Apply viewport screen boundary color, defaulting to surface_0 if undefined
+    const screen_bg = conf.surface_screen || conf.surface_0 || '#000000';
+    document.documentElement.style.backgroundColor = screen_bg;
+    document.body.style.backgroundColor = screen_bg;
+    document.body.style.margin = "0"; // Prevent default browser margin bleeding
+    
     const article_seq = document.querySelectorAll('RT·article');
     
     for(let i = 0; i < article_seq.length; i++){
@@ -68,14 +76,6 @@
       } else {
          style.padding = "0";
       }
-    }
-
-    required_elements.forEach(name => RT.load('Element/' + name));
-
-    if(RT.Element && RT.PageStyle){
-      RT.Element.add(compile_configuration); // Re-evaluate on render pass
-      RT.Element.add(apply_macro_boundaries);
-      RT.PageStyle.add(apply_macro_boundaries);
     }
 
     const page_seq = document.querySelectorAll('RT·article RT·page');

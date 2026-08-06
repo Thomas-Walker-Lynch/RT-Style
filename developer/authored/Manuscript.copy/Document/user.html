@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>RT Manuscript: User Manual</title>
+    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+
+      <RT·title 
+        title="RT Style System: User Manual"
+        author="Thomas Walker Lynch" 
+        date="2026-08-06 16:07Z" 
+        copyright="2026 Reasoning Technology">
+      </RT·title>
+
+      <p style="text-align: center; font-size: 1.2em; font-style: italic; margin-bottom: 4rem;">
+        A semantic JavaScript engine for intercepting and compiling raw DOM data graphs into formatted technical manuscripts.
+      </p>
+
+      <RT·TOC level="1-2"></RT·TOC>
+
+      <RT·section>
+        <RT·name>Philosophical Approach</RT·name>
+        <p>
+          An RT-Style document follows an abstraction hierarchy. At the highest level there is <em>theme</em>. The current working theme is <RT·code>inverse_wheat</RT·code>. Theme colors are set by the role played in the document; they do not refer to any DOM elements. The next layer down the abstraction stack is <em>layout</em>. The current working layout is <RT·code>article_tech_ref</RT·code>. The purpose of layout is to set the general size and placement of elements. <RT·code>article_tech_ref</RT·code> assumes the text will be laid out across pages and displayed in a browser. It allows page length to be flexible so that some elements can appear without breaks in them. Then the RT semantic elements are placed in the layout. An RT semantic element is named by the role it plays in the document, such as title page, section, code, math, etc.
+        </p>
+
+        <p>
+          There is no CSS file to edit. CSS is a miniature language for static styling. However, it lacks loops or conditionals, and even variables are an awkward addition. In RT-Style, style is painted onto elements from JavaScript functions. If something isn't working out in the presentation, this is considered to be a design problem, not a reason to be modifying style.
+        </p>
+
+        <p>
+          RT-Style uses the middle dot as a namespace separator in tags. On macOS: Option + Shift + 9. On Windows: Hold Alt and type 0183 on the numeric keypad. Linux: Compose Key followed by . and -.
+        </p>
+
+        <p>
+          As a quick review of terminology, note that <RT·term>content</RT·term> is found between the opening HTML tag and the closing HTML tag. E.g. <RT·code>&lt;RT·noop&gt;This is content.&lt;/RT·noop&gt;</RT·code>. Whereas an <RT·term>attribute</RT·term> is a name-value pair found within an opening HTML tag. E.g. <RT·code>&lt;RT·noop name="value"&gt;</RT·code>.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Manuscript Types</RT·name>
+        <p>
+          These are the top-level semantic environments. They establish the macro-boundaries that enforce the rendering constraints for all scoped child content.
+        </p>
+
+        <RT·dictionary key="Tag" definition="Description & Arguments">
+          <RT·entry key="&lt;RT·article&gt;">
+            Standard technical document architecture designed for continuous digital reading.
+          </RT·entry>
+          <RT·entry key="&lt;RT·memo&gt;">
+            Strict print layout constraint designed to mirror standard physical paper dimensions.
+          </RT·entry>
+          <RT·entry key="&lt;RT·book&gt;">
+            Multi-chapter assembly architecture.
+          </RT·entry>
+        </RT·dictionary>
+      </RT·section>
+
+      <RT·section>
+        <RT·name><RT·Note·write key="env-setup">Article Environment</RT·Note·write></RT·name>
+        <p>The standard operational header template for an article instance:</p>
+
+        <RT·code>
+          &lt;!DOCTYPE html&gt;
+          &lt;html lang="en"&gt;
+            &lt;head&gt;
+              &lt;meta charset="UTF-8"&gt;
+              &lt;title&gt;RT Manuscript: Reference Manual&lt;/title&gt;
+              &lt;script src="RT-Manuscript_locator.js"&gt;&lt;/script&gt;
+              &lt;script&gt;
+                window.RT.theme_preference('inverse_wheat');
+                window.RT.load('Layout/paginate');
+                window.RT.load('Layout/article_tech_ref');
+                window.RT.load('Element/theme_selector');
+              &lt;/script&gt;
+            &lt;/head&gt;
+          &lt;body&gt;
+            &lt;RT·theme-selector&gt;&lt;/RT·theme-selector&gt;
+            &lt;RT·article&gt;
+              &hellip;
+            &lt;/RT·article&gt;
+          &lt;/body&gt;
+          &lt;/html&gt;
+        </RT·code>
+
+        <RT·section>
+          <RT·name>Decorators</RT·name>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·term&gt;">
+              Semantic anchor for technical terminology. Formats the initial occurrence and registers the element ID for index generation. Authors should decorate all occurrences of the term so that they can be indexed.
+            </RT·entry>
+            <RT·entry key="&lt;RT·neologism&gt;">
+              Semantic anchor for a novel term coined within the current document boundaries. Again all instances should be decorated.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Layout environments</RT·name>
+          <p>
+            Context-aware formatting blocks. Valid inline or as distinct segments.
+          </p>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·section&gt;">
+              Scoped nestable section marker. Each nesting level is styled differently.
+            </RT·entry>
+            <RT·entry key="&lt;RT·name&gt;">
+              Gives a name to the immediately container. Evaluated by sections to set the section heading, by relations to name a relation, and by matrices to name vectors, etc. Multiple instances are concatenated with newlines.
+            </RT·entry>
+            <RT·entry key="&lt;RT·code&gt;">
+              Code span or pre-formatted code block. If opening and closing tags are on the same line, content is considered to be inline span code. Otherwise, the content is considered to be a block of code.
+            </RT·entry>
+            <RT·entry key="&lt;RT·math&gt;">
+              Injects mathematical layout evaluation via the MathJax rendering engine.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Grid environments</RT·name>
+          <p>
+            These elements map semantic data into an internal Cartesian grid state prior to CSS projection, isolating the markup from physical layout mechanics.
+          </p>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·grid&gt;">
+              Base Cartesian coordinate grid. Projects child <RT·code>&lt;RT·e&gt;</RT·code> elements based on explicitly defined <em>x</em> and <em>y</em> index geometries.<br>
+              <div class="attr-list">
+                <br><strong>Attributes:</strong><br>
+                <code>model</code>: Projection strategy. "html-grid-direct" or "html-grid-transpose". (Default: "html-grid-direct")<br>
+                <code>major</code>: Carriage return trigger direction. "x" or "y". (Default: "x")<br>
+                <br>
+                <strong>Child Element:</strong> <RT·code>&lt;RT·e&gt;</RT·code><br>
+                <code>x</code>: Target <em>x</em>-axis index or index range (e.g., "0-2", where 2 is the maximum index into an array regardless of data type). Default when no y value, is to auto increment, default with a y value is to reset to 0.<br>
+                <code>y</code>: Target <em>y</em>-axis index or index range. Default is to keep the prior value.<br>
+                <code>type</code>: Decoration type. "data", "x-label", "y-label", or "name". (Default: "data")
+              </div>
+            </RT·entry>
+            <RT·entry key="&lt;RT·dictionary&gt;">
+              Two-column associative layout mapping explicitly declared keys to their scoped definitions.<br>
+              <div class="attr-list">
+                <br><strong>Attributes:</strong><br>
+                <code>key</code>: Header text for the identifier column.<br>
+                <code>definition</code>: Header text for the data payload column.<br>
+                <br>
+                <strong>Child Element:</strong> <RT·code>&lt;RT·entry&gt;</RT·code><br>
+                <code>key</code>: The term being defined. The scoped HTML of the entry forms the definition value.
+              </div>
+            </RT·entry>
+            <RT·entry key="&lt;RT·relation&gt;">
+              Relational algebra layout formatter. Enforces multi-line text wrapping limits, calculates row distinction boundaries, and restricts column headers to the tuple scope.<br>
+              <div class="attr-list">
+                <br><strong>Attributes:</strong><br>
+                <code>layout-intention</code>: "row-tuple" or "column-tuple". (Default: "row-tuple")<br>
+                <br>
+                <strong>Child Elements:</strong><br>
+                <RT·code>&lt;RT·tuple-meta&gt;</RT·code>: Describes the components rather than providing them. E.g.<RT·code>&lt;RT·label&gt;</RT·code> provides a component label.<br>
+                <RT·code>&lt;RT·tuple&gt;</RT·code>: Container for components. Each <RT·code>&lt;RT·name&gt;</RT·code> is taken as a first component. Component data values are given in <RT·code>&lt;RT·e&gt;</RT·code> tags, these are taken in the order they occur.
+              </div>
+            </RT·entry>
+            <RT·entry key="&lt;RT·matrix&gt;">
+              Linear algebraic matrix representation. Enforces rigid padding, brackets mathematical delimiters, and suppresses the exterior grid coordinate layout.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Generators</RT·name>
+          <p>Data-injection nodes. These elements do not wrap content; execution is governed strictly by the attributes provided.</p>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·title&gt;">
+              Constructs the primary document header block.
+            </RT·entry>
+            <RT·entry key="&lt;RT·TOC&gt;">
+              Compiles an automated Table of Contents by scanning the document's nested <code>&lt;RT·section&gt;</code> hierarchy depth.
+            </RT·entry>
+            <RT·entry key="&lt;RT·endnotes&gt;">
+              Generates the numeric list of endnote payloads. Replaces all inline endnote citations with bracketed indices.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Counters</RT·name>
+          <p>
+            Counters operate as explicit state machines. Initialization requires a unique identifier. Execution evaluates scope depth and increments the state.
+          </p>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·Counter·make&gt;">
+              Initializes the named counter state machine.
+            </RT·entry>
+            <RT·entry key="&lt;RT·Counter·step&gt;">
+              Increments the counter block. Executing a step inside an existing step boundary pushes the state to the next depth index.
+            </RT·entry>
+            <RT·entry key="&lt;RT·Counter·snapshot&gt;">
+              Clones the active count variables into the lookup dictionary. Snapshot processing operates independently of the layout pass, allowing global retrieval regardless of physical placement.
+            </RT·entry>
+            <RT·entry key="&lt;RT·Counter·read&gt;">
+              Retrieves the stored snapshot and projects it as innerHTML.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Cross reference</RT·name>
+          <p>
+            A two-pass mechanism bridging logical content with its physically paginated layout geometry.
+          </p>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·Note·write&gt;">
+              Registers the scoped content and its finalized layout page index into the reference dictionary.
+            </RT·entry>
+            <RT·entry key="&lt;RT·Note·read&gt;">
+              Queries the reference dictionary and injects the output.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Annotation</RT·name>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·endnote&gt;">
+              Marks the scoped content for extraction and placement in the endnotes block.
+            </RT·entry>
+            <RT·entry key="&lt;RT·footnote&gt;">
+              Marks the scoped content for layout relocation to the active page's footer.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Pagination</RT·name>
+          <RT·dictionary key="Tag" definition="Description & Arguments">
+            <RT·entry key="&lt;RT·page&gt;">
+              Physical document boundary generated dynamically by the paginator. Not for manual insertion.
+            </RT·entry>
+            <RT·entry key="&lt;RT·page-break&gt;">
+              Explicit directive terminating the current <RT·code>&lt;RT·page&gt;</RT·code> evaluation and pushing subsequent data to the next boundary.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Global widgets</RT·name>
+        <RT·dictionary key="Tag" definition="Description & Arguments">
+          <RT·entry key="&lt;RT·theme-selector&gt;">
+            Injects a floating overlay permitting real-time CSS theme execution. Writes the selection to the browser's <code>localStorage</code>.
+          </RT·entry>
+        </RT·dictionary>
+      </RT·section>
+
+    </RT·article>
+  </body>
+</html>

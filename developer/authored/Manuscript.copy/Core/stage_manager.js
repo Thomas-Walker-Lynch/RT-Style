@@ -11,12 +11,15 @@
     return;
   }
 
+  // Inject Utilities prior to execution
+  window.RT.load('Core/utility');
+
   // Prevent duplicate initialization
   if(window.RT.Element instanceof Set){
     console.warn("RT stage_manager already initialized. Aborting duplicate run.");
     return;
   }
-
+  
   /* Phase task queues/functions in order the phases are processed.
 
      Generators and element styling must run before pagination. Even styling changes the size of the document.

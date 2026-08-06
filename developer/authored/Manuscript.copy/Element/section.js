@@ -1,11 +1,18 @@
 /*
   Element/section.js
   Expands <RT·section> macros into <RT·counter·step> primitives.
+  Utilizes the global RT.Section namespace for state tracking and execution guards.
 */
 
 (function(){
 
   if(!window.RT) return;
+
+  window.RT.Section = window.RT.Section || {};
+  
+  // Guard against multiple script inclusions
+  if(window.RT.Section.is_loaded) return;
+  window.RT.Section.is_loaded = true;
 
   const apply_style = function(title_node ,depth ,config){
     const base_size = 2.25;
@@ -35,33 +42,33 @@
     const debug = window.RT.Debug || { log: function(){} };
     if(debug.log) debug.log('section' ,'Expanding section macros');
 
+    const U = window.RT.Utility;
     const config = window.RT.layout_config || {};
     const section_seq = document.querySelectorAll('RT·section, rt·section');
 
     if(section_seq.length === 0) return;
 
     const article = document.querySelector('RT·article, rt·article, RT·memo, rt·memo');
-    if(article && !document.querySelector('RT·counter·make[counter="RT_section"], rt·counter·make[counter="RT_section"]')){
+    const counter_name = 'RT·Section·counter';
+
+    // Check the global dictionary for existence rather than traversing the DOM
+    if(article && !U.Registry.has(window.RT.Section, counter_name)){
       const make = document.createElement('RT·counter·make');
-      make.setAttribute('counter' ,'RT_section');
+      make.setAttribute('counter' ,counter_name);
       make.setAttribute('style' ,'CountingNumber');
       make.setAttribute('mode' ,'scoped');
       make.setAttribute('on-first-step' ,'0');
       article.insertBefore(make ,article.firstChild);
+      
+      // Register the physical node and its attributes into the global namespace
+      U.Registry.register_make(window.RT.Section, counter_name, make, ['splitable']);
     }
 
     let section_idx = 0;
 
     section_seq.forEach(section => {
-      let depth = 0;
-      let curr = section.parentElement;
-      while(curr){
-        const tag = (curr.tagName || '').toLowerCase();
-        if(tag === 'rt·section' || (tag === 'rt·counter·step' && curr.getAttribute('counter') === 'RT_section')){
-          depth++;
-        }
-        curr = curr.parentElement;
-      }
+      // Utilize the abstracted structural depth utility
+      let depth = U.Dom.get_structural_depth(section, counter_name);
 
       if(depth === 0){
         if(!section.previousElementSibling?.tagName?.toLowerCase().includes('page-break')){
@@ -73,12 +80,17 @@
       const snap_id = section.id || ('section_snap_' + section_idx++);
       
       const step = document.createElement('RT·counter·step');
-      step.setAttribute('counter' ,'RT_section');
-      step.setAttribute('splitable' ,'true');
+      step.setAttribute('counter' ,counter_name);
+      
+      // Query the global dictionary for the splitable flag
+      if(U.Registry.has(window.RT.Section[counter_name], 'splitable')) {
+         step.setAttribute('splitable', 'true');
+      }
+      
       step.id = snap_id; 
 
       const snap = document.createElement('RT·counter·snapshot');
-      snap.setAttribute('counter' ,'RT_section');
+      snap.setAttribute('counter' ,counter_name);
       snap.setAttribute('snapshot' ,snap_id);
       step.appendChild(snap);
 
