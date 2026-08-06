@@ -184,19 +184,11 @@ window.RT.Utility = {
 
 };
 
-
-window.RT.load = function(module_path) {
-  if (window.RT.Module.has(module_path)) {
-    return;
-  }
-  window.RT.Module.add(module_path);
-
-  let resolved_path = window.RT.dirpr_library + '/' + module_path;
-  if (!resolved_path.endsWith('.js')) {
-    resolved_path = resolved_path + '.js';
-  }
-
-  document.write('<script src="' + resolved_path + '"></script>');
+window.RT.load = function(module_path){
+  const key = module_path.endsWith('.js') ? module_path : module_path + '.js';
+  if(window.RT.Module.has(key)) return;
+  window.RT.Module.add(key);
+  document.write('<script src="' + window.RT.dirpr_library + '/' + key + '"></script>');
 };
 
 window.RT.load('Core/stage_manager');

@@ -25,26 +25,307 @@
       <RT·TOC level="1-2"></RT·TOC>
 
       <RT·section>
-        <RT·name>Global Variable Methodology</RT·name>
+        <RT·name>Scope of this Manual</RT·name>
         <p>
-          The RT-Style layout engine enforces a strict global namespace architecture to manage layout state cleanly and prevent execution collision across asynchronous element evaluations.
+          This manual describes how the engine is built. Its companion, the User Manual, describes how to author a document with the engine. The division should be maintained as the system grows: the user manual owns the tag surface, the attribute lists, and the defaults; this manual owns the data structures, the invariants, and the reasons a mechanism has the shape it has. When a tag gains an attribute, the user manual is authoritative. When a tag's behavior under nesting or pagination changes, this manual is authoritative.
+        </p>
+        <p>
+          Code in this manual follows the RT code format conventions. Two of those conventions appear constantly in the engine source and affect reading comprehension: vertical comma lists place the comma at the head of the line it belongs to, and the typographic middle dot serves as an ad hoc namespace separator. Namespaces are written in PascalCase, so the counter element publishes <RT·code>&lt;RT·Counter·make&gt;</RT·code>, not <RT·code>&lt;RT·counter·make&gt;</RT·code>. Author markup, and write queries against it, using the RT-conforming spelling only. The HTML parser lowercases tag names internally as a matter of course, and CSS type selectors are matched case-insensitively in HTML documents, so a query written in the canonical spelling matches regardless of what the parser did to the source markup underneath it. This is harmless precisely because there is no <RT·code>rt</RT·code> namespace of unrelated elements for the lowercase form to collide with. Querying for both spellings, as some element files presently do, is therefore redundant rather than protective.
+        </p>
+        <p>
+          Code snippets in this manual are normative. Where a snippet and the current source disagree, the snippet states the intended design and the Migration Notes section records the gap. This manual was written during a redesign of the registration and scheduling architecture; the sections on the global object, the boot sequence, and splitting describe the target, and the source is being brought to meet it.
+        </p>
+        <p>
+          The engine began as a quick hack intended to evolve into something usable. Several of its most characteristic decisions, particularly elastic page lengths, are consequences of that history and are better than what a more deliberate start would likely have produced. They are recorded here with their reasoning so they are not mistaken for accidents and optimized away.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>The Global Object</RT·name>
+        <p>
+          Everything the engine owns hangs off <RT·code>window.RT</RT·code>. There is no other global state and no CSS file. The root has four kinds of member, and keeping the kinds distinct is the main thing to understand about it.
         </p>
 
+        <RT·dictionary key="Member" definition="Kind">
+          <RT·entry key="RT.Module ,RT.load ,RT.Debug ,RT.Utility">
+            Bootstrap and shared services. Established before anything else and depended upon by everything.
+          </RT·entry>
+          <RT·entry key="RT.Element">
+            A dictionary of element namespaces, keyed by element name. Pure data. Membership means an element is plugged in.
+          </RT·entry>
+          <RT·entry key="RT.Phase ,RT.Task ,RT.task_add">
+            The schedule. An ordered list of phase names, a dictionary of task lists keyed by those names, and the registration function.
+          </RT·entry>
+          <RT·entry key="RT.Registry">
+            Cross-element tables that belong to no single element.
+          </RT·entry>
+        </RT·dictionary>
+
+        <RT·section>
+          <RT·name>Elements Plug In</RT·name>
+          <p>
+            <RT·code>RT.Element</RT·code> is a dictionary whose keys are element names and whose values are that element's namespace object.
+          </p>
+
+          <RT·code>
+            RT.Element = {};              // element name -&gt; namespace object
+
+            RT.Element.Section = { ... };
+            RT.Element.Counter = { ... };
+            RT.Element.Grid    = { ... };
+          </RT·code>
+
+          <p>
+            The governing principle is that an element <RT·neologism>plugs in</RT·neologism>. If an element is not loaded, there is no trace of it anywhere in the system: no namespace, no registered tasks, no entries in any table. Nothing else needs to know whether it might have been loaded, and no code anywhere carries a branch for its absence. A document that uses no grids runs an engine in which grids do not exist.
+          </p>
+
+          <p>
+            This yields the load guard directly. The presence of an element's namespace means that element has loaded, so an element tests for its own key and returns if it finds it.
+          </p>
+
+          <p>
+            <strong>The invariant that makes this sound: a namespace is created only by its owning element file, in the file body.</strong> No other code may create an element's namespace, and the owning file must create it before doing anything else. Were some cooperating element to create the namespace first, presence would become true before the file body had run, and the guard would skip a file that had not in fact loaded. The invariant is what allows bare presence to serve as the flag, with no separate <RT·code>is_loaded</RT·code> member.
+          </p>
+
+          <p>
+            The invariant also settles how elements communicate. They do not reach into each other's namespaces during load, because during load the other element may not have plugged in yet, and asking would violate the invariant by tempting the asker to create what it did not find. <strong>Inter-element communication happens in a later phase, through functions, when every element that is going to load has loaded.</strong> By the time the first phase runs, <RT·code>RT.Element</RT·code> is complete and stable, and an element may consult any key it likes, tolerating absence as the normal condition it is.
+          </p>
+
+          <p>
+            Two consequences worth stating. Because <RT·code>RT.Element</RT·code> holds only element namespaces, helper functions must not be placed on it; an element named <RT·code>add</RT·code> or <RT·code>has</RT·code> would collide with them. Helpers live on <RT·code>RT.Utility.Registry</RT·code>. And because absence is meaningful rather than exceptional, code that consults another element should test and continue quietly, not warn.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Phases and Tasks</RT·name>
+          <p>
+            Registration and scheduling are separate concerns and are now separate structures. An element registers work; the schedule decides when the work runs.
+          </p>
+
+          <RT·code>
+            RT.Phase = [                  // the schedule ,declared in one place
+              'configure'
+              ,'element'
+              ,'paginate_0'
+              ,'page_style'
+              ,'counter'
+              ,'note'
+              ,'paginate_1'
+            ];
+
+            RT.Task = {};                 // phase name -&gt; ordered list of functions
+            RT.Phase.forEach(name =&gt; { RT.Task[name] = []; });
+          </RT·code>
+
+          <p>
+            The phase list is an explicit array rather than being inferred from the keys of the task dictionary. Object key iteration is insertion ordered for string keys and would happen to work, but the schedule is the single most important ordering in the engine and it should be stated in one obvious place rather than emerging from the order in which a dictionary was populated. An explicit list also gives registration something to validate against.
+          </p>
+
+          <RT·code>
+            RT.task_add = function(phase_name ,task_fn){
+              if(!RT.Task[phase_name]){
+                RT.Debug.error('stage' ,'unknown phase: ' + phase_name);
+                return;
+              }
+              if(typeof task_fn !== 'function'){
+                RT.Debug.error('stage' ,'task is not a function for phase: ' + phase_name);
+                return;
+              }
+              RT.Task[phase_name].push(task_fn);
+            };
+          </RT·code>
+
+          <p>
+            Validating the phase name matters more than it appears to. Without the check, a misspelled phase either throws at registration time or, worse, silently creates a queue that nothing ever runs; the element then does nothing and reports nothing. With the check the failure is immediate and names both the mistake and the file that made it.
+          </p>
+
+          <p>
+            Task lists are lists, not sets. An earlier design used a set, which deduplicated by function identity. That protection is unnecessary, because the module guard and the namespace guard between them already prevent a file from registering twice, and it forbids something legitimate: a task may reasonably be queued more than once when it is genuinely wanted more than once. If a particular task must not be queued twice, that task's own registration can scan the list first; the lists are short and this is the rare case rather than the common one.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Order Within a Phase</RT·name>
+          <p>
+            <strong>The design intent is that tasks within a phase are mutually independent.</strong> All real ordering is expressed by the phases themselves. When a genuine dependency appears, the response is to add a phase, not to arrange the tasks within one. Phases are cheap; if the sequence requires <RT·code>on_page_load_0</RT·code> and <RT·code>on_page_load_1</RT·code>, that is a better outcome than an unstated dependency between two entries in one list.
+          </p>
+
+          <p>
+            The structure does not enforce this. A list preserves insertion order and will satisfy an accidental dependency exactly as silently as a set would have; note that a JavaScript set is also insertion ordered, so switching structures neither creates nor removes the hazard. Independence is a property maintained by discipline.
+          </p>
+
+          <p>
+            Discipline can be given teeth cheaply. In debug builds, shuffle each task list before running it.
+          </p>
+
+          <RT·code>
+            function run_phase(phase_name){
+              let task_seq = RT.Task[phase_name];
+
+              if(RT.Debug.active_tokens.has('shuffle')){
+                task_seq = task_seq.slice();
+                for(let i = task_seq.length - 1; i &gt; 0; i--){
+                  const j = Math.floor(Math.random() * (i + 1));
+                  [task_seq[i] ,task_seq[j]] = [task_seq[j] ,task_seq[i]];
+                }
+              }
+
+              task_seq.forEach(task_fn => {
+                try{ task_fn(); }
+                catch(e){ RT.Debug.error('stage' ,phase_name + ' task failed: ' + e); }
+              });
+            }
+          </RT·code>
+
+          <p>
+            This converts an entire class of silent latent bug into a loud immediate one, at the cost of a few lines that are inert unless the token is enabled. Without it, the first element that quietly depends on another works correctly until something perturbs the load order, at which point the failure appears somewhere unrelated to its cause.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The Element File Template</RT·name>
+          <p>
+            The whole of the above reduces to a small fixed shape. This is the normative form for an element file.
+          </p>
+
+          <RT·code>
+            /*
+              Element/section.js
+              Expands &lt;RT·section&gt; macros into counter step primitives.
+            */
+
+            (function(){
+
+              if(!window.RT) return;
+              if(RT.Element.Section) return;      // already plugged in
+
+              const ns = RT.Element.Section = {};
+
+              ns.tags = ['RT·section'];
+
+              const apply_style = function( ... ){ ... };
+
+              RT.task_add('element' ,function(){
+                // inter-element communication belongs here ,not in the file body
+                ...
+              });
+
+            })();
+          </RT·code>
+
+          <p>
+            The namespace is created immediately after the guard and before anything else, so that the window in which the key exists but the file has not finished is as small as it can be made. Helpers defined in the file body survive because the registered task closes over them; nothing else in the body persists, since the body runs once during parse and never again.
+          </p>
+
+          <p>
+            That last point is the reason state lives in the namespace at all. The file body has already finished before there is a document to inspect, a compiled configuration to read, or pages to number. It is not a place where state can be kept for later, because there is no later occasion on which code in that body will run. What survives is what a longer-lived function captured, or what was written onto a reachable object. The namespace is that reachable object.
+          </p>
+
+          <p>
+            An element with no cross-phase state still creates its namespace, because the namespace is the plug. The term element is the degenerate case: its helper is captured by its task, and its deduplication set is local to a single pass and correctly declared inside the task rather than outside it. It has nothing to store, and it still registers <RT·code>RT.Element.Term</RT·code>, because that is how the system knows terms exist.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Boot Sequence</RT·name>
         <p>
-          <strong>The `window.RT` Root:</strong> All operational properties, layout configurations, execution queues, and registered semantic elements reside exclusively within the `window.RT` object. 
+          Boot and pipeline are two different orderings and are easily confused. Boot is the order in which files load and register their work. The pipeline is the order in which that registered work is invoked, long afterward. This section covers the former.
         </p>
 
-        <p>
-          <strong>Element State Dictionaries:</strong> Every semantic element module registers its own specific namespace dictionary within the root object (e.g., `RT.Section = {}`). This allows individual modules to track their own initialization state across multiple execution phases. Consequently, an element evaluates its own object to determine if it has already been loaded, preventing duplicate instantiation when the layout engine iterates the DOM tree.
-        </p>
+        <RT·section>
+          <RT·name>Deferred Loading</RT·name>
+          <p>
+            One fact governs everything else here. <RT·code>RT.load</RT·code> emits a script tag with <RT·code>document.write</RT·code>, and a script written that way does not run immediately. It is inserted into the token stream at the position of the currently executing script and runs only once that script has finished. <strong><RT·code>RT.load</RT·code> is a deferred request, not a synchronous include.</strong>
+          </p>
+          <p>
+            Two consequences follow. Statements after a load call, in the same file, execute before the loaded file does. And <RT·code>RT.load</RT·code> functions only while the document is parsing; called afterward it writes into a closed stream and destroys the document.
+          </p>
+          <p>
+            This is also why the shared utilities are established inline in the make file rather than being loaded. Anything the make file loaded would not exist by the time the make file finished, so services that must be available to the very next script cannot themselves be loaded; they must be written where they are needed.
+          </p>
+          <p>
+            The module guard must key on the resolved path, not the argument as given. The extension is appended after the check would otherwise run, so two spellings of one module would register as two modules.
+          </p>
 
-        <p>
-          <strong>DOM Reference & Attribute Tracking:</strong> The element-specific dictionaries maintain explicit references to active layout mechanics, reducing the need for computationally expensive DOM traversal. For example, a section element maps its underlying `<RT·counter·make>` DOM node references by counter name directly into the `RT.Section` dictionary.
-        </p>
-        
-        <p>
-          By tracking the element's object within the dictionary, the semantic code dynamically references the exact attributes an element was created with. The presence of attributes such as `splitable` are stored directly within the counter's dictionary as a key (assigned an empty string or null value). The existence of the key itself acts as a boolean flag for the pagination engine to evaluate physical breaking limits.
-        </p>
+          <RT·code>
+            window.RT.load = function(module_path){
+              const key = module_path.endsWith('.js') ? module_path : module_path + '.js';
+              if(window.RT.Module.has(key)) return;
+              window.RT.Module.add(key);
+              document.write('&lt;script src="' + window.RT.dirpr_library + '/' + key + '"&gt;&lt;/script&gt;');
+            };
+          </RT·code>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Debug Placement</RT·name>
+          <p>
+            <RT·code>RT.Debug</RT·code> is a token filtered logger. Messages are tagged with a token, and <RT·code>log</RT·code> and <RT·code>warn</RT·code> emit only when that token is in the active set. <RT·code>error</RT·code> always emits. Tokens are toggled from the console with <RT·code>RT.Debug.enable</RT·code> and <RT·code>RT.Debug.disable</RT·code>, so a programmer finishing a debugging session removes the token and all of its messages stop without any code being touched.
+          </p>
+          <p>
+            Debug belongs with the other shared services in the utility object. Moving it there requires care, because of a trap created by deferred loading. The stage manager currently captures the logger eagerly in its file body.
+          </p>
+
+          <RT·code>
+            const debug = window.RT.Debug || { log: function(){} , ... };   // WRONG: captures once
+          </RT·code>
+
+          <p>
+            If the logger is defined in a file that the stage manager itself requests, that file has not run when the capture happens, and the stage manager permanently holds the no-op stub. The pipeline then runs silently forever, and nothing reports the fact. <strong>Shared services must be looked up at call time, not captured at load time</strong>, unless they are established before the capturing file loads. Both corrections should be applied together: utilities load first, from the make file, ahead of the stage manager; and the stage manager consults <RT·code>RT.Debug</RT·code> inside its functions rather than binding it in its body.
+          </p>
+          <p>
+            With debug and the other services relocated, the make file reduces to a bootstrap: the module set, the load function, and the load calls. That is the right shape for it.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The Sequence</RT·name>
+          <p>
+            A document's head names only the locator and a short configuration block. Everything else arrives transitively.
+          </p>
+
+          <RT·dictionary key="Step" definition="Effect">
+            <RT·entry key="1. Locator">
+              Sets <RT·code>RT.dirpr_library</RT·code>, fixing the root against which every later module path resolves, then requests the make file. Four locator variants exist, differing only in how that root is computed, which is what allows the same document to build inside the distribution or outside it.
+            </RT·entry>
+            <RT·entry key="2. Manuscript make">
+              Establishes <RT·code>RT.Module</RT·code> and <RT·code>RT.load</RT·code>, then requests the utilities, the stage manager, the theme machinery, the theme manifest, the counter layout, and the note layout.
+            </RT·entry>
+            <RT·entry key="3. Utilities">
+              Establishes <RT·code>RT.Debug</RT·code>, the string, DOM, font, and colour helpers, and the registry helpers. Loaded first among the make file's requests, so that everything after it may rely on the logger existing.
+            </RT·entry>
+            <RT·entry key="4. Stage manager">
+              Creates <RT·code>RT.Element</RT·code>, <RT·code>RT.Phase</RT·code>, <RT·code>RT.Task</RT·code>, <RT·code>RT.task_add</RT·code>, and <RT·code>RT.Registry</RT·code>. Locks the layout by hiding the document element, configures scroll restoration, captures the scroll target, binds window events, and registers the pipeline against <RT·code>DOMContentLoaded</RT·code>.
+            </RT·entry>
+            <RT·entry key="5. Theme ,counter ,note">
+              The theme machinery defines the theme accessor and the preference function. The counter and note layouts plug in and register their tasks.
+            </RT·entry>
+            <RT·entry key="6. Document configuration block">
+              The author's inline script. Selects a theme, then requests the pagination layout, the layout driver, and any global widgets. Runs only after everything above has completed, which is why it may call the theme preference function directly.
+            </RT·entry>
+            <RT·entry key="7. Pagination layout">
+              Registers the two pagination tasks and the splitting machinery. Requested independently of the layout driver, because a document may legitimately want no pagination at all.
+            </RT·entry>
+            <RT·entry key="8. Layout driver">
+              The layout is the driver: it declares which elements the format provides and requests them, and registers configuration compilation into the configure phase.
+            </RT·entry>
+            <RT·entry key="9. Element files">
+              Each plugs in and registers its tasks.
+            </RT·entry>
+            <RT·entry key="10. DOMContentLoaded">
+              Parsing completes, the browser fires the event, and the pipeline runs. Nothing within the engine invokes the pipeline; the browser is the trigger. The locator requests the make file, which loads the stage manager, whose body attaches the pipeline to the event. There is no explicit call anywhere.
+            </RT·entry>
+          </RT·dictionary>
+
+          <p>
+            The configuration block is ordered by dependency only at its head. The theme must be selected before the layout driver runs, because compiled configuration reads theme values. Pagination and the layout driver are intended to be independent of one another. Widgets such as the theme selector are not part of the document and may be omitted entirely, though the default theme must still be declared, since the layout reads it whether or not a reader is offered a choice.
+          </p>
+
+          <p>
+            Note what the <RT·code>configure</RT·code> phase accomplishes. Compiled configuration must exist before any element task reads it. Previously that held only as a side effect of deferred loading: the layout driver requested its element files before registering its own work, so its registration nonetheless landed first in a single shared queue. The ordering was correct by virtue of <RT·code>document.write</RT·code> semantics rather than by any statement of intent, and anything that made loading synchronous would have inverted it silently. Giving configuration its own phase states the dependency instead of relying on it.
+          </p>
+        </RT·section>
       </RT·section>
 
       <RT·section>
@@ -54,39 +335,561 @@
         </p>
 
         <RT·dictionary key="Phase" definition="Operation">
-          <RT·entry key="Phase 1: Elements">
+          <RT·entry key="configure">
+            Compiles the layout configuration dictionary from the selected theme. Separated from the element phase so that every later task may read it without an implicit ordering assumption.
+          </RT·entry>
+          <RT·entry key="element">
             Evaluates raw 1D streams. Injects section wrappers, maps counter states, evaluates math tokens, and isolates explicit string payloads.
           </RT·entry>
-          <RT·entry key="Phase 2: Paginate 0">
-            Initial document chunking. Slices the continuous DOM into discrete <code>&lt;RT·page&gt;</code> boundaries based on height configurations. Modifies the tree aggressively.
+          <RT·entry key="paginate_0">
+            Initial document chunking. Slices the continuous DOM into discrete <RT·code>&lt;RT·page&gt;</RT·code> boundaries based on height configurations. Modifies the tree aggressively.
           </RT·entry>
-          <RT·entry key="Phase 3: Page Style">
+          <RT·entry key="page_style">
             Applies geometric CSS configurations to the generated pages.
           </RT·entry>
-          <RT·entry key="Phase 4: Counters">
-            Walks the tree to increment the state machines and populates snapshot variables. Must run after pagination to ensure page numbers exist.
+          <RT·entry key="counter">
+            Walks the tree to increment the status machines and populates snapshot variables. Must run after pagination to ensure page numbers exist.
           </RT·entry>
-          <RT·entry key="Phase 5: Cross Reference">
+          <RT·entry key="note">
             Resolves mapping dictionaries bridging logical content with its physically paginated layout geometry.
           </RT·entry>
-          <RT·entry key="Phase 6: Paginate 1">
+          <RT·entry key="paginate_1">
             Absorbs dimensional deltas. Expands page limits to accommodate space consumed by injected cross-references and generated indices.
+          </RT·entry>
+        </RT·dictionary>
+
+        <p>
+          The ordering is forced by real dependencies rather than by preference. Generators must expand before pagination, because expansion changes height. Pages must exist before counters run, because a page number is itself a counter and there is nothing to step until the page elements exist. Cross references resolve after counters, because a reference target may contain a counter value. And the final pagination pass runs last, for the reason given under elastic pages below.
+        </p>
+
+        <p>
+          With the schedule externalized, the pipeline itself is one loop rather than six hand-written blocks. Previously two phases were sets and four were single nullable function slots, so the runner carried two shapes of code and a special case for each empty slot. A list of length one expresses a single registered function without the special case.
+        </p>
+
+        <RT·code>
+          function run_pipeline(){
+            RT.Phase.forEach(phase_name => {
+              RT.Debug.log('stage' ,'phase: ' + phase_name);
+              run_phase(phase_name);
+            });
+            resolve_scroll_target();
+          }
+        </RT·code>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Elastic Pages</RT·name>
+        <p>
+          A design decision that shapes the whole of pagination, and that arose from the medium rather than from tradition: <strong>the output is a browser, so pages need not be a fixed length.</strong> Nothing physical forces a page to end at a particular height. Once that constraint is dropped, several problems that are hard in a fixed-page formatter become easy or vanish.
+        </p>
+
+        <p>
+          The first consequence is that paragraphs need not be split. Splitting a paragraph is a substantial amount of work, especially in the presence of embedded elements, and a paragraph that runs past the nominal page bottom is simply allowed to. It is also pleasanter to read a paragraph that is not interrupted.
+        </p>
+
+        <p>
+          The second consequence resolves what would otherwise be a serious instability. Page lengths are not fully known until layout has completed, because counter values and cross reference text are injected late and occupy space. Counter values grow logarithmically, so the individual increments are tiny. But a tiny increment can push a figure onto the following page, which changes that page's number, which changes the length of every cross reference naming it, which can push something else. A small perturbation amplifies through the document.
+        </p>
+
+        <p>
+          Rather than allow that cascade, the final phase lengthens the affected page. Growth is local and terminal: no content moves, so no page number changes, so no cross reference changes length, so nothing further is perturbed. The butterfly effect is cut at its source by refusing to relocate anything.
+        </p>
+
+        <p>
+          This is why the final pagination phase runs last and why it only ever grows pages. Any change to it that relocated content instead would reintroduce the cascade it exists to prevent.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Splitting and Pagination</RT·name>
+        <p>
+          Whether an element may be cut across a page boundary is the most subtle question in the engine, because the answer is not a property of the element. This section sets out the decomposition that makes it tractable.
+        </p>
+
+        <RT·section>
+          <RT·name>Permission and Mechanics</RT·name>
+          <p>
+            The essential separation: <strong>mechanics are local, permission is not.</strong>
+          </p>
+          <p>
+            Only the grid element knows how to cut a grid in half. That knowledge is irreducibly local and belongs to the element. But whether a cut is allowed at a given position is a property of the position, computed over the entire chain of enclosing elements. The two questions have different shapes and different homes, and conflating them is what makes the problem look intractable.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Capability Is the Default</RT·name>
+          <p>
+            <strong>An element is splittable exactly when a splitter has been written for it.</strong> This is not a policy choice but a fact about what code exists. An element that could in principle be cut cannot be cut unless the function that performs the cut has been provided.
+          </p>
+          <p>
+            The consequence is that unsplittable is the only possible default, and it requires no defending. It also removes a rule from the engine: not splitting paragraphs ceases to be policy stated somewhere and becomes simply the absence of a paragraph splitter. Nothing in the paginator mentions paragraphs. Should a paragraph splitter ever be written, it works with no change to the engine, because the engine never encoded the exception.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Three Gates</RT·name>
+          <p>
+            Permission at a single node is the conjunction of three independent conditions.
+          </p>
+
+          <RT·dictionary key="Gate" definition="Question and granularity">
+            <RT·entry key="Capability">
+              Does the owning element namespace provide a split function? Per element type. Cannot be overridden by any attribute, because there is no code to run.
+            </RT·entry>
+            <RT·entry key="Counter policy">
+              Does this counter permit its step scopes to be cut? Per counter, declared on the make tag and recorded in the element namespace by the registry helper.
+            </RT·entry>
+            <RT·entry key="Instance">
+              Does this particular occurrence permit it? Per instance, carried as an attribute.
+            </RT·entry>
+          </RT·dictionary>
+
+          <p>
+            A node is <RT·neologism>permeable</RT·neologism> when all three hold. Permeability is a property of one node; it is not yet permission to break.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The Chain Conjunction</RT·name>
+          <p>
+            <strong>A break is legal at a position only if every enclosing node from that position up to the page root is permeable.</strong> A single impermeable ancestor vetoes the break, however permeable everything below it may be.
+          </p>
+
+          <p>
+            This is what handles the cases that appear to require special treatment. A splittable element inside an unsplittable step scope cannot be cut, because the step scope is impermeable and sits in the chain. A splittable element inside a splittable step scope that is itself inside an impermeable step scope belonging to a <em>different</em> counter also cannot be cut, for exactly the same reason and with no additional machinery.
+          </p>
+
+          <p>
+            The multi-counter case dissolves rather than being solved. The conjunction does not ask which counter owns an enclosing step scope; it asks only whether that node is permeable. Counter identity re-enters afterward, when the chain becomes the soft close list, and that list was always permitted to span several machines.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Breaks Migrate Outward</RT·name>
+          <p>
+            The reframing that makes the whole thing simple: <strong>an impermeable ancestor does not forbid a break, it relocates one.</strong> If the break cannot occur inside that ancestor, it occurs before it, and the ancestor moves whole to the next page.
+          </p>
+
+          <RT·code>
+            find_break_position(node):
+              chain   = ancestors(node) up to the page root
+              barrier = outermost node in chain that is not permeable
+
+              if barrier exists:
+                if position_before(barrier) is the page start:
+                  return none                      // nothing to move ,let the page grow
+                return position_before(barrier)    // break migrates outward
+
+              return position_at(node)             // every level permits ,cut here
+          </RT·code>
+
+          <p>
+            An atomic element is now merely a barrier with nothing interesting inside it, and needs no separate treatment; moving an unsplittable element whole to the next page is the same operation as migrating a break outward past it. The paginator need know nothing about grids or sections in particular.
+          </p>
+
+          <p>
+            The terminating case is supplied by elastic pages. When the break has migrated all the way to the start of the page there is nothing left to relocate, and the correct response is not an error but the page growing to accommodate its content. This is the same mechanism the final phase uses and for the same reason: growth is local and terminal, whereas relocation propagates. A barrier taller than a page is therefore not a failure condition. At most it warrants a message under a debug token when a page exceeds some multiple of the target length, which is a signal about content rather than a fault in the engine.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>One Walk Serves Both</RT·name>
+          <p>
+            The chain computed to decide permission is, once the position settles, precisely the list of scopes that must be soft closed. The permission walk and the suspension walk are the same walk, performed once, feeding two mechanisms. This is the strongest evidence that the decomposition is correct, and any implementation should preserve it rather than walking twice.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Splitters Live on Their Elements</RT·name>
+          <p>
+            With permission handled by the chain, mechanics return to the element that owns them, and the global splitter table disappears.
+          </p>
+
+          <RT·code>
+            RT.Element.Grid = {
+              tags: ['RT·grid']
+              ,split: function(el ,remaining ,measure_fn ,recurse_fn){
+                 ...
+                 return { first ,rest ,first_height };
+               }
+            };
+          </RT·code>
+
+          <p>
+            The paginator resolves a tag to its element namespace and looks for <RT·code>split</RT·code>; absence means no capability, which is the first gate. Tags are declared explicitly rather than derived from the namespace name, because derivation works for some elements and not others and a naming rule with exceptions is worse than a declaration.
+          </p>
+
+          <p>
+            This also completes the plug-in principle. An element that is not loaded contributes no splitter, occupies no slot in any table, and requires no entry anywhere to record its absence.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Open Question</RT·name>
+          <p>
+            The instance attribute currently reads as an opt-in, set affirmatively from counter policy when the section macro constructs a step. Under capability-as-default, capability already expresses intent, so the attribute reads more naturally as a per-instance veto: present and false to forbid what would otherwise be permitted. Either reading is workable and the conjunction is unaffected. The choice should be made before it is copied into a second element.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Counters</RT·name>
+        <p>
+          The counter is the engine's only stateful primitive. Nearly every numbered thing in a document is built on it: sections, pages, endnotes, and in due course figures and tables. The user manual documents the four counter tags and their attributes; this section documents the machine underneath them.
+        </p>
+
+        <RT·section>
+          <RT·name>The Count Object</RT·name>
+          <p>
+            A Count holds three fields. A CounterMachine wraps a Count and adds the rendering configuration: the style vector, the separator, the separator placement, and the mode.
+          </p>
+
+          <RT·dictionary key="Field" definition="Meaning">
+            <RT·entry key="status">
+              One of <RT·code>empty</RT·code>, <RT·code>preamble</RT·code>, <RT·code>between</RT·code>. The word <RT·term>status</RT·term> is used in preference to <RT·term>state</RT·term> throughout the engine, so that the word state remains available for other notions of state in the same discussion.
+            </RT·entry>
+            <RT·entry key="list">
+              An array of natural numbers, or null when empty. This is a path, not a number. A list of <RT·code>[1,0]</RT·code> denotes the second step at the top level, first substep within it.
+            </RT·entry>
+            <RT·entry key="names">
+              An array parallel to the list, holding the title text supplied by a nested <RT·code>&lt;RT·name&gt;</RT·code>. Parallel arrays are used rather than an array of records, because the two are pushed and popped in lockstep and every operation touches both.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The Status Machine</RT·name>
+          <p>
+            A <RT·term>scope</RT·term> is one <RT·code>&lt;RT·Counter·step&gt;</RT·code> element. The document walk enters the scope on descent and exits it on ascent. The transition table is small enough to state completely.
+          </p>
+
+          <RT·code>
+            enter:
+              empty     -&gt; push(first_step_val)   ; status = preamble    (init)
+              preamble  -&gt; push(0)                ; status = preamble    (indent)
+              between   -&gt; increment()            ; status = preamble    (inc)
+
+            exit:
+              empty     -&gt; error
+              preamble  -&gt; status = between                              (keep)
+              between   -&gt; pop()                  ; status = between     (outdent)
+          </RT·code>
+
+          <p>
+            The reason the status field exists at all is that enter has no other way to distinguish three cases that are indistinguishable from the DOM alone. Entering from <RT·code>empty</RT·code> is the document's first step and must initialize the list. Entering from <RT·code>preamble</RT·code> means the walk descended into a parent and has not yet closed any child, so this is a nested step and must push a level. Entering from <RT·code>between</RT·code> means a sibling has already closed at this level, so this is the next sibling and must increment. Without the status field the machine cannot tell nesting from succession, and DOM depth will not supply the distinction either, because the walk has already returned to the parent's depth by the time the sibling is reached.
+          </p>
+
+          <p>
+            The status names are document flavored. After entering a section but before any subsection, the position is that section's preamble. Once a subsection has closed, the position is between subsections.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Scoped and Milestone Modes</RT·name>
+          <p>
+            Both modes run the identical status machine. The entire difference lies in how the count is reported: in scoped mode, when the status is <RT·code>between</RT·code>, the last element of the list is dropped from the report.
+          </p>
+
+          <p>
+            A <RT·term>scoped</RT·term> counter answers the question of which scope contains the current position. When the status is between, the deepest level has closed and no longer applies, so it is dropped. Having just closed subsection 1.2, a reader standing in the body of section 1 is in section 1, not in 1.2. The corollary is that a scoped counter at top level in the between status reports the empty string: the list held one element, it was dropped, and no scope applies. That is the correct answer, not a defect, and the Counter test suite asserts it.
+          </p>
+
+          <p>
+            A <RT·term>milestone</RT·term> counter answers the question of how many markers have passed. Mile markers do not nest and have no interior. Each counts where it is found in the walk, and its value stands until the next one. The full list is always reported. Page numbers are the canonical milestone counter, and the mode choice there is load bearing: under scoped mode every page footer would render empty.
+          </p>
+
+          <p>
+            Sections are scoped. Figures, when added, will be milestone.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Index and Display</RT·name>
+          <p>
+            The counter stores indices, always zero-based naturals. Styles are pure renderings of an index, and each style is a <RT·code>to_</RT·code> and <RT·code>from_</RT·code> pair on the machine. This separation is the most error-prone part of the counter, so it is stated flatly here.
+          </p>
+
+          <RT·code>
+            to_NaturalNumber(0)  === "0"     from_NaturalNumber("0")  === 0
+            to_CountingNumber(0) === "1"     from_CountingNumber("1") === 0
+            to_Roman(0)          === "I"     from_Roman("I")          === 0
+            to_roman(0)          === "i"
+            to_Alpha(0)          === "A"     from_Alpha("A")          === 0
+            to_alpha(0)          === "a"
+          </RT·code>
+
+          <p>
+            Numeric and Roman styles are one-based in their display and therefore add one when rendering. Alphabetic styles are zero-based in their display, since A is naturally the zeroth letter, and add nothing. A reader computing an expected value by hand must apply the offset per style, and the offset differs within a single count whenever the style vector mixes families. A count of <RT·code>[0,0]</RT·code> under the style vector <RT·code>Roman,Alpha</RT·code> renders <RT·code>I.A</RT·code>; it renders neither <RT·code>0.A</RT·code> nor <RT·code>I.B</RT·code>. This has already produced one round of incorrect expected values in the Counter tests. Check against the table above rather than against intuition.
+          </p>
+
+          <p>
+            The style is a vector indexed by depth. Depth zero uses element zero, depth one uses element one, and any depth past the end of the vector uses the last element, so a single trailing style covers unbounded nesting. The <RT·code>outline</RT·code> shorthand expands to the vector <RT·code>Roman,Alpha,roman,alpha,CountingNumber</RT·code>. The <RT·code>on-first-step</RT·code> attribute is given in display form and is passed through the depth-zero <RT·code>from_</RT·code> to obtain the stored index. That is why <RT·code>on-first-step="1"</RT·code> under <RT·code>NaturalNumber</RT·code> and <RT·code>on-first-step="0"</RT·code> under <RT·code>CountingNumber</RT·code> both begin a document at the display value one.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Snapshot and Read</RT·name>
+          <p>
+            A snapshot clones the entire machine into the snapshot dictionary under a name. A read resolves against that dictionary in a second pass, after the whole walk has completed. This decoupling is what allows a read to appear anywhere in the document relative to its snapshot, including earlier. A table of contents reads snapshots taken hundreds of pages later.
+          </p>
+          <p>
+            Snapshots clone rather than reference, because the machine continues to mutate after the snapshot is taken. Holding a reference would give every snapshot of a given counter the same final value. Any new code path that stores a machine must clone for the same reason.
+          </p>
+          <p>
+            Snapshotting an empty counter is an error and is reported to the console; a step is required first. A snapshot that no read resolves is harmless. A read naming a snapshot that does not exist substitutes a visible marker into the output and logs an error. The asymmetry is deliberate: an unused snapshot costs nothing, whereas an unresolved read would otherwise leave a blank that the author might not notice.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Splitting Step Scopes Across a Page Boundary</RT·name>
+          <p>
+            This is the most intricate mechanism in the engine. The situation is closely analogous to a message split across packets in telecommunications: the payload is cut, carried separately, and reassembled such that the receiver cannot tell it was ever divided. What makes the counter case harder than a packet is that there is not one open thing at the cut. There is a stack of them.
+          </p>
+
+          <p>
+            The difficulty arises because counter state is produced by a DOM walk that enters on descent and exits on ascent. Naively cutting a step element in two yields two enters and two exits where the document means one of each, and the counter double advances.
+          </p>
+
+          <p>
+            The rule is therefore stated over the whole stack of open scopes rather than over a single element. When a page split is introduced, all open step scopes are <RT·neologism>soft closed</RT·neologism>. A soft close suspends a scope: it does not run exit, and it does not alter the count. On the far side of the boundary, all of the cut scopes are <RT·neologism>continuation opened</RT·neologism>, in the same order and to the same depth. A continuation open does not run enter and does not advance the count.
+          </p>
+
+          <p>
+            Two conditions govern correctness. First, the continuation open depth must equal the soft close depth. A mismatch means the split lost or invented a level, and it is an error. Second, the lowest level continuation open inherits the count state from the lowest level of the split. That innermost scope is the one holding the live count; the outer levels are structural context that must be rebuilt so that subsequent enters and exits land at the correct depth.
+          </p>
+
+          <p>
+            All of this proceeds per named counter. An outer scope may belong to a counter with a different name, and that outer counter may have a step scope broken at the same boundary. Each name is soft closed and continuation opened independently, against its own machine.
+          </p>
+
+          <p>
+            A consequence worth internalizing is that page splitting affects sections even when the element explicitly being split is not a section. If a list is cut, that list sits inside a section, so the section's step scope is cut as well. Whatever element triggered the split, the entire enclosing stack participates. This is the same chain the permission conjunction walks.
+          </p>
+
+          <RT·dictionary key="Attribute" definition="Effect">
+            <RT·entry key="continued">
+              Marks a fragment as soft closed, and carries a split identifier naming the suspension. Suppresses exit; instead clones the machine into the serial dictionary under that identifier.
+            </RT·entry>
+            <RT·entry key="continues">
+              Carried on a synthesized make tag emitted ahead of the remainder. Restores the machine saved under the named identifier rather than constructing a fresh one.
+            </RT·entry>
+            <RT·entry key="continuation">
+              Marks a fragment as continuation opened. Suppresses enter, so the scope is not recounted, while still registering the element for a normal exit at its end.
+            </RT·entry>
+          </RT·dictionary>
+
+          <p>
+            The invariant the protocol maintains is that there is exactly one enter and one exit per logical scope, however many page fragments that scope is spread across. Of N fragments, the first through the N minus first are marked continued; the second through the Nth are marked continuation; only the Nth actually exits.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Counters That Do Not Split</RT·name>
+          <p>
+            The figure counter, when added, will have no splitter. A figure either fits on the page before the break or on the page after it; there is no meaningful half figure, and under capability-as-default that requires only that no splitter be written.
+          </p>
+          <p>
+            Figure scopes are unusual in a second respect worth recording before the element is written: there are long stretches of document between figure scopes. Section scopes tile the document, so a scoped section counter always has a defined answer. Figure scopes are sparse islands, and the question of which figure contains the current position has no answer across most of the text. That is the structural reason figures are a milestone counter rather than a scoped one. Milestone mode answers how many figures have passed, which is defined everywhere, rather than which figure contains the position, which is not.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Sections as a Macro over Counters</RT·name>
+        <p>
+          The section element adds no new state machine. It is close to a pure macro: it rewrites each <RT·code>&lt;RT·section&gt;</RT·code> into a counter step plus the title furniture, and lets the counter do the counting. Reading it as a macro expansion, rather than as an element with logic of its own, is the correct mental model.
+        </p>
+
+        <RT·section>
+          <RT·name>The Expansion</RT·name>
+          <RT·code>
+            &lt;RT·Counter·step counter="RT·Section·counter" splitable="true" id="{snap_id}"&gt;
+              &lt;RT·Counter·snapshot counter="RT·Section·counter" snapshot="{snap_id}"&gt;
+              &lt;div class="RT·section-title"&gt;
+                &lt;RT·Counter·read snapshot="{snap_id}"&gt;
+                &lt;span&gt;&lt;RT·Counter·read snapshot="{snap_id}" key="name"&gt;&lt;/span&gt;
+              &lt;/div&gt;
+              {original children ,with RT·name hidden}
+            &lt;/RT·Counter·step&gt;
+          </RT·code>
+
+          <p>
+            The name child is hidden rather than removed, because the counter walk reads it to populate the names array. Its text reaches the page through the read tag keyed on name, not through its own rendering. A top level section additionally receives a preceding page break if it does not already have one.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The Section Namespace</RT·name>
+          <p>
+            Beyond serving as the plug, <RT·code>RT.Element.Section</RT·code> holds a reference to the make tag that creates the section counter.
+          </p>
+
+          <RT·code>
+            RT.Element.Section = {
+              tags: ['RT·section']
+              ,make_node: null            // the make element for the section counter
+              ,snap_id_allocator: 0
+            };
+          </RT·code>
+
+          <p>
+            The reason to retain the node itself, rather than a copy of its settings, is that <strong>the make tag is the configuration record.</strong> Its attributes are the single source of truth for how sections number, and other section-aware tags check them to decide how to behave. A table of contents entry, a cross reference, and a running header all need the section numbering style, and all three should read it from the make node rather than each hard-coding an assumption or duplicating a default.
+          </p>
+
+          <p>
+            The element creates the make node only if the document does not already contain one for that counter name. An author wanting non-default section numbering supplies a make tag directly, and the macro defers to it. That deferral is why the node reference and the already-created flag are necessarily the same piece of information rather than two.
+          </p>
+
+          <p>
+            The counter is named <RT·code>RT·Section·counter</RT·code> in the source. Whether the trailing word should be <RT·code>counter</RT·code> or <RT·code>count</RT·code> is unsettled: the machine is a counter but the value it holds is a count, and the tag namespace already says Counter.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Depth Computation</RT·name>
+          <p>
+            The macro computes each section's depth by walking up the DOM and counting ancestors that are either an unexpanded section or an already-expanded step belonging to the section counter. Both forms must be counted, because the node list being iterated is static while the expansion mutates the tree. By the time an inner section is processed, its outer ancestors have already become steps.
+          </p>
+          <p>
+            Depth is consumed only by styling. Heading size, indent, and opacity all derive from it. The number itself comes from the counter, not from this walk. Keeping the two independent means a change to the styling rule cannot corrupt numbering.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Invariants</RT·name>
+        <p>
+          Collected for quick reference. A defect in the engine is usually one of these being violated, and checking them in order is a faster diagnostic than reading the walk.
+        </p>
+
+        <RT·dictionary key="Invariant" definition="Where it can break">
+          <RT·entry key="A namespace is created only by its owning element file, in the file body">
+            Any cooperating element tempted to create what it did not find. This invariant is what makes presence a sound load guard.
+          </RT·entry>
+          <RT·entry key="Elements do not read each other during load">
+            Element file bodies. Cross-element reads belong in a task, where the element table is complete.
+          </RT·entry>
+          <RT·entry key="Tasks within a phase are mutually independent">
+            Any new task. Enforce with the debug shuffle; when a real dependency appears, add a phase.
+          </RT·entry>
+          <RT·entry key="Shared services are looked up at call time">
+            Any file body that captures a service into a local. Deferred loading means the service may not exist yet.
+          </RT·entry>
+          <RT·entry key="One enter and one exit per logical scope">
+            Page splitting. The continued and continuation attributes exist solely to preserve this.
+          </RT·entry>
+          <RT·entry key="Continuation depth equals soft close depth">
+            Page splitting across a stack of nested scopes.
+          </RT·entry>
+          <RT·entry key="Permission is a conjunction over the whole enclosing chain">
+            Any splitter that decides locally whether it may cut.
+          </RT·entry>
+          <RT·entry key="Late layout adjustments grow pages ,never relocate content">
+            The final phase. Relocation reintroduces the cascade that elastic pages exist to prevent.
+          </RT·entry>
+          <RT·entry key="Counter names are document global">
+            Two elements independently choosing the same counter name will silently share one machine.
+          </RT·entry>
+          <RT·entry key="Snapshots are clones ,never references">
+            Any new code path that stores a machine. A stored reference yields the final value everywhere.
+          </RT·entry>
+          <RT·entry key="The list holds indices ,never display values">
+            Style handling. Convert with from on the way in and to on the way out, and never compare a stored value against a rendered one.
           </RT·entry>
         </RT·dictionary>
       </RT·section>
 
       <RT·section>
-        <RT·name>Implementation Notes</RT·name>
+        <RT·name>Migration Notes</RT·name>
+        <p>
+          The architecture above is the target. This section records what remains to bring the source to it, in a workable order. Each step is mechanical; the ordering matters because later steps assume earlier ones.
+        </p>
 
-        <RT·dictionary key="Component" definition="Current Implementation Constraints">
-          <RT·entry key="Book Environment">
-            The <code>&lt;RT·book&gt;</code> element is a planned extension. We are deliberately delaying its separation from the <code>article</code> layout until the core engine's pagination and state machine logic are fully stabilized. Currently, book mechanics operate by triggering page breaks and section scoping within the standard article stream.
+        <RT·dictionary key="Step" definition="Work">
+          <RT·entry key="1. Normalize the module key">
+            Resolve the extension before the module guard tests it, so that two spellings of one path cannot register as two modules. Self-contained and safe to do first.
           </RT·entry>
-          <RT·entry key="Memo Environment">
-            The <RT·code>&lt;RT·memo&gt;</RT·code> container inherits all layout functionality from the Article configuration but enforces a static, print-ready CSS environment. This layout model is currently maintained as a legacy execution branch. Continued parity with the core layout engine is not guaranteed.
+          <RT·entry key="2. Relocate shared services">
+            Move the debug logger and the remaining inline utilities into the utility file, and load it first from the make file. Simultaneously convert the stage manager's eager capture of the logger into a call-time lookup, or the pipeline will fall silent.
+          </RT·entry>
+          <RT·entry key="3. Introduce the schedule">
+            Add the phase list, the task dictionary, and the registration function with phase validation. Replace the six hand-written pipeline blocks with the single loop.
+          </RT·entry>
+          <RT·entry key="4. Convert registrations">
+            Change every registration site to the new function with an explicit phase name. The two former set-valued phases and the four former single-slot phases become task lists uniformly.
+          </RT·entry>
+          <RT·entry key="5. Split out configure">
+            Give configuration compilation its own phase ahead of the element phase, replacing the implicit ordering that currently depends on deferred loading.
+          </RT·entry>
+          <RT·entry key="6. Move element namespaces">
+            Relocate each element namespace under the element dictionary, and convert load guards to bare presence tests now that the invariant holds. The counter's runtime dictionaries move under its namespace at the same time.
+          </RT·entry>
+          <RT·entry key="7. Add the debug shuffle">
+            Cheap, and best added before the splitting work rather than after, so that any order dependence introduced along the way surfaces immediately.
+          </RT·entry>
+          <RT·entry key="8. Rework splitting">
+            Move splitters onto element namespaces with declared tags, implement the three gates and the chain conjunction, and implement outward migration with the page-growth terminus. Retire the global splitter table.
+          </RT·entry>
+          <RT·entry key="9. Depth checking">
+            Record the open scope stack per counter name at a cut and assert the two depths on the far side. Currently a mismatch fails silently and produces incorrect numbering rather than an error.
+          </RT·entry>
+          <RT·entry key="10. Simplify selectors">
+            Several element files query both the canonical and lowercase spelling of a tag, for example <RT·code>'RT·section, rt·section'</RT·code>. This is unnecessary: HTML type selectors match case-insensitively, so the canonical spelling alone already matches markup the parser has lowercased. Other files in the same source, including the grid, article, and memo layouts, already query the canonical spelling only and work correctly. Bring the remainder into line. Low risk, no behavior change, and worth doing whenever a touched file happens to carry the redundant form.
           </RT·entry>
         </RT·dictionary>
 
+        <p>
+          Two items are outside this sequence. The figure counter is not yet implemented and should wait until splitting is reworked, since it is the first element that will exercise capability-as-default deliberately. And several test documents author the lowercase counter namespace form; nothing requires this, since the parser and CSS selector matching handle the canonical spelling correctly on their own, so those test documents should be brought to the RT-conforming spelling rather than left as a second accepted form.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Glossary</RT·name>
+
+        <RT·dictionary key="Term" definition="Definition">
+          <RT·entry key="plug in">
+            An element registering its namespace, thereby announcing its presence. An element that has not plugged in leaves no trace anywhere in the system.
+          </RT·entry>
+          <RT·entry key="phase">
+            A named point in the schedule. All ordering between tasks is expressed by phases.
+          </RT·entry>
+          <RT·entry key="task">
+            A function registered against a phase.
+          </RT·entry>
+          <RT·entry key="status">
+            The counter's position within its three-value machine. Used in preference to state, so that the latter word remains available for other notions of state.
+          </RT·entry>
+          <RT·entry key="scope">
+            One step element, and by extension the region of document it encloses.
+          </RT·entry>
+          <RT·entry key="preamble">
+            The status of being inside a step with no child step yet closed.
+          </RT·entry>
+          <RT·entry key="between">
+            The status of being inside a step with at least one child step closed.
+          </RT·entry>
+          <RT·entry key="soft close">
+            Suspension of an open scope at a page boundary. Saves state, does not run exit, does not alter the count.
+          </RT·entry>
+          <RT·entry key="continuation open">
+            Resumption of a suspended scope after a page boundary. Restores state, does not run enter, does not advance the count.
+          </RT·entry>
+          <RT·entry key="permeable">
+            A node through which a page break may pass, being one that satisfies all three gates. Permeability is a property of a single node; permission additionally requires the whole enclosing chain to be permeable.
+          </RT·entry>
+          <RT·entry key="barrier">
+            An impermeable node. A barrier does not forbid a break; it relocates the break to just before itself.
+          </RT·entry>
+          <RT·entry key="scoped">
+            Counter mode answering which scope contains the current position. Drops the deepest level when the status is between.
+          </RT·entry>
+          <RT·entry key="milestone">
+            Counter mode answering how many markers have passed. Always reports the full list.
+          </RT·entry>
+          <RT·entry key="index versus display">
+            The stored zero-based natural, versus its rendered form under a style.
+          </RT·entry>
+        </RT·dictionary>
       </RT·section>
 
     </RT·article>
