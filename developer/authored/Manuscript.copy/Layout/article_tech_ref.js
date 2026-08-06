@@ -92,10 +92,8 @@
 
   required_elements.forEach(name => RT.load('Element/' + name));
 
-  if(RT.Element && RT.PageStyle){
-    RT.Element.add(compile_configuration);
-    RT.Element.add(apply_macro_boundaries);
-    RT.PageStyle.add(apply_macro_boundaries);
-  }
+  RT.task_add('configure' ,compile_configuration);
+  RT.task_add('element' ,apply_macro_boundaries);
+  RT.task_add('page_style' ,apply_macro_boundaries);
 
 })();

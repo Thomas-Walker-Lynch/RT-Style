@@ -7,6 +7,9 @@
 
   if(!window.RT) return;
 
+  if(RT.Element.Code) return;      // already plugged in
+  const ns = RT.Element.Code = {};
+
   const apply_style = function(el ,is_block ,exact_px ,offset_px ,text_color ,overlay_color ,config){
     el.style.fontFamily = "'Courier New', Courier, monospace";
     el.style.backgroundColor = overlay_color;
@@ -28,12 +31,12 @@
     }
   };
 
-  RT.Element.add(function(){
+  RT.task_add('element' ,function(){
     const U = window.RT.Utility;
     const config = window.RT.layout_config || {};
     const metrics = U.Font.measure_ink_ratio('monospace');
     
-    const nodes = document.querySelectorAll('rt·code, RT·code');
+    const nodes = document.querySelectorAll('rt·code');
 
     for(let i = 0; i < nodes.length; i++){
       const el = nodes[i];

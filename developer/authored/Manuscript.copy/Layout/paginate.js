@@ -31,7 +31,7 @@
 
   function get_measure_container(){
     if(measure_container && measure_container.parentNode) return measure_container;
-    const article = document.querySelector('RT·article, rt·article');
+    const article = document.querySelector('RT·article');
     if(!article){
       const temp = document.createElement('div');
       temp.style.visibility = 'hidden';
@@ -311,7 +311,7 @@
   function paginate_0(){
     if(debug.log) debug.log('paginate_0' ,'Running initial document chunking');
 
-    const article_seq = document.querySelectorAll('RT·article, rt·article, RT·memo, rt·memo');
+    const article_seq = document.querySelectorAll('RT·article, RT·memo');
     if(article_seq.length === 0){
       debug.error('pagination' ,'No <RT·article> elements found. Pagination aborted.');
       return;
@@ -526,7 +526,7 @@
     Array.from(article_seq).forEach(article => paginate_article(article));
 
     Array.from(article_seq).forEach(article => {
-      const rendered_pages = article.querySelectorAll('RT·page, rt·page');
+      const rendered_pages = article.querySelectorAll('RT·page');
       
       Array.from(rendered_pages).forEach(page => {
         const all_page_nodes = Array.from(page.querySelectorAll('*'));
@@ -572,7 +572,7 @@
   function paginate_1(){
     if(debug.log) debug.log('paginate_1' ,'Adjusting final page heights after component injections');
 
-    const rendered_pages = document.querySelectorAll('RT·page, rt·page');
+    const rendered_pages = document.querySelectorAll('RT·page');
     Array.from(rendered_pages).forEach(page => {
       const actual_height = page.scrollHeight;
       if(actual_height > page_height_limit){
@@ -581,7 +581,7 @@
     });
   }
 
-  window.RT.paginate_0 = paginate_0;
-  window.RT.paginate_1 = paginate_1;
+  RT.task_add('paginate_0' ,paginate_0);
+  RT.task_add('paginate_1' ,paginate_1);
 
 })();

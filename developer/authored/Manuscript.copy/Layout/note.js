@@ -18,7 +18,7 @@
     const ref_dictionary = {};
 
     // Pass 1: Gather writes
-    const writes = root_node.querySelectorAll('RT·Note·write, rt·note·write');
+    const writes = root_node.querySelectorAll('RT·Note·write');
     for(let i = 0; i < writes.length; i++){
       const node = writes[i];
       const key = node.getAttribute('key');
@@ -48,7 +48,7 @@
     }
 
     // Pass 2: Resolve reads
-    const reads = root_node.querySelectorAll('RT·Note·read, rt·note·read');
+    const reads = root_node.querySelectorAll('RT·Note·read');
     for(let i = 0; i < reads.length; i++){
       const node = reads[i];
       const key = node.getAttribute('key');
@@ -71,6 +71,6 @@
   // Registration upon load
   //
   
-  window.RT.note = note;
+  RT.task_add('note' ,note);
 
 })();

@@ -1,18 +1,17 @@
 /*
   Element/section.js
   Expands <RT·section> macros into <RT·counter·step> primitives.
-  Utilizes the global RT.Section namespace for state tracking and execution guards.
+  Utilizes the RT.Element.Section namespace for state tracking and execution guards.
 */
 
 (function(){
 
   if(!window.RT) return;
 
-  window.RT.Section = window.RT.Section || {};
-  
-  // Guard against multiple script inclusions
-  if(window.RT.Section.is_loaded) return;
-  window.RT.Section.is_loaded = true;
+  if(RT.Element.Section) return;      // already plugged in
+  const ns = RT.Element.Section = {};
+
+  ns.tags = ['RT·section'];
 
   const apply_style = function(title_node ,depth ,config){
     const base_size = 2.25;
@@ -38,21 +37,21 @@
     title_node.style.lineHeight = '1.2';
   };
 
-  RT.Element.add(function(){
+  RT.task_add('element' ,function(){
     const debug = window.RT.Debug || { log: function(){} };
     if(debug.log) debug.log('section' ,'Expanding section macros');
 
     const U = window.RT.Utility;
     const config = window.RT.layout_config || {};
-    const section_seq = document.querySelectorAll('RT·section, rt·section');
+    const section_seq = document.querySelectorAll('RT·section');
 
     if(section_seq.length === 0) return;
 
-    const article = document.querySelector('RT·article, rt·article, RT·memo, rt·memo');
+    const article = document.querySelector('RT·article, RT·memo');
     const counter_name = 'RT·Section·counter';
 
     // Check the global dictionary for existence rather than traversing the DOM
-    if(article && !U.Registry.has(window.RT.Section, counter_name)){
+    if(article && !U.Registry.has(ns, counter_name)){
       const make = document.createElement('RT·counter·make');
       make.setAttribute('counter' ,counter_name);
       make.setAttribute('style' ,'CountingNumber');
@@ -61,7 +60,7 @@
       article.insertBefore(make ,article.firstChild);
       
       // Register the physical node and its attributes into the global namespace
-      U.Registry.register_make(window.RT.Section, counter_name, make, ['splitable']);
+      U.Registry.register_make(ns, counter_name, make, ['splitable']);
     }
 
     let section_idx = 0;
@@ -83,7 +82,7 @@
       step.setAttribute('counter' ,counter_name);
       
       // Query the global dictionary for the splitable flag
-      if(U.Registry.has(window.RT.Section[counter_name], 'splitable')) {
+      if(U.Registry.has(ns[counter_name], 'splitable')) {
          step.setAttribute('splitable', 'true');
       }
       

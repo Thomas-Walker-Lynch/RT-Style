@@ -7,6 +7,9 @@
 
   if(!window.RT) return;
 
+  if(RT.Element.Title) return;      // already plugged in
+  const ns = RT.Element.Title = {};
+
   const apply_style = function(container ,h1 ,meta ,copy_div ,config){
     container.style.textAlign = 'center';
     container.style.marginBottom = '3rem';
@@ -36,9 +39,9 @@
     }
   };
 
-  RT.Element.add(function(){
+  RT.task_add('element' ,function(){
     const config = window.RT.layout_config || {};
-    const nodes = document.querySelectorAll('rt·title, RT·title');
+    const nodes = document.querySelectorAll('rt·title');
     
     for(let i = 0; i < nodes.length; i++){
       const el = nodes[i];

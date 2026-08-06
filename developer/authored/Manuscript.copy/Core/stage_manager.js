@@ -1,7 +1,28 @@
 /*
   Core/stage_manager.js
-  Orchestrates the execution pipeline to resolve layout dependencies
-  and handles scroll restoration.
+
+  Establishes the element registry and the schedule ,then orchestrates the
+  execution pipeline. Also handles layout locking and scroll restoration.
+
+  Two structures ,two purposes:
+
+    RT.Element   a dictionary of element namespaces ,keyed by element name.
+                 Pure data. Presence means an element has plugged in. Helper
+                 functions do not live here ,or an element named for a helper
+                 would collide with it.
+
+    RT.Phase     an ordered list of phase names ,the schedule ,stated in one
+                 place rather than inferred from dictionary key order.
+    RT.Task      phase name -> ordered list of functions.
+
+  Tasks within a phase are intended to be mutually independent; all real
+  ordering is expressed by the phases. The structure does not enforce this ,so
+  enable the 'shuffle' debug token to randomize task order and surface any
+  accidental dependency immediately.
+
+  RT.Debug is looked up at call time ,never captured into a local here. RT.load
+  is deferred ,so a capture in this file body could bind a service that does not
+  yet exist.
 */
 
 (function(){
@@ -11,43 +32,79 @@
     return;
   }
 
-  // Inject Utilities prior to execution
-  window.RT.load('Core/utility');
-
   // Prevent duplicate initialization
-  if(window.RT.Element instanceof Set){
-    console.warn("RT stage_manager already initialized. Aborting duplicate run.");
+  if(window.RT.Element){
+    if(window.RT.Debug) window.RT.Debug.warn('stage' ,'stage_manager already initialized. Aborting duplicate run.');
     return;
   }
-  
-  /* Phase task queues/functions in order the phases are processed.
 
-     Generators and element styling must run before pagination. Even styling changes the size of the document.
+  // Element namespaces. An element creates its own key ,in its own file body ,
+  // and nothing else may create it. That invariant is what allows presence to
+  // serve as the load guard.
+  window.RT.Element = {};
 
-     Page styling can only happen after the pages are added. Pages are
-     element pairs, the content is what is on the page.
+  // Cross element tables that belong to no single element.
+  window.RT.Registry = {};
 
-     The document can only be walked for counters after the pages are added, because pages have page numbers. (Even if the document is not paginated, the counters can not be processed until after the endnote generators, or any other elements that have counters, run.)
+  /* The schedule.
 
-     The paginate_0 breaks the document into <page> ... </page> elements. It will break some elements, but not others. As examples, it breaks lists and tables, but does not break paragraphs. It has a target length, but will lengthen or shorten a page so that the content fits.
+     configure    compile the layout configuration from the selected theme.
+                  Separated from the element phase so later tasks may read it
+                  without an implicit ordering assumption.
 
-     Not breaking paragraphs simplifies pagination, especially in light of the possible embedding of other elements. It is also nice to read a paragraph without page breaks in them. Footnotes can change page length a small amount due to being formatted. This is handled during pagination_0.
+     element      expand generators ,style elements. Changes document height ,
+                  so it must precede pagination.
 
-     Pages have page numbers, which are counters. So counters come after pagination.
+     paginate_0   slice the continuous DOM into <RT·page> pairs.
 
-     Cross reference targets can have counters in them, so they are handled after counters.
+     page_style   apply geometry to the generated pages.
 
-     Adding counter values and cross references can cause the content of a page to lengthen. Rather than having that cascade, which could change page number cross reference text, We merely lengthen pages as required.
+     counter      walk for counters ,then resolve read tags. After pagination ,
+                  because a page number is itself a counter.
+
+     note         resolve cross references. After counters ,because a reference
+                  target may contain a counter value.
+
+     paginate_1   absorb dimensional deltas by growing pages. Last ,and it only
+                  ever grows: relocating content would change page numbers ,
+                  which would change cross reference lengths ,which would
+                  relocate more content. Growth is local and terminal.
   */
-  window.RT.Element = new Set();      // expand generators, style elements
-  window.RT.paginate_0 = null;        // add the <page> ... </page> pairs
-  window.RT.PageStyle = new Set();    // apply style to pages
-  window.RT.counter = null;           // walk doc for counters, then read snapshots
-  window.RT.note = null;              // mark notes, read them back, any order
-  window.RT.paginate_1 = null;        // bump individual pages lengths up as needed
-  
-  const debug = window.RT.Debug || { log: function(){} ,warn: function(){} ,error: function(){} };
-  
+  window.RT.Phase = [
+    'configure'
+    ,'element'
+    ,'paginate_0'
+    ,'page_style'
+    ,'counter'
+    ,'note'
+    ,'paginate_1'
+  ];
+
+  window.RT.Task = {};
+  window.RT.Phase.forEach(phase_name => { window.RT.Task[phase_name] = []; });
+
+  /* Register a task against a phase.
+
+     The phase name is validated. Without the check a misspelling either throws
+     or ,worse ,silently creates a queue nothing runs; the element would then do
+     nothing and report nothing.
+
+     Task lists are lists ,not sets. The module guard and the namespace guard
+     already prevent a file registering twice ,and a task may legitimately be
+     queued more than once when that is genuinely wanted.
+  */
+  window.RT.task_add = function(phase_name ,task_fn){
+    if(!window.RT.Task[phase_name]){
+      window.RT.Debug.error('stage' ,'unknown phase: ' + phase_name);
+      return;
+    }
+    if(typeof task_fn !== 'function'){
+      window.RT.Debug.error('stage' ,'task is not a function ,phase: ' + phase_name);
+      return;
+    }
+    window.RT.Task[phase_name].push(task_fn);
+  };
+
   let target_y = 0;
   let is_reload = false;
   let is_layout_locked = false;
@@ -136,92 +193,65 @@
   }
 
   // =========================================================
-  // MASTER PIPELINE EXECUTION
+  // PIPELINE EXECUTION
   // =========================================================
 
-  function run_pipeline(){
-    
-    // Phase 1: Base Elements
-    debug.log('stage_manager' ,'Phase 1: Executing Element tasks');
-    if(window.RT.Element.size > 0){
-      for(const element_fn of window.RT.Element){
-        if(typeof element_fn === 'function'){
-          try{ element_fn(); }
-          catch(e){ debug.error('stage_manager' ,"Element task failed: " + e); }
-        }
-        else {
-          debug.warn('stage_manager' ,'Invalid element in RT.Element Set: ' + element_fn);
-        }
-      }
+  function shuffled(task_seq){
+    const out = task_seq.slice();
+    for(let i = out.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [out[i] ,out[j]] = [out[j] ,out[i]];
+    }
+    return out;
+  }
+
+  function run_phase(phase_name){
+    const debug = window.RT.Debug;
+    let task_seq = window.RT.Task[phase_name];
+
+    if(debug.active_tokens.has('shuffle')){
+      task_seq = shuffled(task_seq);
+      debug.log('stage' ,'phase ' + phase_name + ': task order shuffled');
     }
 
-    // Phase 2: Pagination Part 0
-    debug.log('stage_manager' ,'Phase 2: Executing paginate_0');
-    if(typeof window.RT.paginate_0 === 'function'){
-      try{ window.RT.paginate_0(); } 
-      catch(e){ debug.error('stage_manager' ,"paginate_0 failed: " + e); }
-    }
-    else {
-      debug.log('stage_manager' ,'No paginate_0 function registered. Skipping.');
-    }
+    task_seq.forEach(task_fn => {
+      try{ task_fn(); }
+      catch(e){ debug.error('stage' ,phase_name + ' task failed: ' + e); }
+    });
+  }
 
-    // Phase 3: Page Styling
-    debug.log('stage_manager' ,'Phase 3: Executing PageStyle tasks');
-    if(window.RT.PageStyle.size > 0){
-      for(const style_fn of window.RT.PageStyle){
-        if(typeof style_fn === 'function'){
-          try{ style_fn(); } 
-          catch(e){ debug.error('stage_manager' ,"PageStyle task failed: " + e); }
-        }
-      }
-    }
+  function resolve_scroll_target(){
+    window.RT.Debug.log('scroll' ,'Pipeline execution complete. Enforcing scroll target.');
 
-    // Phase 4: Counters
-    debug.log('stage_manager' ,'Phase 4: Executing counter processing');
-    if(typeof window.RT.counter === 'function'){
-      try{ window.RT.counter(); } 
-      catch(e){ debug.error('stage_manager' ,"Counter processing failed: " + e); }
-    }
-
-    // Phase 5: Cross Reference
-    debug.log('stage_manager' ,'Phase 5: Executing note processing');
-    if(typeof window.RT.note === 'function'){
-      try{ window.RT.note(); } 
-      catch(e){ debug.error('stage_manager' ,"Cross reference processing failed: " + e); }
-    }
-
-    // Phase 6: Pagination Part 1
-    debug.log('stage_manager' ,'Phase 6: Executing paginate_1');
-    if(typeof window.RT.paginate_1 === 'function'){
-      try{ window.RT.paginate_1(); } 
-      catch(e){ debug.error('stage_manager' ,"paginate_1 failed: " + e); }
-    }
-
-    // Final Step: Resolve Scroll Target
-    debug.log('scroll' ,`Pipeline execution complete. Enforcing scroll target.`);
-    let final_target = target_y;
     let use_hash = false;
-    
     if(window.location.hash && !is_reload){
-        const hash_target = document.getElementById(window.location.hash.substring(1));
-        if(hash_target) use_hash = true;
+      const hash_target = document.getElementById(window.location.hash.substring(1));
+      if(hash_target) use_hash = true;
     }
 
-    enforce_scroll(final_target ,use_hash ,0);
+    enforce_scroll(target_y ,use_hash ,0);
+  }
+
+  function run_pipeline(){
+    window.RT.Phase.forEach(phase_name => {
+      window.RT.Debug.log('stage' ,'phase: ' + phase_name);
+      run_phase(phase_name);
+    });
+    resolve_scroll_target();
   }
 
   // =========================================================
   // INITIALIZATION
   // =========================================================
-  
+
   lock_layout();
   configure_history();
   capture_scroll_target();
   bind_window_events();
-  
+
   document.addEventListener('DOMContentLoaded' ,run_pipeline);
 
-  // Safety Net: restore visibility on load if the async layout engine hangs
+  // Safety net: restore visibility on load if the layout engine hangs
   window.addEventListener("load" ,unlock_layout);
-  
+
 })();

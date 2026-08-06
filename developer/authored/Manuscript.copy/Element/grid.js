@@ -6,6 +6,9 @@
 (function() {
   if (!window.RT) return;
 
+  if(RT.Element.Grid) return;      // already plugged in
+  const ns = RT.Element.Grid = {};
+
   const debug = window.RT.Debug || { log: function(){}, warn: function(){}, error: function(){} };
 
   class GridState {
@@ -167,7 +170,7 @@
     return { start, extent };
   }
 
-  RT.Element.add(function process_grids() {
+  RT.task_add('element' ,function process_grids() {
     if(debug.log) debug.log('grid', 'Processing grid structures');
 
     // 1. Native Grid

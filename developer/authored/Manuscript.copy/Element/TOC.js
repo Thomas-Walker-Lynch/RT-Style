@@ -9,6 +9,9 @@
 
   if(!window.RT) return;
 
+  if(RT.Element.TOC) return;      // already plugged in
+  const ns = RT.Element.TOC = {};
+
   const apply_style = function(a ,config){
     a.style.textDecoration = 'none';
     a.style.color = 'inherit';
@@ -18,12 +21,12 @@
     a.onmouseout  = () => a.style.color = 'inherit';
   };
 
-  RT.Element.add(function(){
+  RT.task_add('element' ,function(){
     const debug = window.RT.Debug || { log: function(){} };
     if(debug.log) debug.log('TOC' ,'Generating Table of Contents from expanded section steps');
     
     const config = window.RT.layout_config || {};
-    const TOC_seq = document.querySelectorAll('RT·TOC, rt·toc');
+    const TOC_seq = document.querySelectorAll('RT·TOC');
 
     TOC_seq.forEach((container ,TOC_index) => {
       container.style.display = 'block';

@@ -8,6 +8,9 @@
     console.error("RT not defined. Was RT Manuscript make run?");
     return;
   }
+
+  if(RT.Element.Math) return;      // already plugged in
+  const ns = RT.Element.Math = {};
   if(!window.RT.Element){
     console.error("RT.Element not defined. Was the stage manager run?");
     return;
@@ -33,7 +36,7 @@
     const debug = window.RT.Debug || { log: function(){} };
     if(debug.log) debug.log('math' ,'Processing math tags directly');
 
-    const math_elements = Array.from(document.querySelectorAll('RT·math, rt·math'));
+    const math_elements = Array.from(document.querySelectorAll('RT·math'));
 
     if(math_elements.length === 0) return;
 
@@ -67,6 +70,6 @@
   };
 
   RT.load('Math/mathjax_svg');
-  RT.Element.add(scan_tags);
+  RT.task_add('element' ,scan_tags);
 
 })();

@@ -7,6 +7,9 @@
 
   if(!window.RT) return;
 
+  if(RT.Element.Endnote) return;      // already plugged in
+  const ns = RT.Element.Endnote = {};
+
   const apply_style = function(link, config) {
     link.style.cursor = 'pointer';
     link.style.color = config.brand_link || '#0056b3';
@@ -24,7 +27,7 @@
 
   function process_endnotes(){
     const config = window.RT.layout_config || {};
-    const article = document.querySelector('RT·article, rt·article, RT·memo, rt·memo');
+    const article = document.querySelector('RT·article, RT·memo');
     
     if(!article) return;
 
@@ -34,7 +37,7 @@
     initial_make.setAttribute('on-first-step', '0');
     article.insertBefore(initial_make, article.firstChild);
 
-    const nodes = document.querySelectorAll('RT·endnote, rt·endnote, RT-endnote, rt-endnote, RT·endnotes, rt·endnotes, RT-endnotes, rt-endnotes');
+    const nodes = document.querySelectorAll('RT·endnote, RT-endnote, RT·endnotes, RT-endnotes');
     
     let endnote_buffer = [];
     let anchor_id_counter = 1;
@@ -131,6 +134,6 @@
     }
   }
 
-  window.RT.Element.add(process_endnotes);
+  RT.task_add('element' ,process_endnotes);
 
 })();

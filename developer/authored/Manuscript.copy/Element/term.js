@@ -7,6 +7,9 @@
 
   if(!window.RT) return;
 
+  if(RT.Element.Term) return;      // already plugged in
+  const ns = RT.Element.Term = {};
+
   const apply_style = function(el ,is_neologism ,is_first ,config){
     if(is_first){
       el.style.fontStyle = 'italic';
@@ -23,7 +26,7 @@
     }
   };
 
-  RT.Element.add(function(){
+  RT.task_add('element' ,function(){
     const config = window.RT.layout_config || {};
     const seen_terms_dpa = new Set();
     const selector_s = 'rt·term, rt·term-em, rt·neologism, rt·neologism-em';

@@ -9,12 +9,15 @@
     console.error("RT not defined - was RT-Manuscript_make run?");
     return;
   }
+
+  if(RT.Element.ThemeSelector) return;      // already plugged in
+  const ns = RT.Element.ThemeSelector = {};
   if (!window.RT.Element) {
     console.error("RT.Element not defined - was the state_manager run?");
     return;
   }
 
-  RT.Element.add( function() {
+  RT.task_add('element' , function() {
     const debug = window.RT.Debug || { log: function(){} };
     if (debug.log) debug.log('theme_selector', 'Building theme selectors');
 

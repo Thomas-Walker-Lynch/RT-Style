@@ -15,11 +15,15 @@
     return;
   }
 
-  RT.Counter = RT.Counter || {};
-  RT.dict_instance = RT.dict_instance || {};
-  RT.dict_snapshot = RT.dict_snapshot || {};
-  RT.dict_serial = RT.dict_serial || {};
-  RT.serial_id_allocator = RT.serial_id_allocator || 1;
+  if(RT.Element.Counter) return;      // already plugged in
+  const ns = RT.Element.Counter = {};
+
+  ns.tags = ['RT·Counter·make' ,'RT·Counter·step' ,'RT·Counter·snapshot' ,'RT·Counter·read'];
+
+  ns.dict_instance = {};       // counter name -> live machine
+  ns.dict_snapshot = {};       // snapshot name -> cloned machine
+  ns.dict_serial = {};         // serial / split id -> cloned machine (suspension store)
+  ns.serial_id_allocator = 1;
 
   class Count{
     constructor(){
@@ -354,13 +358,13 @@
         if(name){
           const continues_id = node.getAttribute('continues');
           
-          if(continues_id && RT.dict_serial[continues_id]){
-            RT.dict_instance[name] = RT.dict_serial[continues_id].clone();
+          if(continues_id && ns.dict_serial[continues_id]){
+            ns.dict_instance[name] = ns.dict_serial[continues_id].clone();
           }else{
             const style_attr = node.getAttribute('style');
             const parsed_style = style_attr ? style_attr.split(',').map(s => s.trim()) : ['NaturalNumber'];
             
-            RT.dict_instance[name] = new CounterMachine({
+            ns.dict_instance[name] = new CounterMachine({
               style: parsed_style
               ,separator: node.getAttribute('separator') || '.'
               ,separator_placement: node.getAttribute('separator-placement') || 'embedded'
@@ -369,9 +373,9 @@
 
             const on_first_step_str = node.getAttribute('on-first-step');
             if(on_first_step_str){
-              const top_style = RT.dict_instance[name].style[0];
+              const top_style = ns.dict_instance[name].style[0];
               const method_name = `from_${top_style}`;
-              const active_machine = RT.dict_instance[name];
+              const active_machine = ns.dict_instance[name];
               const initial_val = typeof active_machine[method_name] === 'function' 
                 ? active_machine[method_name](on_first_step_str) 
                 : active_machine.from_NaturalNumber(on_first_step_str);
@@ -380,17 +384,17 @@
             }
           }
 
-          const serial = node.getAttribute('serial') || String(RT.serial_id_allocator++);
+          const serial = node.getAttribute('serial') || String(ns.serial_id_allocator++);
           node.setAttribute('serial' ,serial);
-          RT.dict_serial[serial] = RT.dict_instance[name];
+          ns.dict_serial[serial] = ns.dict_instance[name];
         }
 
       }else if(tag === 'rt·counter·step'){
         const name = node.getAttribute('counter');
         const is_continuation = node.getAttribute('continuation') === 'true';
 
-        if(name && RT.dict_instance[name]){
-          const active_machine = RT.dict_instance[name];
+        if(name && ns.dict_instance[name]){
+          const active_machine = ns.dict_instance[name];
           if(!is_continuation){
             active_machine.enter(active_machine.first_step_val);
             active_machine.first_step_val = undefined; 
@@ -407,13 +411,13 @@
         const counter_name = node.getAttribute('counter');
         const snapshot_name = node.getAttribute('snapshot');
         
-        if(counter_name && snapshot_name && RT.dict_instance[counter_name]){
-          const active_machine = RT.dict_instance[counter_name];
+        if(counter_name && snapshot_name && ns.dict_instance[counter_name]){
+          const active_machine = ns.dict_instance[counter_name];
 
           if(active_machine.read('count' ,'status') === 'empty'){
             console.error(`RT-Manuscript Layout Error: Attempted to snapshot an empty counter '${counter_name}' at snapshot '${snapshot_name}'. A step is required first.`);
           }else{
-            RT.dict_snapshot[snapshot_name] = active_machine.clone();
+            ns.dict_snapshot[snapshot_name] = active_machine.clone();
           }
         }
       }
@@ -431,7 +435,7 @@
         }else{
           const split_id = node.getAttribute('split-id');
           if(split_id){
-            RT.dict_serial[split_id] = machine_to_exit.clone();
+            ns.dict_serial[split_id] = machine_to_exit.clone();
           }
         }
       }
@@ -439,7 +443,7 @@
 
     walk(root_node);
 
-    const reads = root_node.querySelectorAll('RT·counter·read, rt·counter·read');
+    const reads = root_node.querySelectorAll('RT·counter·read');
 
     for(let i = 0; i < reads.length; i++){
       process_read_node(reads[i]);
@@ -449,8 +453,8 @@
       const snapshot_name = node.getAttribute('snapshot');
       const key = node.getAttribute('key') || 'count'; 
       
-      if(snapshot_name && RT.dict_snapshot[snapshot_name]){
-        const snapshot_machine = RT.dict_snapshot[snapshot_name];
+      if(snapshot_name && ns.dict_snapshot[snapshot_name]){
+        const snapshot_machine = ns.dict_snapshot[snapshot_name];
         
         if(key === 'count'){
           const raw_state = snapshot_machine.read('count');
@@ -474,6 +478,6 @@
     }
   };
 
-  window.RT.counter = counter;
+  RT.task_add('counter' ,counter);
 
 })();
