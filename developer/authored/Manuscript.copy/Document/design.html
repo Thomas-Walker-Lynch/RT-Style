@@ -80,7 +80,15 @@
           </RT·code>
 
           <p>
-            The governing principle is that an element <RT·neologism>plugs in</RT·neologism>. If an element is not loaded, there is no trace of it anywhere in the system: no namespace, no registered tasks, no entries in any table. Nothing else needs to know whether it might have been loaded, and no code anywhere carries a branch for its absence. A document that uses no grids runs an engine in which grids do not exist.
+            The governing principle is that an element <RT·neologism>plugs in</RT·neologism>. If an element is not loaded, it has no namespace, no registered tasks, and no entries in any table.
+          </p>
+
+          <p>
+            <strong>It is the layout, not the document, that decides.</strong> The layout driver declares which elements its format provides and requests them; the document never says either way. A document containing no grids still runs an engine in which the grid element is fully present, because its layout included it. An element is absent only when a layout omits it, which is a deliberate act of format design rather than an accident of what an author happened to write.
+          </p>
+
+          <p>
+            Absence is therefore a legitimate condition, and code that consults another element must distinguish two cases. A <RT·term>soft dependency</RT·term> is one the consulting element can do without: it tests, finds nothing, and continues silently, since the layout has simply not offered that capability. A <RT·term>hard dependency</RT·term> is one it cannot do without, and finding nothing is then not a runtime condition to be tolerated but a fault in the layout's design. Since layouts are written by programmers who were not party to the original decisions, that case should say so plainly on the console, naming both the element required and the element requiring it. The message is addressed to whoever is assembling the layout, not to the author of the document.
           </p>
 
           <p>

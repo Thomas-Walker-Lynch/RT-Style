@@ -118,8 +118,18 @@
   function is_splittable(el){
     if(!el || el.nodeType !== Node.ELEMENT_NODE) return null;
 
+    /* Component registry: capability keyed by instance rather than by tag ,for
+       elements whose tag says nothing useful about how they divide. A rendered
+       grid is a plain division ,and registering a splitter for every division
+       would be plainly wrong.
+
+       The instance gate applies here as it does everywhere else ,so splitable
+       is required alongside the registration. Capability without permission is
+       not permission. */
     const component_id = el.getAttribute('data-rt-component');
-    if(component_id && window.RT.Component && window.RT.Component[component_id] && window.RT.Component[component_id].split){
+    if(component_id && el.hasAttribute('splitable')
+       && window.RT.Component && window.RT.Component[component_id]
+       && window.RT.Component[component_id].split){
       return (remaining) => window.RT.Component[component_id].split(el ,remaining ,measure_fragment);
     }
 

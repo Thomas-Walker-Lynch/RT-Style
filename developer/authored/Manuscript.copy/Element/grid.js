@@ -69,16 +69,49 @@
     }
   };
 
+  /* ---------------------------------------------------------------
+     The rendering layer.
+
+     Whether a grid can be divided is a property of how it is rendered ,not of
+     the grid element. A CSS grid places every cell at an explicit row ,so
+     cutting it means renumbering every row after the break; a nested list
+     nests ,so cutting it is nearly free. These are different capabilities and
+     they belong to whatever produces them.
+
+     Each renderer therefore declares its own split function ,or declares none.
+     Capability decides ,exactly as it does for elements: a model with no
+     splitter yields an atomic grid ,and no attribute can pretend otherwise.
+
+     Models are named for the axis mapping they produce ,reading as
+     <row axis>_by_<column axis>:
+
+       y-row_by_x-column   y runs down the rows ,x across the columns
+       x-row_by_y-column   the transpose
+       nested-list         rows nested as lists ,which also carries n dimensions
+
+     The older names remain accepted so existing documents keep working.
+  --------------------------------------------------------------- */
+
+  ns.Renderer = {};
+
+  const model_alias = {
+    'html-grid-direct':     'y-row_by_x-column'
+    ,'html-grid-transpose': 'x-row_by_y-column'
+    ,'html-grid-dictionary':'y-row_by_x-column-dictionary'
+  };
+
   function project_grid(container_node, grid_state, model, options = {}) {
     const config = window.RT.layout_config || {};
-    switch (model) {
-      case 'html-grid-direct':
-        return render_model_html_standard(container_node, grid_state, options, false, config);
-      case 'html-grid-transpose':
-        return render_model_html_standard(container_node, grid_state, options, true, config);
-      case 'html-grid-dictionary':
-        return render_model_html_dictionary(container_node, grid_state, options, config);
+    const model_name = model_alias[model] || model || 'y-row_by_x-column';
+    const renderer = ns.Renderer[model_name];
+
+    if (!renderer) {
+      window.RT.Debug.error('grid'
+        ,"unknown rendering model '" + model + "'. Known models: "
+        + Object.keys(ns.Renderer).join(' ,'));
+      return;
     }
+    return renderer.render(container_node, grid_state, options, config);
   }
 
   function render_model_html_standard(container_node, grid_state, options, is_transposed, config) {
@@ -86,11 +119,13 @@
     wrapper.style.display = 'grid';
     wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
-    // No splitter is registered for this wrapper ,so the grid is atomic: a
-    // grid taller than a page grows its page rather than being cut. That is
-    // the intended model. Claiming splitable without a registered splitter
-    // is inert and misleading ,so the claim is not made. Restore it together
-    // with an RT.Splitter entry if grids are ever made divisible.
+    // Rendered by a model that provides a splitter ,so the instance opts in.
+    // The component registry is used rather than a tag registry: the wrapper is
+    // a plain division and registering a splitter for every division would be
+    // wrong. Both attributes are set ,the component naming the capability and
+    // splitable carrying the per instance permission.
+    wrapper.setAttribute('data-rt-component' ,'RT·Grid·css');
+    wrapper.setAttribute('splitable' ,'true');
 
     if (options.delimiters) {
       wrapper.style.borderLeft = '2px solid ' + (config.content_main || '#000');
@@ -112,7 +147,14 @@
       el.style.gridColumn = `${render_x + 1} / ${render_x_extent + 2}`;
       el.style.gridRow = `${render_y + 1} / ${render_y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
-      
+
+      // Retained so a splitter can regroup cells by row and renumber them.
+      // Without this the rendered grid is a flat bag of absolutely placed
+      // cells and its row structure is unrecoverable.
+      el.setAttribute('data-rt-row' ,render_y);
+      el.setAttribute('data-rt-row-extent' ,render_y_extent);
+      el.setAttribute('data-rt-col' ,render_x);
+
       apply_style(el, cell, is_transposed, options, config);
       wrapper.appendChild(el);
     });
@@ -129,18 +171,24 @@
     wrapper.style.maxWidth = '100%';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
     wrapper.style.margin = '1.5rem 0';
-    // No splitter is registered for this wrapper ,so the grid is atomic: a
-    // grid taller than a page grows its page rather than being cut. That is
-    // the intended model. Claiming splitable without a registered splitter
-    // is inert and misleading ,so the claim is not made. Restore it together
-    // with an RT.Splitter entry if grids are ever made divisible.
+    // Rendered by a model that provides a splitter ,so the instance opts in.
+    // The component registry is used rather than a tag registry: the wrapper is
+    // a plain division and registering a splitter for every division would be
+    // wrong. Both attributes are set ,the component naming the capability and
+    // splitable carrying the per instance permission.
+    wrapper.setAttribute('data-rt-component' ,'RT·Grid·css');
+    wrapper.setAttribute('splitable' ,'true');
 
     grid_state.cells.forEach(cell => {
       const el = cell.element;
       el.style.gridColumn = `${cell.x + 1} / ${cell.x_extent + 2}`;
       el.style.gridRow = `${cell.y + 1} / ${cell.y_extent + 2}`;
       el.className = `RT_grid_${cell.type}`;
-      
+
+      el.setAttribute('data-rt-row' ,cell.y);
+      el.setAttribute('data-rt-row-extent' ,cell.y_extent);
+      el.setAttribute('data-rt-col' ,cell.x);
+
       apply_style(el, cell, false, options, config);
       if (cell.type === 'data') el.style.textAlign = 'left';
 
@@ -150,6 +198,97 @@
     container_node.replaceWith(wrapper);
     execute_two_pass_measurement(wrapper, options);
   }
+
+
+  /* ---------------------------------------------------------------
+     Splitting a rendered CSS grid.
+
+     Cut between rows ,never within one. The header row is repeated on the
+     continuation ,because a table of data whose column headings appear only on
+     the first page is unreadable on every page after it.
+
+     Rows must be renumbered on the continuation fragment. Every cell carries an
+     explicit grid row ,so a fragment starting at row 12 would otherwise leave
+     eleven empty rows above it.
+  --------------------------------------------------------------- */
+
+  function rows_of(wrapper){
+    const rows = new Map();
+    Array.from(wrapper.children).forEach(cell => {
+      const r = parseInt(cell.getAttribute('data-rt-row') ,10);
+      if(isNaN(r)) return;
+      if(!rows.has(r)) rows.set(r ,[]);
+      rows.get(r).push(cell);
+    });
+    return rows;
+  }
+
+  function place_row(cell ,new_row){
+    const extent = parseInt(cell.getAttribute('data-rt-row-extent') ,10);
+    const start = parseInt(cell.getAttribute('data-rt-row') ,10);
+    const span = (isNaN(extent) ? start : extent) - start;
+    cell.style.gridRow = `${new_row + 1} / ${new_row + span + 2}`;
+    return cell;
+  }
+
+  function split_css_grid(el ,remaining ,measure_fn){
+    const rows = rows_of(el);
+    const keys = Array.from(rows.keys()).sort((a ,b) => a - b);
+
+    // Fewer than three rows leaves nothing worth cutting once the header is
+    // repeated on both sides.
+    if(keys.length < 3) return { first: null ,rest: el ,firstHeight: 0 };
+
+    const header_key = keys[0];
+    const header_cells = rows.get(header_key);
+
+    const probe = el.cloneNode(false);
+    header_cells.forEach(c => probe.appendChild(place_row(c.cloneNode(true) ,0)));
+    let height = measure_fn(probe);
+    if(height > remaining) return { first: null ,rest: el ,firstHeight: 0 };
+
+    let taken = 0;
+    for(let i = 1; i < keys.length; i++){
+      const trial = rows.get(keys[i]).map(c => place_row(c.cloneNode(true) ,i));
+      trial.forEach(c => probe.appendChild(c));
+      const h = measure_fn(probe);
+      if(h > remaining){
+        trial.forEach(c => probe.removeChild(c));
+        break;
+      }
+      height = h;
+      taken = i;
+    }
+
+    // No data row fits beneath the header ,so there is no useful cut.
+    if(taken === 0) return { first: null ,rest: el ,firstHeight: 0 };
+    if(taken >= keys.length - 1) return { first: null ,rest: el ,firstHeight: 0 };
+
+    const first = el.cloneNode(false);
+    header_cells.forEach(c => first.appendChild(place_row(c.cloneNode(true) ,0)));
+    for(let i = 1; i <= taken; i++){
+      rows.get(keys[i]).forEach(c => first.appendChild(place_row(c.cloneNode(true) ,i)));
+    }
+
+    const rest = el.cloneNode(false);
+    header_cells.forEach(c => rest.appendChild(place_row(c.cloneNode(true) ,0)));
+    let out_row = 1;
+    for(let i = taken + 1; i < keys.length; i++){
+      rows.get(keys[i]).forEach(c => rest.appendChild(place_row(c.cloneNode(true) ,out_row)));
+      out_row++;
+    }
+
+    if(window.RT.Debug.active_tokens.has('paginate_v')){
+      window.RT.Debug.log('paginate_v'
+        ,'      grid split: header + rows 1..' + taken + ' of ' + (keys.length - 1)
+        + ' data rows ,' + height + 'px ,header repeated on continuation');
+    }
+
+    return { first ,rest ,firstHeight: height };
+  }
+
+  window.RT.Component = window.RT.Component || {};
+  window.RT.Component['RT·Grid·css'] = { split: split_css_grid };
 
   function execute_two_pass_measurement(wrapper, options) {
     requestAnimationFrame(() => {
@@ -169,6 +308,109 @@
       }
     });
   }
+
+
+  /* ---------------------------------------------------------------
+     Nested list rendering.
+
+     Each row becomes a list item; the cells of that row become a nested list
+     within it. Two properties follow ,and both are why the model is worth
+     having.
+
+     It divides almost for free. A list is already divisible by the generic list
+     splitter ,so no grid specific machinery is needed and the cut costs nothing
+     to compute.
+
+     It carries more than two dimensions. A CSS grid has exactly two axes and no
+     way to express a third; nesting has no such limit ,so an n dimensional
+     model renders as lists within lists to whatever depth the data has.
+
+     There is no header to repeat: the labels travel with their rows.
+  --------------------------------------------------------------- */
+
+  function render_model_nested_list(container_node, grid_state, options, config) {
+    const rows = new Map();
+    grid_state.cells.forEach(cell => {
+      const r = cell.y;
+      if(!rows.has(r)) rows.set(r ,[]);
+      rows.get(r).push(cell);
+    });
+
+    const list = document.createElement('ul');
+    list.className = `RT_grid_container RT_grid_nested ${options.css_class || ''}`;
+    list.style.listStyle = 'none';
+    list.style.margin = '1.5rem 0';
+    list.style.paddingLeft = '0';
+
+    Array.from(rows.keys()).sort((a ,b) => a - b).forEach(r => {
+      const row_cells = rows.get(r).sort((a ,b) => a.x - b.x);
+      const item = document.createElement('li');
+      item.className = 'RT_grid_row';
+      item.style.margin = '0.4rem 0';
+
+      // The first cell of a row labels it; the remainder nest beneath.
+      const label_cell = row_cells[0];
+      if(label_cell){
+        const label = label_cell.element;
+        label.className = `RT_grid_${label_cell.type}`;
+        apply_style(label ,label_cell ,false ,options ,config);
+        label.style.textAlign = 'left';
+        item.appendChild(label);
+      }
+
+      if(row_cells.length > 1){
+        const inner = document.createElement('ul');
+        inner.style.listStyle = 'none';
+        inner.style.marginLeft = '1.25rem';
+        inner.style.paddingLeft = '0';
+        row_cells.slice(1).forEach(cell => {
+          const li = document.createElement('li');
+          const el = cell.element;
+          el.className = `RT_grid_${cell.type}`;
+          apply_style(el ,cell ,false ,options ,config);
+          el.style.textAlign = 'left';
+          li.appendChild(el);
+          inner.appendChild(li);
+        });
+        item.appendChild(inner);
+      }
+
+      list.appendChild(item);
+    });
+
+    container_node.replaceWith(list);
+    // Divisible by the generic list splitter ,so no component registration is
+    // needed. The instance gate is still set explicitly.
+    list.setAttribute('splitable' ,'true');
+  }
+
+  /* Model registration. A model appears here with a split function or without
+     one; the presence of the function is what makes grids of that model
+     divisible. All three current models divide. */
+
+  ns.Renderer['y-row_by_x-column'] = {
+    render: (c ,s ,o ,cfg) => render_model_html_standard(c ,s ,o ,false ,cfg)
+    ,split: split_css_grid
+    ,repeats_header: true
+  };
+
+  ns.Renderer['x-row_by_y-column'] = {
+    render: (c ,s ,o ,cfg) => render_model_html_standard(c ,s ,o ,true ,cfg)
+    ,split: split_css_grid
+    ,repeats_header: true
+  };
+
+  ns.Renderer['y-row_by_x-column-dictionary'] = {
+    render: (c ,s ,o ,cfg) => render_model_html_dictionary(c ,s ,o ,cfg)
+    ,split: split_css_grid
+    ,repeats_header: true
+  };
+
+  ns.Renderer['nested-list'] = {
+    render: render_model_nested_list
+    ,split: null              // the generic list splitter handles it
+    ,repeats_header: false
+  };
 
   function parse_coordinate(attr_value, current_val) {
     if (!attr_value) return { start: current_val, extent: current_val };
