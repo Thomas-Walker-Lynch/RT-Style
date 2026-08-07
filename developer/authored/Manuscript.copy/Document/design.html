@@ -852,6 +852,12 @@
           Afterwards the longest line touches the right edge of the box, the text is flush left with its ragged edge on the right where a reader expects it, and the box can be placed wherever it belongs.
         </p>
         <p>
+          <strong>A block's first line should be no shorter than the lines beneath it.</strong> The eye enters at the top, and a block opening on its shortest line reads as ragged where it is least wanted; a column of such blocks looks unset. The balanced width does not always give this, because line breaking is greedy — the first line takes what fits, and one long following word can leave it short while later lines pack well. Widening a little often finds a width where the first line is the longest.
+        </p>
+        <p>
+          The preference yields when it conflicts. Widening far enough to lengthen the first line sometimes costs another line, or strands a word alone at the end. <strong>A stranded word is worse than a short first line</strong>, so the search never accepts a width that adds a line, and where no width within the bound satisfies the preference the balanced width stands unaltered.
+        </p>
+        <p>
           Neither width can be written in a style sheet, because neither is known until the lines exist. Both are asked of the browser once they do: a range over the contents reports one rectangle per line box, which gives the line count and the widest line. The search bisects rather than stepping, costing about ten measurements rather than one per em. The work is not particular to grids, so it lives in the utilities as <RT·code>shrink_wrap</RT·code> and is available to any element that sets a label.
         </p>
       </RT·section>

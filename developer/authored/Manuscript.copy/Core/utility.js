@@ -261,9 +261,17 @@ window.RT.Utility = {
         lines.set(key ,{ left: r.left ,right: r.right });
       }
     }
+    // Ordered by vertical position, so widths[0] is the first line.
+    const keys = Array.from(lines.keys()).sort((a ,b) => a - b);
+    const widths = keys.map(k => lines.get(k).right - lines.get(k).left);
     let widest = 0;
-    lines.forEach(l => { const w = l.right - l.left; if(w > widest) widest = w; });
-    return { count: lines.size || 1 ,widest: widest };
+    widths.forEach(w => { if(w > widest) widest = w; });
+    return {
+      count: lines.size || 1
+      ,widest: widest
+      ,widths: widths
+      ,first: widths.length ? widths[0] : 0
+    };
   };
 
   window.RT.Utility.Dom.line_metrics = line_metrics;
@@ -306,6 +314,36 @@ window.RT.Utility = {
           hi = mid;
         }else{
           lo = mid + 1;
+        }
+      }
+      el.style.width = best + 'px';
+
+      /* Prefer a first line no shorter than the lines beneath it.
+
+         A block whose opening line is the short one reads as ragged at the top ,
+         where the eye enters. Compositors set the first line long for the same
+         reason a paragraph is not begun with its shortest sentence.
+
+         The narrowest width holding the line count does not always give this ,
+         because line breaking is greedy: the first line takes what fits ,and a
+         long following word can leave it short while later lines pack well. So
+         widen a little and look for a width where the first line is the longest.
+
+         The search is bounded, and it never accepts a width that adds a line.
+         Where no such width exists within the bound the balanced width stands:
+         <strong>a stranded word is worse than a short first line</strong> ,and
+         given the choice we decline to create one.
+      */
+      const ceiling = Math.ceil(m.widest) || max_width;
+      const span = Math.max(0 ,ceiling - best);
+      const step = Math.max(2 ,Math.round(span / 16));
+      for(let w = best + step; w <= ceiling; w += step){
+        el.style.width = w + 'px';
+        const t = line_metrics(el);
+        if(t.count !== target_lines) break;          // never add a line
+        if(t.first >= t.widest - 0.5){               // first line is the longest
+          best = w;
+          break;
         }
       }
       el.style.width = best + 'px';

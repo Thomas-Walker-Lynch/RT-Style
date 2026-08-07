@@ -21,6 +21,72 @@
     a.onmouseout  = () => a.style.color = 'inherit';
   };
 
+
+  /* Splitting a table of contents.
+
+     A contents list is one of the few things in a document that is nearly
+     always too long for a page, and it divides cleanly: entries are siblings in
+     a list, and cutting between two of them loses nothing.
+
+     The title is repeated on the continuation. A page of entries with no
+     heading above them tells the reader nothing about what they are looking at,
+     and a contents list is consulted by people who have turned to it directly
+     rather than arrived by reading. The repeat is marked so a theme can set it
+     apart — "continued" ,or a lighter weight — without the splitter deciding
+     how that should look.
+  */
+  window.RT.Component = window.RT.Component || {};
+  window.RT.Component['RT·TOC'] = {
+    split: function(el ,remaining ,measure_fn){
+      const title = el.querySelector('.RT·TOC-title');
+      const list  = el.querySelector('ul');
+      if(!list) return { first: null ,rest: el ,firstHeight: 0 };
+
+      const items = Array.from(list.children);
+      if(items.length < 2) return { first: null ,rest: el ,firstHeight: 0 };
+
+      const probe = el.cloneNode(false);
+      const probe_list = list.cloneNode(false);
+      if(title) probe.appendChild(title.cloneNode(true));
+      probe.appendChild(probe_list);
+
+      let height = measure_fn(probe);
+      let taken = 0;
+      for(let i = 0; i < items.length; i++){
+        const row = items[i].cloneNode(true);
+        probe_list.appendChild(row);
+        const h = measure_fn(probe);
+        if(h > remaining){ probe_list.removeChild(row); break; }
+        height = h;
+        taken = i + 1;
+      }
+
+      // No entry fits beneath the title, or everything fits: nothing to do.
+      if(taken === 0 || taken >= items.length){
+        return { first: null ,rest: el ,firstHeight: 0 };
+      }
+
+      const build = function(from ,to ,is_continuation){
+        const frag = el.cloneNode(false);
+        if(title){
+          const t = title.cloneNode(true);
+          if(is_continuation) t.setAttribute('data-rt-continued' ,'true');
+          frag.appendChild(t);
+        }
+        const l = list.cloneNode(false);
+        for(let i = from; i < to; i++) l.appendChild(items[i].cloneNode(true));
+        frag.appendChild(l);
+        return frag;
+      };
+
+      return {
+        first: build(0 ,taken ,false)
+        ,rest: build(taken ,items.length ,true)
+        ,firstHeight: height
+      };
+    }
+  };
+
   RT.task_add('element' ,function(){
     const debug = window.RT.Debug || { log: function(){} };
     if(debug.log) debug.log('TOC' ,'Generating table of contents from expanded section steps');
@@ -96,6 +162,10 @@
       top_list.style.paddingLeft = '0';
       top_list.style.marginBottom = '0';
       container.appendChild(top_list);
+
+      // Capability plus per instance permission ,as everywhere else.
+      container.setAttribute('data-rt-component' ,'RT·TOC');
+      container.setAttribute('splitable' ,'true');
 
       const list_stack = [top_list];
 
