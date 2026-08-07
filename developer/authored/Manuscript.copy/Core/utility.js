@@ -216,6 +216,108 @@ window.RT.Utility = {
   // DOM Structural Operations
   window.RT.Utility.Dom = window.RT.Utility.Dom || {};
   
+
+  /* Shrink wrap an attached element to a well set block of text.
+
+     Text left in a box as wide as its column wraps wherever the width happens
+     to run out, which strands a word or two on the last line:
+
+         One two three and then some
+         more
+
+     Two steps fix it, and both are needed. First narrow the box until narrowing
+     it further would cost another line. Every line then carries text:
+
+         One two three and
+         then some more
+
+     Second, hug the longest line. Until this is done the box is still as wide as
+     it was allowed to be, and a box wider than its text cannot be placed: pushed
+     against the right edge of a cell it looks exactly as it did against the
+     left, because the lines inside have not moved.
+
+     Afterwards the longest line touches the right edge of the box, the text is
+     flush left with its ragged edge on the right where a reader expects it, and
+     the box as a whole can be placed wherever it belongs.
+
+     The element must be attached and laid out, since every question here is one
+     only the browser can answer. Widths are searched by bisection rather than
+     stepped, which costs about ten measurements instead of one per em.
+  */
+  const line_metrics = function(el){
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const rects = range.getClientRects();
+    const lines = new Map();
+    for(let i = 0; i < rects.length; i++){
+      const r = rects[i];
+      if(r.width === 0 && r.height === 0) continue;
+      const key = Math.round(r.top);
+      const cur = lines.get(key);
+      if(cur){
+        if(r.left < cur.left) cur.left = r.left;
+        if(r.right > cur.right) cur.right = r.right;
+      }else{
+        lines.set(key ,{ left: r.left ,right: r.right });
+      }
+    }
+    let widest = 0;
+    lines.forEach(l => { const w = l.right - l.left; if(w > widest) widest = w; });
+    return { count: lines.size || 1 ,widest: widest };
+  };
+
+  window.RT.Utility.Dom.line_metrics = line_metrics;
+
+  window.RT.Utility.Dom.shrink_wrap = function(el ,options){
+    options = options || {};
+    if(!el || !el.isConnected) return el;
+
+    /* The ceiling is the parent's content box. clientWidth includes padding ,
+       so using it directly would allow the label to be set wider than the space
+       it actually occupies. */
+    const parent = el.parentElement;
+    let parent_content = 0;
+    if(parent){
+      const ps = window.getComputedStyle(parent);
+      parent_content = parent.clientWidth
+                     - parseFloat(ps.paddingLeft || 0)
+                     - parseFloat(ps.paddingRight || 0);
+    }
+    const max_width = options.max_width || parent_content || el.offsetWidth;
+    if(!(max_width > 0)) return el;
+
+    el.style.display = 'inline-block';
+    el.style.textAlign = 'left';
+    el.style.width = max_width + 'px';
+
+    let m = line_metrics(el);
+    const target_lines = m.count;
+
+    if(target_lines > 1){
+      // The box never needs to exceed the widest line it already produced.
+      let lo = 1;
+      let hi = Math.ceil(m.widest) || max_width;
+      let best = hi;
+      while(hi - lo > 2){
+        const mid = Math.floor((lo + hi) / 2);
+        el.style.width = mid + 'px';
+        if(line_metrics(el).count <= target_lines){
+          best = mid;
+          hi = mid;
+        }else{
+          lo = mid + 1;
+        }
+      }
+      el.style.width = best + 'px';
+    }
+
+    // Hug the longest line, so it touches the right edge of the box.
+    m = line_metrics(el);
+    if(m.widest > 0) el.style.width = Math.ceil(m.widest) + 'px';
+
+    return el;
+  };
+
   window.RT.Utility.Dom.get_structural_depth = function(element, counter_name) {
     let depth = 0;
     let curr = element.parentElement;

@@ -842,6 +842,18 @@
         <p>
           Line lengths within the label are evened so that no line is left holding a single stranded word, which is what makes a narrow heading column look broken. Where a browser does not implement the evening, the text still wraps and only the evenness is lost.
         </p>
+        <p>
+          <strong>Setting the label takes two narrowings, and both are necessary.</strong> Text left in a box as wide as its column wraps wherever the width happens to run out, which strands a word or two on a line of their own. The first narrowing reduces the box until reducing it further would cost another line; every line then carries text, and the block reads as a block rather than as a sentence that ran out of room.
+        </p>
+        <p>
+          The second narrowing hugs the longest line. Until it is done the box is still as wide as it was permitted to be, and <strong>a box wider than its text cannot be placed</strong>: pressed against the right edge of its cell it looks exactly as it did against the left, because the lines within it have not moved. This is the likeliest explanation when placement appears to have been ignored altogether.
+        </p>
+        <p>
+          Afterwards the longest line touches the right edge of the box, the text is flush left with its ragged edge on the right where a reader expects it, and the box can be placed wherever it belongs.
+        </p>
+        <p>
+          Neither width can be written in a style sheet, because neither is known until the lines exist. Both are asked of the browser once they do: a range over the contents reports one rectangle per line box, which gives the line count and the widest line. The search bisects rather than stepping, costing about ten measurements rather than one per em. The work is not particular to grids, so it lives in the utilities as <RT·code>shrink_wrap</RT·code> and is available to any element that sets a label.
+        </p>
       </RT·section>
 
       <RT·section>

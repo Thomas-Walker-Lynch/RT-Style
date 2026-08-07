@@ -45,7 +45,6 @@
     inner.className = 'RT_grid_label';
     inner.style.display = 'inline-block';
     inner.style.textAlign = 'left';
-    inner.style.textWrap = 'balance';
     inner.style.maxWidth = '100%';
     while(el.firstChild) inner.appendChild(el.firstChild);
     el.appendChild(inner);
@@ -200,6 +199,7 @@
 
     container_node.replaceWith(wrapper);
     freeze_columns(wrapper);
+    shrink_labels(wrapper);
     execute_two_pass_measurement(wrapper, options);
   }
 
@@ -254,6 +254,7 @@
 
     container_node.replaceWith(wrapper);
     freeze_columns(wrapper);
+    shrink_labels(wrapper);
     execute_two_pass_measurement(wrapper, options);
   }
 
@@ -392,6 +393,18 @@
      value is written to the inline style, so it survives cloneNode and travels
      with fragments that have been detached from the document.
   */
+  /* Size every composed label. The work belongs to the utility ,since nothing
+     about it is particular to grids; a label in any element wants the same
+     treatment. Run after the columns are frozen ,so the wrapping measured is
+     the wrapping that will be rendered. */
+  function shrink_labels(wrapper){
+    if(!wrapper || !wrapper.isConnected) return;
+    const labels = wrapper.querySelectorAll('.RT_grid_label');
+    for(let i = 0; i < labels.length; i++){
+      window.RT.Utility.Dom.shrink_wrap(labels[i]);
+    }
+  }
+
   function freeze_columns(wrapper){
     if(!wrapper || !wrapper.isConnected) return;
     const resolved = window.getComputedStyle(wrapper).gridTemplateColumns;
