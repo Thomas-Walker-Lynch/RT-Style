@@ -1,2 +1,12 @@
 RT.Debug.enable('paginate')     // one line per element with its reason
 RT.Debug.enable('paginate_v')   // per-child measurement inside a split
+
+Pass 0 — survey, no changes. I read the manuscript and report: what tags it uses, where it diverges from current conventions, what's broken, how big it is, what it needs that the engine doesn't have yet. You get an inventory before committing to anything.
+
+Pass 1 — mechanical conformance. RT code format, tag spellings, heading capitalization, the may/just rule. Mostly scriptable, entirely verifiable, no judgement about content.
+
+Pass 2 — structure. Sections, counters, TOC, and whatever the book needs that we haven't built — figures and theorem numbering being the obvious candidates for a computation theory text. This is where the engine likely grows.
+
+Pass 3 — render and fix. The real test bed. Expect layout faults we haven't seen, since a book exercises depths and lengths the manuals don't.
+
+Pass 4 — copy editing, a chapter at a time. Slowest, most judgement-dependent, and best done once everything else is stable.

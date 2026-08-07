@@ -111,15 +111,17 @@
       const overlay = is_text_light ? `rgba(255,255,255,${alpha})` : `rgba(0,0,0,${alpha})`;
       const text_color = is_text_light ? '#ffffff' : '#000000';
 
-      let exact_px = parseFloat(computed.fontSize) * metrics.ratio;
+      /* Two corrections, both applying to blocks and inline code alike. The ink
+         ratio corrects for the face; the size ratio corrects for the impression
+         a fixed pitch face makes at the same nominal size. Applying the second
+         only to blocks left inline code reading larger than the prose around
+         it, which is the more conspicuous of the two places to get it wrong,
+         since the comparison is immediate. */
+      const size_ratio = (RT.config && RT.config.code && RT.config.code.size_ratio) || 0.85;
+      let exact_px = parseFloat(computed.fontSize) * metrics.ratio * size_ratio;
       let offset_px = metrics.baseline_diff * (exact_px / 100);
 
       if(is_block){
-        /* A fixed pitch face reads larger than a proportional one at the same
-           size, since its widest glyphs set the measure. The tradition is a
-           point or two smaller: eleven against twelve, sometimes ten. The ink
-           ratio corrects for the face; this corrects for the impression. */
-        exact_px *= ((RT.config && RT.config.code && RT.config.code.size_ratio) || 0.85);
         let tagIndent = '';
         const prevNode = el.previousSibling;
         
