@@ -1,0 +1,2 @@
+RT.Debug.enable('paginate')     // one line per element with its reason
+RT.Debug.enable('paginate_v')   // per-child measurement inside a split

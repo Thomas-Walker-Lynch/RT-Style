@@ -160,6 +160,7 @@
     });
 
     container_node.replaceWith(wrapper);
+    freeze_columns(wrapper);
     execute_two_pass_measurement(wrapper, options);
   }
 
@@ -196,6 +197,7 @@
     });
 
     container_node.replaceWith(wrapper);
+    freeze_columns(wrapper);
     execute_two_pass_measurement(wrapper, options);
   }
 
@@ -231,7 +233,34 @@
     return cell;
   }
 
+  /* Fragments inherit the frozen template through cloneNode, so probe and
+     fragments lay out as the original did. Where a grid was rendered before
+     freezing existed, fall back to a live read if the element is still
+     attached; a detached element with no frozen value cannot be measured
+     meaningfully, and the splitter declines rather than guessing. */
+  function columns_known(el){
+    return el.hasAttribute('data-rt-columns-frozen')
+        || (el.isConnected && window.getComputedStyle(el).gridTemplateColumns !== 'none');
+  }
+
+  function pin_columns(source ,target){
+    if(!source || !target) return target;
+    if(source.style.gridTemplateColumns){
+      target.style.gridTemplateColumns = source.style.gridTemplateColumns;
+    }else if(source.isConnected){
+      const resolved = window.getComputedStyle(source).gridTemplateColumns;
+      if(resolved && resolved !== 'none') target.style.gridTemplateColumns = resolved;
+    }
+    return target;
+  }
+
   function split_css_grid(el ,remaining ,measure_fn){
+    if(!columns_known(el)){
+      window.RT.Debug.warn('grid'
+        ,'column widths unknown for a detached grid; declining to split rather than '
+        + 'measuring against an ambient width.');
+      return { first: null ,rest: el ,firstHeight: 0 };
+    }
     const rows = rows_of(el);
     const keys = Array.from(rows.keys()).sort((a ,b) => a - b);
 
@@ -242,7 +271,7 @@
     const header_key = keys[0];
     const header_cells = rows.get(header_key);
 
-    const probe = el.cloneNode(false);
+    const probe = pin_columns(el ,el.cloneNode(false));
     header_cells.forEach(c => probe.appendChild(place_row(c.cloneNode(true) ,0)));
     let height = measure_fn(probe);
     if(height > remaining) return { first: null ,rest: el ,firstHeight: 0 };
@@ -264,13 +293,13 @@
     if(taken === 0) return { first: null ,rest: el ,firstHeight: 0 };
     if(taken >= keys.length - 1) return { first: null ,rest: el ,firstHeight: 0 };
 
-    const first = el.cloneNode(false);
+    const first = pin_columns(el ,el.cloneNode(false));
     header_cells.forEach(c => first.appendChild(place_row(c.cloneNode(true) ,0)));
     for(let i = 1; i <= taken; i++){
       rows.get(keys[i]).forEach(c => first.appendChild(place_row(c.cloneNode(true) ,i)));
     }
 
-    const rest = el.cloneNode(false);
+    const rest = pin_columns(el ,el.cloneNode(false));
     header_cells.forEach(c => rest.appendChild(place_row(c.cloneNode(true) ,0)));
     let out_row = 1;
     for(let i = taken + 1; i < keys.length; i++){
@@ -289,6 +318,32 @@
 
   window.RT.Component = window.RT.Component || {};
   window.RT.Component['RT·Grid·css'] = { split: split_css_grid };
+
+
+  /* Freeze the resolved column widths onto the wrapper at render time.
+
+     A CSS grid sizes its columns from the content of every row it holds, and
+     from the width available to it. Both are hazards for pagination.
+
+     A probe holding four of twelve rows resolves different widths than the full
+     table, so its measured height describes a fragment that will never exist.
+     And because measurement happens in a container sized from the article, any
+     change to the available width — a docked developer panel narrowing the
+     viewport, for one — changes every height and therefore every split
+     decision. Measurement that depends on ambient width is not deterministic.
+
+     Resolving once, here, and recording the answer in pixels removes both. The
+     value is written to the inline style, so it survives cloneNode and travels
+     with fragments that have been detached from the document.
+  */
+  function freeze_columns(wrapper){
+    if(!wrapper || !wrapper.isConnected) return;
+    const resolved = window.getComputedStyle(wrapper).gridTemplateColumns;
+    if(resolved && resolved !== 'none'){
+      wrapper.style.gridTemplateColumns = resolved;
+      wrapper.setAttribute('data-rt-columns-frozen' ,'true');
+    }
+  }
 
   function execute_two_pass_measurement(wrapper, options) {
     requestAnimationFrame(() => {
