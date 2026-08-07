@@ -86,7 +86,11 @@
     wrapper.style.display = 'grid';
     wrapper.style.justifyContent = 'start';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
-    wrapper.setAttribute('splitable', 'true');
+    // No splitter is registered for this wrapper ,so the grid is atomic: a
+    // grid taller than a page grows its page rather than being cut. That is
+    // the intended model. Claiming splitable without a registered splitter
+    // is inert and misleading ,so the claim is not made. Restore it together
+    // with an RT.Splitter entry if grids are ever made divisible.
 
     if (options.delimiters) {
       wrapper.style.borderLeft = '2px solid ' + (config.content_main || '#000');
@@ -125,7 +129,11 @@
     wrapper.style.maxWidth = '100%';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
     wrapper.style.margin = '1.5rem 0';
-    wrapper.setAttribute('splitable', 'true');
+    // No splitter is registered for this wrapper ,so the grid is atomic: a
+    // grid taller than a page grows its page rather than being cut. That is
+    // the intended model. Claiming splitable without a registered splitter
+    // is inert and misleading ,so the claim is not made. Restore it together
+    // with an RT.Splitter entry if grids are ever made divisible.
 
     grid_state.cells.forEach(cell => {
       const el = cell.element;

@@ -16,6 +16,57 @@
   const page_conf = (RT.config && RT.config.page) ? RT.config.page : {};
   const page_height_limit = page_conf.height_limit || 1000;
 
+  /* ---------------------------------------------------------------
+     Pagination tracing.
+
+     Splitting is the most intricate part of the engine and the hardest to
+     reason about after the fact ,because the decisions are made against
+     measurements that no longer exist by the time the output is inspected.
+     This narrates what the paginator saw and what it decided.
+
+       RT.Debug.enable('paginate')    decisions ,one line per element
+       RT.Debug.enable('paginate_v')  verbose: per child measurement inside
+                                      a split ,which is noisy but is where
+                                      the difficult faults hide
+
+     Both are inert when their token is off ,beyond a set membership test.
+  --------------------------------------------------------------- */
+
+  let trace_depth = 0;
+
+  function tracing(){ return window.RT.Debug.active_tokens.has('paginate'); }
+  function tracing_verbose(){ return window.RT.Debug.active_tokens.has('paginate_v'); }
+
+  function trace(msg){
+    if(!tracing()) return;
+    window.RT.Debug.log('paginate' ,'  '.repeat(trace_depth) + msg);
+  }
+
+  function trace_v(msg){
+    if(!tracing_verbose()) return;
+    window.RT.Debug.log('paginate_v' ,'  '.repeat(trace_depth) + msg);
+  }
+
+  // A short human readable handle for an element ,so trace lines identify
+  // which node is being discussed without dumping markup.
+  function el_id(el){
+    if(!el) return '(null)';
+    if(el.nodeType !== Node.ELEMENT_NODE) return '#text';
+    const tag = (el.tagName || '?').toLowerCase();
+    const bits = [];
+    const counter = el.getAttribute && el.getAttribute('counter');
+    if(counter) bits.push('counter=' + counter);
+    if(el.className && typeof el.className === 'string' && el.className.trim()){
+      bits.push('.' + el.className.trim().split(/\s+/)[0]);
+    }
+    if(el.getAttribute && el.getAttribute('continued') === 'true') bits.push('CONTINUED');
+    if(el.getAttribute && el.getAttribute('continuation') === 'true') bits.push('CONTINUATION');
+    // first few words of text ,to make sections recognizable in the log
+    const txt = (el.textContent || '').trim().replace(/\s+/g ,' ').slice(0 ,32);
+    if(txt) bits.push('"' + txt + (txt.length >= 32 ? '…' : '') + '"');
+    return tag + (bits.length ? ' [' + bits.join(' ') + ']' : '');
+  }
+
   let measure_container = null;
 
   // 1. DOM Measurement Utilities
@@ -74,6 +125,22 @@
 
     if(el.hasAttribute('splitable') && window.RT.Splitter && window.RT.Splitter[(el.tagName || '').toLowerCase()]){
       return (remaining) => window.RT.Splitter[(el.tagName || '').toLowerCase()](el ,remaining ,measure_fragment ,is_splittable);
+    }
+
+    /* An element may claim splitable and have no splitter registered for its
+       tag. Capability is what actually decides ,so the element is atomic and
+       the claim is inert — but it is almost always a mistake ,and a silent one:
+       the element is then unbreakable ,and if it exceeds a page it falls to the
+       overflow path rather than being cut. Report it once per tag. */
+    if(el.hasAttribute('splitable')){
+      const tag_l = (el.tagName || '').toLowerCase();
+      if(!is_splittable.warned) is_splittable.warned = new Set();
+      if(!is_splittable.warned.has(tag_l)){
+        is_splittable.warned.add(tag_l);
+        window.RT.Debug.warn('paginate'
+          ,"<" + tag_l + "> claims splitable but no splitter is registered for it. "
+          + "Treating as atomic. Register RT.Splitter['" + tag_l + "'] or drop the attribute.");
+      }
     }
 
     const tag = (el.tagName || '').toUpperCase();
@@ -227,6 +294,7 @@
   window.RT.Splitter = window.RT.Splitter || {};
 
   window.RT.Splitter['rt·counter·step'] = function(el ,remaining ,measure_fn ,is_splittable_fn){
+    trace_v('split ' + el_id(el) + ' into ' + remaining + 'px');
     const children = Array.from(el.childNodes);
     let best_count = 0;
     let best_height = 0;
@@ -248,13 +316,20 @@
       const frag_height = measure_fn(temp_container);
 
       if(frag_height <= remaining){
+        trace_v('  child ' + i + ' ' + el_id(child) + ': cumulative ' + frag_height
+                + 'px <= ' + remaining + 'px ,keep');
         best_count = i + 1;
         best_height = frag_height;
       }else{
+        trace_v('  child ' + i + ' ' + el_id(child) + ': cumulative ' + frag_height
+                + 'px > ' + remaining + 'px ,cut here');
         temp_container.removeChild(temp_container.lastChild);
         const child_splitter = child.nodeType === Node.ELEMENT_NODE ? is_splittable_fn(child) : null;
         if(child_splitter){
+          trace_v('    child is splittable ,recursing with ' + (remaining - best_height) + 'px');
+          trace_depth++;
           const child_split = child_splitter(remaining - best_height);
+          trace_depth--;
           if(child_split && child_split.first){
             split_child_result = child_split;
             best_height += child_split.firstHeight;
@@ -265,8 +340,35 @@
       }
     }
 
-    if(best_count === 0 && !split_child_result && !forced_break){
-      return { first: null ,rest: el ,firstHeight: 0 };
+    if(best_height === 0 && !split_child_result && !forced_break){
+      /* No progress. Either nothing fit at all ,or everything that fit has zero
+         height — make tags ,snapshots ,whitespace — which is not progress.
+
+         Abandoning here (returning no first fragment) hands the whole subtree
+         back to the caller ,whose overflow path places all of it on one grown
+         page ,dragging every following subsection along: that is how the tail
+         of a chapter arrives as a single monster page. Emitting the zero height
+         children as a fragment is no better ,since it produces a page holding
+         nothing but its own page number.
+
+         Take one more child instead ,whatever its size. The page grows just
+         enough to hold it and everything after it flows on normally. Growth is
+         meant to be local ,and this applies it at the smallest scope that needs
+         it rather than the largest.
+
+         Testing height rather than count matters: a fragment may hold several
+         children and still be empty ,which is exactly the case that produced a
+         blank page between two full ones.
+      */
+      if(best_count < children.length){
+        temp_container.appendChild(children[best_count].cloneNode(true));
+        best_height = measure_fn(temp_container);
+        best_count++;
+        trace_v('  -> no progress; taking ' + el_id(children[best_count - 1])
+                + ' whole at ' + best_height + 'px ,remainder flows on');
+      }else{
+        return { first: null ,rest: el ,firstHeight: 0 };
+      }
     }
 
     /* Decide whether a remainder exists BEFORE marking the fragment.
@@ -283,6 +385,12 @@
        element without first testing whether it overflows.
     */
     const has_rest = (best_count < children.length) || !!split_child_result || forced_break;
+
+    trace_v('  -> ' + best_count + ' of ' + children.length + ' children fit'
+            + (split_child_result ? ' ,plus a split child' : '')
+            + (forced_break ? ' ,forced break present' : '')
+            + ' ,has_rest=' + has_rest
+            + (has_rest ? ' (soft close ,scope continues)' : ' (no soft close ,scope intact)'));
 
     const first = el.cloneNode(false);
     const split_id = 'split_' + Math.random().toString(36).substr(2 ,9);
@@ -374,6 +482,9 @@
       let current_h = 0;
       let i = 0;
 
+      trace('=== paginate ' + el_id(article) + ' : ' + raw_element_seq.length
+            + ' top level elements ,page limit ' + page_height_limit + 'px ===');
+
       while(i < raw_element_seq.length){
         const el = raw_element_seq[i];
         const splitter = is_splittable(el);
@@ -403,15 +514,24 @@
           const has_interior_break = !!el.querySelector('RT·page-break, RT·page-break-primitive');
 
           if(el_h <= remaining && !has_interior_break){
+            trace(el_id(el) + ': ' + el_h + 'px fits in ' + remaining
+                  + 'px remaining -> PLACE WHOLE (break falls after it ,not inside)');
             current_batch_seq.push(el);
             current_h += el_h;
             i++;
             continue;
           }
 
+          trace(el_id(el) + ': ' + el_h + 'px vs ' + remaining + 'px remaining'
+                + (has_interior_break ? ' ,has interior page break' : '')
+                + ' -> SPLIT');
+          trace_depth++;
           const { first ,rest ,firstHeight } = splitter(remaining);
+          trace_depth--;
 
           if(first){
+            trace('  -> first fragment ' + firstHeight + 'px'
+                  + (rest ? ' ,remainder continues on next page' : ' ,NO remainder'));
             current_batch_seq.push(first);
             current_h += firstHeight;
 
@@ -433,13 +553,25 @@
               continue;
             }
           }else{
+            trace('  -> NOTHING FITS. Element cannot be broken at this position.');
             if(current_h === 0){
-              const frame = document.createElement('RT·scroll-frame');
-              frame.style.display = 'block';
-              frame.style.overflowY = 'auto';
-              frame.style.maxHeight = page_height_limit + 'px';
-              frame.appendChild(el);
-              current_batch_seq.push(frame);
+              /* Elastic pages. The break has migrated all the way to the start
+                 of the page ,so there is nothing left to relocate. Place the
+                 element whole and let the page grow around it.
+
+                 Growth is local and terminal: no content moves ,so no page
+                 number changes ,so no cross reference changes length ,so
+                 nothing further is perturbed. Clipping into a scroll frame
+                 instead ,as this once did ,both hid content and — because the
+                 frame's height was never added to current_h — left the page
+                 looking empty ,so the next forced page break was discarded and
+                 the following chapter ran on without its break. */
+              trace('  -> page is empty; PLACE WHOLE and grow page to ' + el_h + 'px');
+              window.RT.Debug.warn('paginate'
+                ,'oversized: ' + el_id(el) + ' is ' + el_h + 'px against a '
+                + page_height_limit + 'px limit and cannot be split. Growing the page.');
+              current_batch_seq.push(el);
+              current_h += el_h;
               i++; 
             }else{
               let backtrack_seq = [];
@@ -460,13 +592,16 @@
               }else{
                 current_batch_seq.push(...backtrack_seq);
                 current_h += backtrack_h;
-                
-                const frame = document.createElement('RT·scroll-frame');
-                frame.style.display = 'block';
-                frame.style.overflowY = 'auto';
-                frame.style.maxHeight = page_height_limit + 'px';
-                frame.appendChild(el);
-                current_batch_seq.push(frame);
+
+                // Same elastic page rule as above: nothing left to relocate ,so
+                // place whole and grow. current_h must include it ,or a later
+                // forced break will read this page as empty and be discarded.
+                trace('  -> cannot emit a page here; PLACE WHOLE and grow page by ' + el_h + 'px');
+                window.RT.Debug.warn('paginate'
+                  ,'oversized: ' + el_id(el) + ' is ' + el_h + 'px against a '
+                  + page_height_limit + 'px limit and cannot be split. Growing the page.');
+                current_batch_seq.push(el);
+                current_h += el_h;
                 i++;
               }
             }
@@ -479,6 +614,8 @@
         const is_RT_page_break = tag === 'rt·page-break' || tag === 'rt·page-break-primitive';
 
         if(is_RT_page_break){
+          trace(el_id(el) + ' -> FORCED PAGE BREAK'
+                + (current_h > 0 ? ' ,emitting page' : ' ,page already empty ,ignored'));
           if(current_h > 0){
             page_seq.push(current_batch_seq);
             current_batch_seq = [];
@@ -489,6 +626,8 @@
         }
 
         if(current_h + h > page_height_limit && current_h > 0){
+          trace(el_id(el) + ': ' + h + 'px would exceed limit at ' + current_h
+                + 'px used -> MOVE TO NEXT PAGE (atomic ,no splitter)');
           let backtrack_seq = [];
           let backtrack_h = 0;
           
@@ -510,6 +649,7 @@
           }
         }
 
+        trace(el_id(el) + ': ' + h + 'px -> place (atomic) ,page now ' + (current_h + h) + 'px');
         current_batch_seq.push(el);
         current_h += h;
         i++;
@@ -518,6 +658,8 @@
       if(current_batch_seq.length > 0){
         page_seq.push(current_batch_seq);
       }
+
+      trace('=== ' + page_seq.length + ' pages produced ===');
 
       article.innerHTML = '';
       

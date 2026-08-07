@@ -25,13 +25,17 @@
       <RT·TOC level="1-2"></RT·TOC>
 
       <RT·section>
-        <RT·name>Scope of this Manual</RT·name>
+        <RT·name>Scope of this manual</RT·name>
         <p>
           This manual describes how the engine is built. Its companion, the User Manual, describes how to author a document with the engine. The division should be maintained as the system grows: the user manual owns the tag surface, the attribute lists, and the defaults; this manual owns the data structures, the invariants, and the reasons a mechanism has the shape it has. When a tag gains an attribute, the user manual is authoritative. When a tag's behavior under nesting or pagination changes, this manual is authoritative.
         </p>
         <p>
           Code in this manual follows the RT code format conventions. Two of those conventions appear constantly in the engine source and affect reading comprehension: vertical comma lists place the comma at the head of the line it belongs to, and the typographic middle dot serves as an ad hoc namespace separator. Namespaces are written in PascalCase, so the counter element publishes <RT·code>&lt;RT·Counter·make&gt;</RT·code>, not <RT·code>&lt;RT·counter·make&gt;</RT·code>. Author markup, and write queries against it, using the RT-conforming spelling only. The HTML parser lowercases tag names internally as a matter of course, and CSS type selectors are matched case-insensitively in HTML documents, so a query written in the canonical spelling matches regardless of what the parser did to the source markup underneath it. This is harmless precisely because there is no <RT·code>rt</RT·code> namespace of unrelated elements for the lowercase form to collide with. Querying for both spellings, as some element files presently do, is therefore redundant rather than protective.
         </p>
+        <p>
+          <strong>Headings capitalize the first word only.</strong> This is not house preference but a requirement of the notation: identifiers in this system carry meaning in their case, so <RT·code>RT.Element</RT·code>, <RT·code>RT·Section·counter</RT·code>, and <RT·code>CountingNumber</RT·code> must read the same in a heading as in code. Title casing every word makes an ordinary word indistinguishable from an identifier, and worse, makes a genuine identifier look like ordinary title casing. Sentence case keeps the distinction legible. The same rule applies to headings the engine generates for itself, such as a table of contents title.
+        </p>
+
         <p>
           Code snippets in this manual are normative. Where a snippet and the current source disagree, the snippet states the intended design and the Migration Notes section records the gap. This manual was written during a redesign of the registration and scheduling architecture; the sections on the global object, the boot sequence, and splitting describe the target, and the source is being brought to meet it.
         </p>
@@ -41,7 +45,7 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>The Global Object</RT·name>
+        <RT·name>The global object</RT·name>
         <p>
           Everything the engine owns hangs off <RT·code>window.RT</RT·code>. There is no other global state and no CSS file. The root has four kinds of member, and keeping the kinds distinct is the main thing to understand about it.
         </p>
@@ -62,7 +66,7 @@
         </RT·dictionary>
 
         <RT·section>
-          <RT·name>Elements Plug In</RT·name>
+          <RT·name>Elements plug in</RT·name>
           <p>
             <RT·code>RT.Element</RT·code> is a dictionary whose keys are element names and whose values are that element's namespace object.
           </p>
@@ -97,7 +101,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Phases and Tasks</RT·name>
+          <RT·name>Phases and tasks</RT·name>
           <p>
             Registration and scheduling are separate concerns and are now separate structures. An element registers work; the schedule decides when the work runs.
           </p>
@@ -145,7 +149,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Order Within a Phase</RT·name>
+          <RT·name>Order within a phase</RT·name>
           <p>
             <strong>The design intent is that tasks within a phase are mutually independent.</strong> All real ordering is expressed by the phases themselves. When a genuine dependency appears, the response is to add a phase, not to arrange the tasks within one. Phases are cheap; if the sequence requires <RT·code>on_page_load_0</RT·code> and <RT·code>on_page_load_1</RT·code>, that is a better outcome than an unstated dependency between two entries in one list.
           </p>
@@ -183,7 +187,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>The Element File Template</RT·name>
+          <RT·name>The element file template</RT·name>
           <p>
             The whole of the above reduces to a small fixed shape. This is the normative form for an element file.
           </p>
@@ -228,13 +232,13 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Boot Sequence</RT·name>
+        <RT·name>Boot sequence</RT·name>
         <p>
           Boot and pipeline are two different orderings and are easily confused. Boot is the order in which files load and register their work. The pipeline is the order in which that registered work is invoked, long afterward. This section covers the former.
         </p>
 
         <RT·section>
-          <RT·name>Deferred Loading</RT·name>
+          <RT·name>Deferred loading</RT·name>
           <p>
             One fact governs everything else here. <RT·code>RT.load</RT·code> emits a script tag with <RT·code>document.write</RT·code>, and a script written that way does not run immediately. It is inserted into the token stream at the position of the currently executing script and runs only once that script has finished. <strong><RT·code>RT.load</RT·code> is a deferred request, not a synchronous include.</strong>
           </p>
@@ -259,7 +263,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Debug Placement</RT·name>
+          <RT·name>Debug placement</RT·name>
           <p>
             <RT·code>RT.Debug</RT·code> is a token filtered logger. Messages are tagged with a token, and <RT·code>log</RT·code> and <RT·code>warn</RT·code> emit only when that token is in the active set. <RT·code>error</RT·code> always emits. Tokens are toggled from the console with <RT·code>RT.Debug.enable</RT·code> and <RT·code>RT.Debug.disable</RT·code>, so a programmer finishing a debugging session removes the token and all of its messages stop without any code being touched.
           </p>
@@ -280,7 +284,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>The Sequence</RT·name>
+          <RT·name>The sequence</RT·name>
           <p>
             A document's head names only the locator and a short configuration block. Everything else arrives transitively.
           </p>
@@ -329,7 +333,7 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Execution Pipeline Schedule</RT·name>
+        <RT·name>Execution pipeline schedule</RT·name>
         <p>
           In the RT-Style framework when a page is rendered, the JS code associated with the semantic elements modifies the DOM. It does so in multiple passes so that page numbering, counters, and cross references function without need for forward referencing or concern about dependencies between them. Consequently what is seen in the element view of the browser debug window will not have a one to one correspondence with the elements found in the document.
         </p>
@@ -378,7 +382,7 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Elastic Pages</RT·name>
+        <RT·name>Elastic pages</RT·name>
         <p>
           A design decision that shapes the whole of pagination, and that arose from the medium rather than from tradition: <strong>the output is a browser, so pages need not be a fixed length.</strong> Nothing physical forces a page to end at a particular height. Once that constraint is dropped, several problems that are hard in a fixed-page formatter become easy or vanish.
         </p>
@@ -398,16 +402,24 @@
         <p>
           This is why the final pagination phase runs last and why it only ever grows pages. Any change to it that relocated content instead would reintroduce the cascade it exists to prevent.
         </p>
+
+        <p>
+          Growth applies during pagination as well as after it. When an element cannot be broken and does not fit, the break migrates outward until it reaches the start of the page, at which point there is nothing left to relocate and the page simply grows. Clipping the element into a scrolling frame is the wrong response twice over: it hides content in a medium that has no need to, and it presents a page whose apparent height is unrelated to what it holds.
+        </p>
+
+        <p>
+          <strong>Whatever a page is given, its running height must account for.</strong> This reads as bookkeeping and is not. The running height is what every later decision consults, and a forced page break asks it whether the page holds anything at all. A page carrying an element whose height was never added reports itself empty, so the break is judged redundant and discarded, and the next chapter continues on a page that already appears full to the reader. One omission thus produces two unrelated looking faults: content clipped in one place, and a missing page break in another. Any path that places an element must add its height, including the paths that place an element the ordinary rules could not.
+        </p>
       </RT·section>
 
       <RT·section>
-        <RT·name>Splitting and Pagination</RT·name>
+        <RT·name>Splitting and pagination</RT·name>
         <p>
           Whether an element may be cut across a page boundary is the most subtle question in the engine, because the answer is not a property of the element. This section sets out the decomposition that makes it tractable.
         </p>
 
         <RT·section>
-          <RT·name>Permission and Mechanics</RT·name>
+          <RT·name>Permission and mechanics</RT·name>
           <p>
             The essential separation: <strong>mechanics are local, permission is not.</strong>
           </p>
@@ -417,7 +429,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Capability Is the Default</RT·name>
+          <RT·name>Capability is the default</RT·name>
           <p>
             <strong>An element is splittable exactly when a splitter has been written for it.</strong> This is not a policy choice but a fact about what code exists. An element that could in principle be cut cannot be cut unless the function that performs the cut has been provided.
           </p>
@@ -427,7 +439,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Three Gates</RT·name>
+          <RT·name>Three gates</RT·name>
           <p>
             Permission at a single node is the conjunction of three independent conditions.
           </p>
@@ -450,7 +462,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>The Chain Conjunction</RT·name>
+          <RT·name>The chain conjunction</RT·name>
           <p>
             <strong>A break is legal at a position only if every enclosing node from that position up to the page root is permeable.</strong> A single impermeable ancestor vetoes the break, however permeable everything below it may be.
           </p>
@@ -465,7 +477,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>A Break Between Siblings Splits the Parent</RT·name>
+          <RT·name>A break between siblings splits the parent</RT·name>
           <p>
             A break does not always fall inside a scope. It may fall in the gap between two sibling scopes, after the first has closed and before the second has opened. <strong>In that case neither sibling is cut, and neither should be soft closed. The element that spans the boundary is the parent.</strong>
           </p>
@@ -487,7 +499,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Nested Cuts of One Counter</RT·name>
+          <RT·name>Nested cuts of one counter</RT·name>
           <p>
             Two scopes of the same counter may be cut at a single boundary: a section and a subsection within it, both spanning the break. The far side then carries two make tags bearing <RT·code>continues</RT·code>, one per suspension, and each legitimately replaces the live machine for that counter name as it restores its own saved state.
           </p>
@@ -503,7 +515,20 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Breaks Migrate Outward</RT·name>
+          <RT·name>An indivisible child must not silence its siblings</RT·name>
+          <p>
+            When a child cannot be divided, the temptation is to report that the parent cannot be divided either. That is wrong, and its cost is out of all proportion to how reasonable it sounds. The parent may have a dozen further children, every one of them divisible, and reporting failure discards all of them at once. The caller, told only that nothing can be done, places the entire subtree as a single unit.
+          </p>
+          <p>
+            The visible result is a page carrying the whole tail of a chapter, and the natural reading is that the indivisible child caused it. It did not. <strong>An element being larger than a page is not a defect; the defect is abandoning its siblings on account of it.</strong> A large table that occupies a page of its own is behaving exactly as intended, and the sections that follow it should go on paginating as though it were not there.
+          </p>
+          <p>
+            The rule is therefore to make progress rather than to report failure. Take the indivisible child alone, let its page grow to fit, and return everything after it as a remainder to be divided normally. Progress must be measured in height and not in count, since a fragment may hold several children of no height at all — make tags, snapshots, whitespace — and emitting it yields a page bearing nothing but its own number.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Breaks migrate outward</RT·name>
           <p>
             The reframing that makes the whole thing simple: <strong>an impermeable ancestor does not forbid a break, it relocates one.</strong> If the break cannot occur inside that ancestor, it occurs before it, and the ancestor moves whole to the next page.
           </p>
@@ -531,14 +556,14 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>One Walk Serves Both</RT·name>
+          <RT·name>One walk serves both</RT·name>
           <p>
             The chain computed to decide permission is, once the position settles, precisely the list of scopes that must be soft closed. The permission walk and the suspension walk are the same walk, performed once, feeding two mechanisms. This is the strongest evidence that the decomposition is correct, and any implementation should preserve it rather than walking twice.
           </p>
         </RT·section>
 
         <RT·section>
-          <RT·name>Splitters Live on Their Elements</RT·name>
+          <RT·name>Splitters live on their elements</RT·name>
           <p>
             With permission handled by the chain, mechanics return to the element that owns them, and the global splitter table disappears.
           </p>
@@ -563,7 +588,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Open Question</RT·name>
+          <RT·name>Open question</RT·name>
           <p>
             The instance attribute currently reads as an opt-in, set affirmatively from counter policy when the section macro constructs a step. Under capability-as-default, capability already expresses intent, so the attribute reads more naturally as a per-instance veto: present and false to forbid what would otherwise be permitted. Either reading is workable and the conjunction is unaffected. The choice should be made before it is copied into a second element.
           </p>
@@ -577,7 +602,7 @@
         </p>
 
         <RT·section>
-          <RT·name>The Count Object</RT·name>
+          <RT·name>The count object</RT·name>
           <p>
             A Count holds three fields. A CounterMachine wraps a Count and adds the rendering configuration: the style vector, the separator, the separator placement, and the mode.
           </p>
@@ -596,7 +621,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>The Status Machine</RT·name>
+          <RT·name>The status machine</RT·name>
           <p>
             A <RT·term>scope</RT·term> is one <RT·code>&lt;RT·Counter·step&gt;</RT·code> element. The document walk enters the scope on descent and exits it on ascent. The transition table is small enough to state completely.
           </p>
@@ -623,7 +648,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Scoped and Milestone Modes</RT·name>
+          <RT·name>Scoped and milestone modes</RT·name>
           <p>
             Both modes run the identical status machine. The entire difference lies in how the count is reported: in scoped mode, when the status is <RT·code>between</RT·code>, the last element of the list is dropped from the report.
           </p>
@@ -642,7 +667,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Index and Display</RT·name>
+          <RT·name>Index and display</RT·name>
           <p>
             The counter stores indices, always zero-based naturals. Styles are pure renderings of an index, and each style is a <RT·code>to_</RT·code> and <RT·code>from_</RT·code> pair on the machine. This separation is the most error-prone part of the counter, so it is stated flatly here.
           </p>
@@ -666,7 +691,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Snapshot and Read</RT·name>
+          <RT·name>Snapshot and read</RT·name>
           <p>
             A snapshot clones the entire machine into the snapshot dictionary under a name. A read resolves against that dictionary in a second pass, after the whole walk has completed. This decoupling is what allows a read to appear anywhere in the document relative to its snapshot, including earlier. A table of contents reads snapshots taken hundreds of pages later.
           </p>
@@ -679,7 +704,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Splitting Step Scopes Across a Page Boundary</RT·name>
+          <RT·name>Splitting step scopes across a page boundary</RT·name>
           <p>
             This is the most intricate mechanism in the engine. The situation is closely analogous to a message split across packets in telecommunications: the payload is cut, carried separately, and reassembled such that the receiver cannot tell it was ever divided. What makes the counter case harder than a packet is that there is not one open thing at the cut. There is a stack of them.
           </p>
@@ -722,7 +747,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Counters That Do Not Split</RT·name>
+          <RT·name>Counters that do not split</RT·name>
           <p>
             The figure counter, when added, will have no splitter. A figure either fits on the page before the break or on the page after it; there is no meaningful half figure, and under capability-as-default that requires only that no splitter be written.
           </p>
@@ -733,13 +758,13 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Sections as a Macro over Counters</RT·name>
+        <RT·name>Sections as a macro over counters</RT·name>
         <p>
           The section element adds no new state machine. It is close to a pure macro: it rewrites each <RT·code>&lt;RT·section&gt;</RT·code> into a counter step plus the title furniture, and lets the counter do the counting. Reading it as a macro expansion, rather than as an element with logic of its own, is the correct mental model.
         </p>
 
         <RT·section>
-          <RT·name>The Expansion</RT·name>
+          <RT·name>The expansion</RT·name>
           <RT·code>
             &lt;RT·Counter·step counter="RT·Section·counter" splitable="true" id="{snap_id}"&gt;
               &lt;RT·Counter·snapshot counter="RT·Section·counter" snapshot="{snap_id}"&gt;
@@ -757,7 +782,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>The Section Namespace</RT·name>
+          <RT·name>The section namespace</RT·name>
           <p>
             Beyond serving as the plug, <RT·code>RT.Element.Section</RT·code> holds a reference to the make tag that creates the section counter.
           </p>
@@ -784,7 +809,7 @@
         </RT·section>
 
         <RT·section>
-          <RT·name>Depth Computation</RT·name>
+          <RT·name>Depth computation</RT·name>
           <p>
             The macro computes each section's depth by walking up the DOM and counting ancestors that are either an unexpanded section or an already-expanded step belonging to the section counter. Both forms must be counted, because the node list being iterated is static while the expansion mutates the tree. By the time an inner section is processed, its outer ancestors have already become steps.
           </p>
@@ -825,6 +850,15 @@
           <RT·entry key="Late layout adjustments grow pages ,never relocate content">
             The final phase. Relocation reintroduces the cascade that elastic pages exist to prevent.
           </RT·entry>
+          <RT·entry key="A page fragment must make progress in height ,not merely in count">
+            Splitting. Zero height children — make tags, snapshots, whitespace — are not progress. A fragment holding several of them and nothing else yields a page carrying only its own page number.
+          </RT·entry>
+          <RT·entry key="Any path that places an element adds its height">
+            Overflow and fallback paths, which place elements the ordinary rules could not. An unaccounted placement makes the page report itself empty, and a later forced break is then discarded.
+          </RT·entry>
+          <RT·entry key="Splitable implies a registered splitter">
+            An element marking itself splitable with no splitter registered for its tag is silently atomic. Capability decides; the attribute alone does nothing.
+          </RT·entry>
           <RT·entry key="Counter names are document global">
             Two elements independently choosing the same counter name will silently share one machine.
           </RT·entry>
@@ -838,7 +872,7 @@
       </RT·section>
 
       <RT·section>
-        <RT·name>Migration Notes</RT·name>
+        <RT·name>Migration notes</RT·name>
         <p>
           The architecture above is the target. This section records what remains to bring the source to it, in a workable order. Each step is mechanical; the ordering matters because later steps assume earlier ones.
         </p>
@@ -870,6 +904,9 @@
           </RT·entry>
           <RT·entry key="9. Depth checking">
             Record the open scope stack per counter name at a cut and assert the two depths on the far side. Currently a mismatch fails silently and produces incorrect numbering rather than an error.
+          </RT·entry>
+          <RT·entry key="Grids are atomic by design">
+            Grids register no splitter and no longer claim to be splitable. A grid taller than a page grows its page rather than being cut, which is the intended model rather than a deficiency. Should grids ever be made divisible, the attribute returns together with a registered splitter, not before it.
           </RT·entry>
           <RT·entry key="10. Simplify selectors">
             Several element files query both the canonical and lowercase spelling of a tag, for example <RT·code>'RT·section, rt·section'</RT·code>. This is unnecessary: HTML type selectors match case-insensitively, so the canonical spelling alone already matches markup the parser has lowercased. Other files in the same source, including the grid, article, and memo layouts, already query the canonical spelling only and work correctly. Bring the remainder into line. Low risk, no behavior change, and worth doing whenever a touched file happens to carry the redundant form.

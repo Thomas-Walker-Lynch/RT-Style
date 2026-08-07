@@ -1,7 +1,7 @@
 /*
   Element/TOC.js
   Processes <RT·TOC> tags.
-  Iterates nested RT_section boundaries, evaluates tree depth, 
+  Iterates nested RT·Section·counter step boundaries, evaluates tree depth, 
   and duplicates the title payload for automated navigation.
 */
 
@@ -23,7 +23,7 @@
 
   RT.task_add('element' ,function(){
     const debug = window.RT.Debug || { log: function(){} };
-    if(debug.log) debug.log('TOC' ,'Generating Table of Contents from expanded section steps');
+    if(debug.log) debug.log('TOC' ,'Generating table of contents from expanded section steps');
     
     const config = window.RT.layout_config || {};
     const TOC_seq = document.querySelectorAll('RT·TOC');
@@ -50,7 +50,7 @@
       }
 
       const sections = [];
-      const all_sections = document.querySelectorAll('RT·counter·step[counter="RT_section"], rt·counter·step[counter="RT_section"]');
+      const all_sections = document.querySelectorAll('RT·counter·step[counter="RT·Section·counter"]');
       
       all_sections.forEach(section => {
         let depth = 0;
@@ -58,7 +58,7 @@
         
         while(curr){
           const tag = (curr.tagName || '').toLowerCase();
-          if(tag === 'rt·counter·step' && curr.getAttribute('counter') === 'RT_section'){
+          if(tag === 'rt·counter·step' && curr.getAttribute('counter') === 'RT·Section·counter'){
             depth++;
           }
           curr = curr.parentElement;
@@ -81,7 +81,7 @@
       container.innerHTML = '';
       const title = document.createElement('div');
       title.className = 'RT·TOC-title';
-      title.textContent = start_level === 1 ? 'Table of Contents' : 'Section Contents';
+      title.textContent = start_level === 1 ? 'Table of contents' : 'Section contents';
       title.style.textAlign = 'center';
       title.style.fontWeight = '600';
       title.style.fontSize = '1.5em';
