@@ -10,3 +10,45 @@ Pass 2 — structure. Sections, counters, TOC, and whatever the book needs that 
 Pass 3 — render and fix. The real test bed. Expect layout faults we haven't seen, since a book exercises depths and lengths the manuals don't.
 
 Pass 4 — copy editing, a chapter at a time. Slowest, most judgement-dependent, and best done once everything else is stable.
+
+
+---
+
+No update tool
+
+-> we will manually update too complex for a script
+
+README.md is stale — it advertises <RT-article>, <RT-title>, <RT-constraint> in hyphen form. RT-constraint doesn't exist in the engine under either spelling.
+
+-> remind me later we will get back to this.
+
+
+<RT·book> is documented but unimplemented. The user manual lists it as a manuscript type alongside article and memo; nothing in the engine references it. For a 4-volume work this is probably the single most consequential gap.
+
+-> ignore
+
+User manual omissions: RT·term-em and RT·neologism-em (both live in term.js, and the book uses term-em 5 times), RT·noop, RT·e, RT·label, RT·tuple/RT·tuple-meta, RT·vector/RT·vector-meta, and the splitable attribute.
+
+-> I am surprised they are not in there, apparently they got dropped, remind me later we will get back to this.
+
+to_pdf.py is dead against current documents — it regex-rewrites <RT-term-em>, <RT-term>, etc. in hyphen form, which matches nothing in a v4/v5 file. to_pdf2.py has the same problem on 8 lines. Two PDF tools with unclear precedence is worth resolving.
+
+-> it has been removed from the project.
+
+
+RT-code-format.html has a broken tag: RT·code>snake_case is missing its opening <. Renders as literal text.
+
+term.js violates its own migration note. The design manual's migration notes say to drop dual-spelling selectors in favor of the canonical form; term.js uses the all-lowercase form exclusively ('rt·term, rt·term-em, …'), as does footnote.js. Worth a consistency sweep.
+
+todo.txt triage. Still open and relevant to the book: paginate's ad-hoc page numbering vs. the counters; unifying footnote/endnote under Note with path keys; the Count/Note capitalization and space-vs-dot key path convention; justified text inserting spaces into inline RT blocks; table types. The theme-name/manifest mismatch item at the top appears already fixed — all three themes' meta.name match their manifest keys and filenames. Close it.
+
+footnote.js is a validation stub (processing lives in the paginator). Fine, but the user manual presents it as a peer of endnote.
+
+Q
+The title. The file is TM-2026.html, titled "Computational Naturalism", and there's a chapter called "Or, does it go the other way? Computational Naturalism". You described this as volume 1 of Tom's Turing Complete Computer Architecture. Is "Computational Naturalism" the volume-1 title, a working title, or a leftover from a reorganization?
+
+RT·chapter — implement or convert? Given <RT·book> is also unimplemented and you have three more volumes coming, I'd lean toward building RT·book and RT·chapter properly in the engine rather than flattening chapters into depth-0 sections. That's more work now and much less later. But it's your call, and the section route gets a readable book faster.
+
+Lists and blockquotes. 29 raw ones in the book. Add RT elements, or accept raw HTML as legitimate for these?
+
+Order of operations. Do you want me to start with the engine gaps (so the migration has a target), or with a mechanical first pass on the book (theme-selector, copyright, the comment, the <pre> blocks) to get it rendering before we touch structure?
