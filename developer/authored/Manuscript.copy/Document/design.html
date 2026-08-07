@@ -863,6 +863,28 @@
       </RT·section>
 
       <RT·section>
+        <RT·name>Code that overruns the measure</RT·name>
+        <p>
+          Code is set in a fixed pitch face and does not wrap, so a line longer than the measure runs off the right edge and is lost. Four responses are available and only two survive contact with print.
+        </p>
+        <p>
+          Reducing the face until the widest line fits lets one long line dictate the size of every block on the page, and changes heights, which feeds back into pagination. Scrolling the block works on a screen and fails on paper, and fails <em>silently</em>, which is the property this engine works hardest to avoid. Having the author shorten the line gives the best result of all, since no engine chooses a break as well as the person who wrote the code, but it is not something the engine can do. Wrapping with a continuation mark works identically on screen and on paper and loses nothing.
+        </p>
+        <p>
+          The default is therefore to wrap, following the compositor's convention: mark the broken line so the reader knows it continues, and set the carried portion <strong>flush right</strong>. Indentation carries much of the meaning in a listing, and a carried fragment beginning at the left margin reads as a statement in its own right. Pushed to the right margin it cannot be mistaken for one.
+        </p>
+        <p>
+          A fixed pitch face makes the arithmetic exact rather than a search: one character width divides into the measure and gives the columns available.
+        </p>
+        <p>
+          <strong>An overflow is reported as well as repaired.</strong> A line long enough to need carrying is usually a line its author would rather rewrite, and a wrapped listing is a compromise even when it is a correct one. The report names the columns available, the longest line, and the first line to overflow, so the source can be found without hunting. This is what turns the best strategy — the author fixing the line — from something noticed by eye into a worklist, and it gives the same guarantee to whatever renders the document to paper.
+        </p>
+        <p>
+          A fixed pitch face also reads larger than a proportional one at the same size, since its widest glyphs set the measure. The tradition is a point or two smaller, eleven against twelve or sometimes ten. One correction is made for the face and a second for the impression.
+        </p>
+      </RT·section>
+
+      <RT·section>
         <RT·name>Widows and orphans</RT·name>
         <p>
           The engine carries no widow or orphan control for prose. A short closing paragraph is never held back from a page boundary, and a paragraph is never split, so a page break falls wherever the measurements put it.

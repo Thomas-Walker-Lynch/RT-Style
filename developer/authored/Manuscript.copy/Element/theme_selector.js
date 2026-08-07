@@ -38,7 +38,21 @@
       container.style.color = 'white';
       container.style.fontFamily = 'sans-serif';
 
-      let html_content = `<b>Theme Selection</b><br>`;
+      /* A widget, not part of the document.
+
+         It overlaps the text once the window is narrow enough to fit the page,
+         and it has nothing left to say once a theme has been chosen. So it can
+         be dismissed. Nothing is persisted: a reload brings it back, which is
+         the behaviour wanted for a control that is occasionally needed and
+         usually not. */
+      let html_content = `
+        <div style="display:flex; align-items:baseline; gap:0.75rem;">
+          <b style="flex:1">Theme selection</b>
+          <span class="RT·theme-dismiss"
+                title="Dismiss until reload"
+                style="cursor:pointer; opacity:0.6; font-size:1.1em; line-height:1;"
+                >&times;</span>
+        </div>`;
       
       if (available_theme_keys.length === 0) {
         html_content += `<small>No themes found in library.</small>`;
@@ -69,6 +83,13 @@
           location.reload(); 
         }
       });
+
+      const dismiss = container.querySelector('.RT·theme-dismiss');
+      if(dismiss){
+        dismiss.addEventListener('click' ,function(){ container.remove(); });
+        dismiss.addEventListener('mouseenter' ,function(){ dismiss.style.opacity = '1'; });
+        dismiss.addEventListener('mouseleave' ,function(){ dismiss.style.opacity = '0.6'; });
+      }
 
       el.replaceWith(container);
     });
