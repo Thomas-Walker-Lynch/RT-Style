@@ -832,6 +832,32 @@
       </RT·section>
 
       <RT·section>
+        <RT·name>Composing labels</RT·name>
+        <p>
+          A label in a grid involves two decisions that are easily mistaken for one. How the lines of a label sit relative to each other is a property of the label. Where that block of lines sits within its cell is a property of the placement. Answering both with a single alignment on the cell gives ragged text pressed against an edge, which reads as though the words were spilled into the corner rather than set there.
+        </p>
+        <p>
+          The label is therefore composed as an object in its own right, in a box sized to its content and capped at the width of the cell, with its lines set flush left because that is how prose is read. That box is then placed: against the data for a row heading, so the label and the thing it labels meet; centred over the column for a column heading or a datum. It is the convention of a drawing, where a text label is made to look right on its own and then attached.
+        </p>
+        <p>
+          Line lengths within the label are evened so that no line is left holding a single stranded word, which is what makes a narrow heading column look broken. Where a browser does not implement the evening, the text still wraps and only the evenness is lost.
+        </p>
+      </RT·section>
+
+      <RT·section>
+        <RT·name>Widows and orphans</RT·name>
+        <p>
+          The engine carries no widow or orphan control for prose. A short closing paragraph is never held back from a page boundary, and a paragraph is never split, so a page break falls wherever the measurements put it.
+        </p>
+        <p>
+          The single exception is headings. When a page is emitted, trailing headings are carried forward with the content they introduce, so a heading is never stranded at the foot of a page above content that has moved on without it.
+        </p>
+        <p>
+          This is worth stating because the absence is easily mistaken for its presence. A page whose last paragraph would have been widowed had it split, and which instead runs long, looks like a deliberate accommodation and is not one. Before crediting such a page to judgement the engine does not exercise, check the measurements: a page running long is more often a height reported short than a boundary chosen well.
+        </p>
+      </RT·section>
+
+      <RT·section>
         <RT·name>Debugging</RT·name>
         <p>
           The engine reports through <RT·code>RT.Debug</RT·code>, a token filtered logger. Every message carries a token naming the area it concerns. <RT·code>log</RT·code> and <RT·code>warn</RT·code> emit only when their token is in the active set; <RT·code>error</RT·code> emits always, since an error nobody asked to see is still an error.
@@ -935,6 +961,9 @@
           </RT·entry>
           <RT·entry key="A page fragment must make progress in height ,not merely in count">
             Splitting. Zero height children — make tags, snapshots, whitespace — are not progress. A fragment holding several of them and nothing else yields a page carrying only its own page number.
+          </RT·entry>
+          <RT·entry key="Measure at the width content will occupy">
+            Any measuring container. A page carries padding, so its content box is narrower than the article. Measuring at the article's width lets text wrap less than it will when rendered, reporting every height short, and pages then run long with nothing to indicate that anything went wrong.
           </RT·entry>
           <RT·entry key="A measurement must not depend on ambient width">
             Anything measured in a container rather than in place. A height that follows the width available is not a property of the content, and it changes when a developer panel is docked or a window resized. Resolve such widths once and record them, so that probe and fragment lay out as the original did.

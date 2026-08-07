@@ -83,7 +83,9 @@
        let p_style = page_seq[i].style;
        p_style.position = "relative";
        p_style.display = "block";
-       p_style.padding = "3rem";
+       // Single source of truth: the paginator measures against this same
+       // value, so a page's content box and the measuring container agree.
+       p_style.padding = ((RT.config && RT.config.page && RT.config.page.padding) || "3rem");
        p_style.margin = "1.25rem auto";
        p_style.backgroundColor = conf.surface_0;
        p_style.boxShadow = "0 0 0.625rem " + conf.brand_primary;

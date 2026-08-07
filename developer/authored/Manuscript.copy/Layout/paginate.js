@@ -16,6 +16,15 @@
   const page_conf = (RT.config && RT.config.page) ? RT.config.page : {};
   const page_height_limit = page_conf.height_limit || 1000;
 
+  /* Pages carry padding, so the width available to content inside a page is
+     narrower than the article. Measuring at the article's width lets text wrap
+     less than it will when rendered, which reports every height short and makes
+     the paginator believe content fits when it does not. Pages then run long,
+     with no indication that anything went wrong.
+
+     One value, read by both the paginator and whatever applies the geometry. */
+  const page_padding = page_conf.padding || '3rem';
+
   /* ---------------------------------------------------------------
      Pagination tracing.
 
@@ -92,11 +101,38 @@
       measure_container = temp;
       return temp;
     }
+    /* Measure at the width content will actually occupy: a page's content box,
+       not the article. The probe carries the page padding so the arithmetic is
+       done by the browser in whatever units the padding was written in. */
+    /* The probe stays in flow. An absolutely positioned box resolves a
+       percentage width against its nearest positioned ancestor ,which the
+       article is not ,so it would measure against the viewport instead — wider
+       than the article ,not narrower ,and every height would come back shorter
+       still. In flow ,100% is the article's content width ,which is what is
+       wanted. It is removed before anything else runs. */
+    const probe = document.createElement('div');
+    probe.style.visibility = 'hidden';
+    probe.style.width = '100%';
+    probe.style.height = '0';
+    probe.style.overflow = 'hidden';
+    probe.style.boxSizing = 'border-box';
+    probe.style.padding = page_padding;
+    article.appendChild(probe);
+    const probe_style = window.getComputedStyle(probe);
+    const content_width = probe.clientWidth
+                        - parseFloat(probe_style.paddingLeft || 0)
+                        - parseFloat(probe_style.paddingRight || 0);
+    article.removeChild(probe);
+
     const container = document.createElement('div');
     const article_style = window.getComputedStyle(article);
     container.style.visibility = 'hidden';
     container.style.position = 'absolute';
-    container.style.width = article_style.width;
+    container.style.width = (content_width > 0 ? content_width + 'px' : article_style.width);
+
+    RT.Debug.log('paginate' ,'measuring at page content width '
+      + (content_width > 0 ? content_width + 'px' : article_style.width)
+      + ' (article ' + article_style.width + ' ,page padding ' + page_padding + ')');
     container.style.fontFamily = article_style.fontFamily;
     container.style.fontSize = article_style.fontSize;
     container.style.lineHeight = article_style.lineHeight;

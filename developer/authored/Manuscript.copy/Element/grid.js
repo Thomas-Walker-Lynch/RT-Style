@@ -21,6 +21,37 @@
     }
   }
 
+  /* Compose the label, then place it.
+
+     Aligning text inside a cell conflates two separate decisions. How the lines
+     of a label sit relative to one another is a property of the label; where
+     that block of lines sits within its cell is a property of the placement.
+     Ragged text pushed hard against the right edge of a cell is the result of
+     answering both with one text-align, and it reads as though the words were
+     spilled into the corner rather than set.
+
+     The label is therefore given its own box, sized to its content and capped at
+     the width of the cell. The lines are set flush left within that box, which
+     is how prose is read, and the box is then placed in the cell — against the
+     data for a row heading, centred for a datum. It is the drawing convention:
+     compose the label, then attach it.
+
+     text-wrap: balance evens the line lengths so that no line is left holding a
+     single stranded word. Where the browser does not implement it the text still
+     wraps, so nothing is lost beyond the evenness.
+  */
+  function compose_label(el ,place){
+    const inner = document.createElement('div');
+    inner.className = 'RT_grid_label';
+    inner.style.display = 'inline-block';
+    inner.style.textAlign = 'left';
+    inner.style.textWrap = 'balance';
+    inner.style.maxWidth = '100%';
+    while(el.firstChild) inner.appendChild(el.firstChild);
+    el.appendChild(inner);
+    el.style.textAlign = place;
+  }
+
   const apply_style = function(el, cell, is_transposed, options, config) {
     el.style.padding = '0.25rem 0.5rem';
     el.style.margin = '0';
@@ -54,9 +85,17 @@
       }
     }
 
-    if (type === 'data' || type === 'x-label') {
-      el.style.textAlign = 'center';
+    /* Row headings sit against the data they label; column headings and data
+       centre over their column. In every case the label's own lines are flush
+       left inside its box. */
+    if (type === 'y-label') {
+      compose_label(el ,'right');
+    } else if (type === 'corner') {
+      compose_label(el ,'right');
+    } else if (type === 'x-label' || type === 'data') {
+      compose_label(el ,'center');
     }
+
     
     if ((is_transposed ? type === 'x-label' : type === 'y-label') || type === 'corner') {
       el.style.textAlign = 'right';
@@ -167,7 +206,24 @@
   function render_model_html_dictionary(container_node, grid_state, options, config) {
     const wrapper = document.createElement('div');
     wrapper.style.display = 'grid';
-    wrapper.style.gridTemplateColumns = 'max-content auto';
+    /* Recalcitrant wrapping in the key column.
+
+       max-content makes the key column as wide as its longest key and refuses
+       to wrap at any width. One long key then takes most of the table and the
+       definitions are squeezed into a ribbon, which inverts the balance the
+       reader expects: the column carrying least information takes most room.
+
+       fit-content(limit) resolves to min(max-content ,max(min-content ,limit)).
+       Keys keep their preferred width while they are short ,which is the common
+       case and the one worth optimizing for ,and a key too long for the ceiling
+       wraps rather than widening the column past it. Reluctant to wrap, not
+       unwilling — the whole of the intent is in that distinction.
+
+       The ceiling is a proportion rather than a length so it holds across page
+       widths and themes. */
+    const key_ceiling = (window.RT.config && window.RT.config.grid
+                         && window.RT.config.grid.key_max_width) || '38%';
+    wrapper.style.gridTemplateColumns = `fit-content(${key_ceiling}) 1fr`;
     wrapper.style.width = 'fit-content';
     wrapper.style.maxWidth = '100%';
     wrapper.className = `RT_grid_container ${options.css_class || ''}`;
