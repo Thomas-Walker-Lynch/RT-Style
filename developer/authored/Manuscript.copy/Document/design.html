@@ -465,6 +465,44 @@
         </RT·section>
 
         <RT·section>
+          <RT·name>A Break Between Siblings Splits the Parent</RT·name>
+          <p>
+            A break does not always fall inside a scope. It may fall in the gap between two sibling scopes, after the first has closed and before the second has opened. <strong>In that case neither sibling is cut, and neither should be soft closed. The element that spans the boundary is the parent.</strong>
+          </p>
+          <p>
+            This follows from the chain view rather than being a separate rule. A position between two siblings has those siblings nowhere in its enclosing chain; the chain runs from the gap upward through the parent. Soft closing a sibling that merely happens to precede the gap suspends a scope that was never cut.
+          </p>
+          <p>
+            When the parent is itself a step scope, it is the parent that is soft closed and continuation opened, its children distributed between the two fragments. When the parent is not a scope, as with top level sections whose parent is the article, nothing needs suspending at all: the counter walk traverses the whole document tree after pagination and is indifferent to page boundaries, so it enters and exits each intact scope in turn and the numbering follows without any protocol.
+          </p>
+          <p>
+            The practical consequence for an implementation is that <strong>a splitter must be engaged only when the break is strictly interior to the element</strong>. Asking an element to split itself when the break falls after it is asking the wrong question, and an element obliging by marking itself continued produces a scope that is never resumed and never exits.
+          </p>
+          <p>
+            This was the cause of a real defect. Sibling top level sections numbered one and then one point one: the first section was handed to the splitter although the break fell after it, was marked continued, and produced no remainder. Its exit was therefore suppressed with no continuation fragment to resume it, the scope stayed open, and the next sibling entered from status <RT·code>preamble</RT·code> and indented where it should have incremented. The guard is to test whether the element fits in the space remaining before invoking its splitter, and to treat an interior forced break as the one case that requires splitting an element that would otherwise fit.
+          </p>
+          <p>
+            A second guard belongs inside the splitter itself, as an invariant rather than as the primary fix: the continuation attributes should be written only once a remainder is known to exist. A fragment marked continued with no matching continuation fragment is not a split, it is a leak.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Nested Cuts of One Counter</RT·name>
+          <p>
+            Two scopes of the same counter may be cut at a single boundary: a section and a subsection within it, both spanning the break. The far side then carries two make tags bearing <RT·code>continues</RT·code>, one per suspension, and each legitimately replaces the live machine for that counter name as it restores its own saved state.
+          </p>
+          <p>
+            The consequence for implementation is that <strong>a scope must record which counter it will exit, not which machine object.</strong> Holding a reference taken at enter time applies the exit to a machine that a nested restoration has since displaced; the live machine never receives that exit, and its list is left one level too deep. The next sibling then increments within the stale level rather than at its own, giving one point two where two was meant.
+          </p>
+          <p>
+            Resolving the counter name at exit time applies the exit to whichever machine is current. Where nothing displaces the entry the two are identical, which is why the fault appears only under nested cuts and is invisible to any test that splits a single scope.
+          </p>
+          <p>
+            This is the same hazard as the rule against holding references to snapshots, in a different guise: the live machine is a moving target, and anything that means to act on the current one must look it up when it acts.
+          </p>
+        </RT·section>
+
+        <RT·section>
           <RT·name>Breaks Migrate Outward</RT·name>
           <p>
             The reframing that makes the whole thing simple: <strong>an impermeable ancestor does not forbid a break, it relocates one.</strong> If the break cannot occur inside that ancestor, it occurs before it, and the ancestor moves whole to the next page.

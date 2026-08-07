@@ -269,10 +269,28 @@
       return { first: null ,rest: el ,firstHeight: 0 };
     }
 
+    /* Decide whether a remainder exists BEFORE marking the fragment.
+
+       A fragment marked 'continued' is soft closed: the counter walk suppresses
+       its exit and parks the machine under the split id, to be resumed by the
+       matching continuation fragment. If no remainder is produced there is no
+       continuation fragment ,so the scope would be suspended permanently ,its
+       exit never running. The next sibling step would then enter from status
+       'preamble' rather than 'between' ,indenting instead of incrementing.
+
+       This path is reached whenever a splitable element fits entirely ,which is
+       the common case: the caller invokes the splitter for every splitable
+       element without first testing whether it overflows.
+    */
+    const has_rest = (best_count < children.length) || !!split_child_result || forced_break;
+
     const first = el.cloneNode(false);
-    first.setAttribute('continued' ,'true');
     const split_id = 'split_' + Math.random().toString(36).substr(2 ,9);
-    first.setAttribute('split-id' ,split_id);
+
+    if(has_rest){
+      first.setAttribute('continued' ,'true');
+      first.setAttribute('split-id' ,split_id);
+    }
     
     for(let i = 0; i < best_count; i++){
       first.appendChild(children[i].cloneNode(true));
@@ -280,7 +298,7 @@
     if(split_child_result) first.appendChild(split_child_result.first);
 
     let rest = null;
-    if(best_count < children.length || split_child_result || forced_break){
+    if(has_rest){
       rest = el.cloneNode(false);
       rest.setAttribute('continuation' ,'true');
       
@@ -362,6 +380,35 @@
 
         if(splitter){
           const remaining = page_height_limit - current_h;
+
+          /* A break belongs to this element only if it falls strictly inside it.
+
+             When the element fits in the space remaining ,any break falls after
+             it — in the gap between this scope and the next sibling — and that
+             gap belongs to the parent ,not to this element. Neither sibling is
+             cut ,so neither should be soft closed; the counter walk simply
+             enters and exits each intact scope in turn ,across the page
+             boundary ,and the numbering follows.
+
+             Splitting here regardless is what produced sibling top level
+             sections numbered 1 then 1.1: the first was marked continued ,its
+             exit suppressed ,and with no remainder there was no continuation
+             fragment to resume it. The scope stayed open ,so the next sibling
+             entered from 'preamble' and indented instead of incrementing.
+
+             An interior forced break still requires splitting even when the
+             element fits ,since the break is genuinely inside it.
+          */
+          const el_h = get_el_height(el);
+          const has_interior_break = !!el.querySelector('RT·page-break, RT·page-break-primitive');
+
+          if(el_h <= remaining && !has_interior_break){
+            current_batch_seq.push(el);
+            current_h += el_h;
+            i++;
+            continue;
+          }
+
           const { first ,rest ,firstHeight } = splitter(remaining);
 
           if(first){

@@ -351,7 +351,20 @@
       if(node.nodeType !== Node.ELEMENT_NODE) return;
 
       const tag = (node.tagName || '').toLowerCase();
-      let machine_to_exit = null;
+      /* The counter NAME is captured ,not the machine object.
+
+         A nested continuation legitimately replaces ns.dict_instance[name]: the
+         inner make tag carrying 'continues' restores its own saved state over
+         the live entry. Holding an object reference from enter time would then
+         apply this scope's exit to a machine that is no longer current ,and the
+         live machine would never receive the exit. Two scopes of one counter cut
+         at the same boundary is exactly that case.
+
+         Resolving the name at exit time applies the exit to whichever machine is
+         current. Where nothing replaces the entry ,this is identical to holding
+         the reference.
+      */
+      let counter_to_exit = null;
 
       if(tag === 'rt·counter·make'){
         const name = node.getAttribute('counter');
@@ -405,7 +418,7 @@
               active_machine.count.set_name(step_name);
             }
           }
-          machine_to_exit = active_machine;
+          counter_to_exit = name;
         }
       }else if(tag === 'rt·counter·snapshot'){
         const counter_name = node.getAttribute('counter');
@@ -428,7 +441,10 @@
         child = child.nextElementSibling;
       }
 
-      if(machine_to_exit){
+      if(counter_to_exit){
+        // Resolve now ,not at enter time: a nested continuation may have
+        // replaced the live machine for this counter.
+        const machine_to_exit = ns.dict_instance[counter_to_exit];
         const is_continued = node.getAttribute('continued') === 'true';
         if(!is_continued){
           machine_to_exit.exit();
@@ -436,6 +452,15 @@
           const split_id = node.getAttribute('split-id');
           if(split_id){
             ns.dict_serial[split_id] = machine_to_exit.clone();
+          }else{
+            /* A soft close with no split id cannot be resumed: nothing names the
+               parked state ,so no continuation fragment can restore it and the
+               scope's exit never runs. Report it and exit normally rather than
+               suspending the scope permanently. */
+            RT.Debug.error('counter'
+              ,"soft close with no split-id on counter '" + node.getAttribute('counter')
+              + "'. Scope cannot be resumed; exiting normally.");
+            machine_to_exit.exit();
           }
         }
       }
