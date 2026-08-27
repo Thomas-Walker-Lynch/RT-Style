@@ -176,6 +176,7 @@
     container.style.fontSize = article_style.fontSize;
     container.style.lineHeight = article_style.lineHeight;
     container.style.fontWeight = article_style.fontWeight;
+    container.style.contain = 'layout paint style';
     document.body.appendChild(container);
     measure_container = container;
     return container;

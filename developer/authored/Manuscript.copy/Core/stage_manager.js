@@ -201,7 +201,10 @@
      about not knowing how long the work will take ,and it is always moving.
   --------------------------------------------------------------- */
 
-  const progress = { panel: null ,time: null ,bar: null ,start: 0 ,timer: 0 };
+  const progress = {
+    panel: null ,time: null ,bar: null ,log: null
+    ,line: null ,line_name: null ,line_phase: '' ,start: 0 ,timer: 0
+  };
 
   // Every animation this file starts ,so each is honoured or skipped together.
   function animate(el ,frame_seq ,timing){
@@ -213,6 +216,20 @@
   function style_write(el ,dict){
     for(const key in dict) el.style[key] = dict[key];
     return el;
+  }
+
+  // Three dots that rise and fall in turn. Used by the Loading line and by
+  // whichever phase is currently running.
+  function dot_seq_append(parent){
+    for(let i = 0; i < 3; i++){
+      const dot = document.createElement('span');
+      dot.textContent = ' .';
+      style_write(dot ,{ opacity: '0.15' });
+      parent.appendChild(dot);
+      animate(dot ,[{ opacity: 0.15 } ,{ opacity: 0.9 } ,{ opacity: 0.15 }]
+        ,{ duration: 1400 ,delay: i * 200 ,iterations: Infinity });
+    }
+    return parent;
   }
 
   function progress_make(){
@@ -234,15 +251,7 @@
     const label = document.createElement('div');
     style_write(label ,{ letterSpacing: '0.08em' });
     label.appendChild(document.createTextNode('Loading'));
-
-    const dot_seq = [];
-    for(let i = 0; i < 3; i++){
-      const dot = document.createElement('span');
-      dot.textContent = ' .';
-      style_write(dot ,{ opacity: '0.15' });
-      label.appendChild(dot);
-      dot_seq.push(dot);
-    }
+    dot_seq_append(label);
 
     /* The dimming is in the track's own colour ,not in an opacity over it. An
        opacity establishes a group ,and the bar is inside it ,so a translucent
@@ -270,19 +279,36 @@
       fontSize: '0.85rem' ,color: '#8f8f8f' ,fontVariantNumeric: 'tabular-nums'
     });
 
+    /* The phase log ,on the screen rather than in the console.
+
+       A reader who reports that a book will not open sends a photograph of
+       what is in front of them ,not a console transcript ,and the console is
+       no help in any case: the debug tokens are read when the pipeline runs ,
+       so enabling one afterwards is too late to have recorded anything. A line
+       per phase ,left where anybody can see it ,makes the screenshot the
+       report. The phase that was running when the picture was taken is the one
+       still carrying its dots.
+
+       Left aligned inside a centred block ,so the times form a column rather
+       than a ragged edge. */
+    const log = document.createElement('div');
+    style_write(log ,{
+      marginTop: '0.4rem' ,textAlign: 'left'
+      ,fontSize: '0.8rem' ,color: '#6f6f6f'
+      ,fontVariantNumeric: 'tabular-nums' ,lineHeight: '1.5'
+      ,minWidth: 'min(18rem ,60vw)'
+    });
+
     panel.appendChild(label);
     panel.appendChild(track);
     panel.appendChild(time);
+    panel.appendChild(log);
 
     /* Raised on a delay ,so a book that formats quickly never shows it. In the
        animation and not in a timer ,for the same reason as everything else
        here. */
     animate(panel ,[{ opacity: 0 } ,{ opacity: 1 }]
       ,{ duration: 300 ,delay: 400 ,easing: 'ease-out' ,fill: 'both' });
-
-    dot_seq.forEach((dot ,i) => animate(dot
-      ,[{ opacity: 0.15 } ,{ opacity: 0.9 } ,{ opacity: 0.15 }]
-      ,{ duration: 1400 ,delay: i * 200 ,iterations: Infinity }));
 
     progress.bar_animation = animate(bar
       ,[{ transform: 'scaleX(0)' } ,{ transform: 'scaleX(0.96)' }]
@@ -295,7 +321,39 @@
     progress.panel = panel;
     progress.time = time;
     progress.bar = bar;
+    progress.log = log;
     return panel;
+  }
+
+  /* A phase opens a line and keeps it until it closes. While it is open the
+     line carries the task it has reached ,so a stall is pinned to one task
+     rather than to a whole phase. */
+  function progress_phase_begin(phase_name){
+    if(!progress.log) return;
+    const line = document.createElement('div');
+    const name = document.createElement('span');
+    name.textContent = phase_name;
+    line.appendChild(name);
+    progress.line = line;
+    progress.line_name = name;
+    progress.line_phase = phase_name;
+    progress.log.appendChild(line);
+    dot_seq_append(line);
+  }
+
+  function progress_task(index ,count){
+    if(!progress.line_name) return;
+    progress.line_name.textContent = count > 1
+      ? progress.line_phase + '  ' + index + '/' + count
+      : progress.line_phase;
+  }
+
+  function progress_phase_end(phase_name ,seconds){
+    if(!progress.line) return;
+    progress.line.textContent = phase_name + '  ' + seconds.toFixed(2) + ' s';
+    style_write(progress.line ,{ color: '#5a5a5a' });
+    progress.line = null;
+    progress.line_name = null;
   }
 
   function progress_raise(){
@@ -303,14 +361,19 @@
     progress.start = performance.now();
 
     const attempt = function(){
-      if(!is_layout_locked) return;
+      if(!is_layout_locked || progress.panel) return;
       if(document.body){
         document.body.appendChild(progress_make());
         return;
       }
       requestAnimationFrame(attempt);
     };
-    requestAnimationFrame(attempt);
+
+    /* Immediately where there is already a body — which is the case by the
+       time the pipeline starts — and on a frame otherwise ,which is the case
+       during parsing. Waiting for a frame in both cases lost the first phase's
+       line ,the panel not yet existing when that phase opened it. */
+    attempt();
   }
 
   /* The count advances at phase boundaries and not within them ,since a phase
@@ -329,6 +392,9 @@
     progress.time = null;
     progress.bar = null;
     progress.bar_animation = null;
+    progress.log = null;
+    progress.line = null;
+    progress.line_name = null;
     if(progress.timer){ clearTimeout(progress.timer); progress.timer = 0; }
     if(!panel || !panel.parentNode) return;
 
@@ -464,7 +530,27 @@
     return out;
   }
 
-  function run_phase(phase_name){
+  /* One task per turn ,as the phases are run one per turn.
+
+     The schedule already states that tasks within a phase are mutually
+     independent — it is the reason the shuffle token exists — so handing the
+     thread back between them is safe by construction rather than by hope.
+
+     What it buys is that the elapsed count advances at every task rather than
+     at every phase. It stood at six seconds and then leapt to forty two ,
+     because there were two yields in the whole run and the reader was looking
+     at a number sampled before most of the work began.
+
+     It does not buy a count that moves during a task. Nothing can: a task
+     holds the thread for its whole length and the browser cannot paint while
+     it does. Where one task carries most of a long load the count will still
+     sit. The bar keeps moving regardless ,being animated off the main thread ,
+     which is why the bar and not the number is what the panel leans on.
+
+     Each task is timed under the stage token ,which is how the task carrying
+     most of a long load is identified rather than guessed at.
+  */
+  function run_phase(phase_name ,when_done){
     const debug = window.RT.Debug;
     let task_seq = window.RT.Task[phase_name];
 
@@ -473,10 +559,35 @@
       debug.log('stage' ,'phase ' + phase_name + ': task order shuffled');
     }
 
-    task_seq.forEach(task_fn => {
-      try{ task_fn(); }
-      catch(e){ debug.error('stage' ,phase_name + ' task failed: ' + e); }
-    });
+    let index = 0;
+
+    /* The task is announced ,then the thread is handed back so the
+       announcement is painted ,and only then is the task run. Announcing after
+       the fact would name the task that has finished ,which is the one thing
+       nobody needs to know: a screenshot of a book that will not open should
+       name the task it is inside. */
+    const next = function(){
+      if(index >= task_seq.length){ when_done(); return; }
+
+      progress_task(index + 1 ,task_seq.length);
+      progress_report();
+
+      next_frame(function(){
+        const task_fn = task_seq[index++];
+        const task_start = performance.now();
+
+        try{ task_fn(); }
+        catch(e){ debug.error('stage' ,phase_name + ' task failed: ' + e); }
+
+        debug.log('stage' ,'  ' + phase_name + ' task ' + index + ' of '
+          + task_seq.length + ': '
+          + ((performance.now() - task_start) / 1000).toFixed(2) + ' s');
+
+        next();
+      });
+    };
+
+    next();
   }
 
   function resolve_scroll_target(){
@@ -532,27 +643,28 @@
       const phase_name = window.RT.Phase[index++];
       progress_report();
 
+      progress_phase_begin(phase_name);
+
       next_frame(function(){
         window.RT.Debug.log('stage' ,'phase: ' + phase_name);
-
-        /* Per phase timing ,under the existing token. Forty seconds spent
-           somewhere is not a thing to guess at ,and the phase boundaries are
-           already here to be measured between. Costs two clock reads when the
-           token is off. */
         const phase_start = performance.now();
-        run_phase(phase_name);
-        window.RT.Debug.log('stage' ,'  ' + phase_name + ' took '
-          + ((performance.now() - phase_start) / 1000).toFixed(2) + ' s');
 
-        /* The reader is let in here ,and the remaining phases go on behind
-           them. Scroll is settled first ,or the reader would be shown the top
-           of the book and then moved. */
-        if(phase_name === window.RT.Phase_reveal && is_layout_locked){
-          progress_end();
-          resolve_scroll_target();
-        }
+        run_phase(phase_name ,function(){
+          const phase_seconds = (performance.now() - phase_start) / 1000;
+          window.RT.Debug.log('stage' ,phase_name + ' total '
+            + phase_seconds.toFixed(2) + ' s');
+          progress_phase_end(phase_name ,phase_seconds);
 
-        step();
+          /* The reader is let in here ,and the remaining phases go on behind
+             them. Scroll is settled first ,or the reader would be shown the
+             top of the book and then moved. */
+          if(phase_name === window.RT.Phase_reveal && is_layout_locked){
+            progress_end();
+            resolve_scroll_target();
+          }
+
+          step();
+        });
       });
     };
 
