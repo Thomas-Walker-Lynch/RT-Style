@@ -13,6 +13,75 @@
 
   ns.tags = ['RT·section'];
 
+  /* Series: one counter per division of the book.
+
+     A single counter across the whole manuscript numbers the preface as
+     chapter one and starts the appendices wherever the last chapter left off.
+     The divisions of a book are not one sequence and never were ,so they do
+     not share a counter.
+
+     A series names a counter ,the styles its levels are set in ,and the words
+     that precede a number at each level. The word list mirrors the counter
+     nesting and its last entry repeats ,so {Chapter ,Section} reads 'Chapter 3'
+     at the top and 'Section 3.2.1' at every level below the first.
+
+     The table is open. An author wanting a numbered part ,or a second
+     appendix sequence ,adds an entry before the element phase runs:
+
+       RT.Element.Section.series.part =
+         { counter: 'RT·Section·counter·part'
+           ,style: 'Roman' ,prefix: 'Part' ,on_first_step: 'I' };
+
+     and writes <RT·section series="part">. Sections nested inside a section
+     inherit its series ,so the attribute is written once at the top of a
+     division and not repeated.
+  */
+  ns.series = {
+    body: {
+      counter: 'RT·Section·counter'
+      ,style: 'CountingNumber'
+      ,prefix: 'Chapter,Section'
+      ,on_first_step: '0'
+    }
+    ,front: {
+      counter: 'RT·Section·counter·front'
+      ,style: 'roman'
+      ,prefix: 'Front Matter,Front Matter Section'
+      ,on_first_step: 'i'
+    }
+    ,appendix: {
+      counter: 'RT·Section·counter·appendix'
+      ,style: 'Alpha,CountingNumber'
+      ,prefix: 'Appendix,Appendix Section'
+      ,on_first_step: 'A'
+    }
+  };
+
+  ns.series_default = 'body';
+
+  /* The series is written on the outermost section of a division. Read it from
+     the nearest ancestor that has one.
+
+     Sections are expanded in document order ,so by the time a nested section is
+     reached its ancestors are already steps carrying data-RT-series. Both forms
+     are checked ,since an ancestor may be either. */
+  const resolve_series = function(section){
+    let curr = section;
+    while(curr){
+      const declared = curr.getAttribute && (curr.getAttribute('series')
+                                          || curr.getAttribute('data-RT-series'));
+      if(declared){
+        if(ns.series[declared]) return declared;
+        window.RT.Debug.error('section'
+          ,"unknown section series '" + declared + "'. Known series: "
+          + Object.keys(ns.series).join(' ,') + ". Using '" + ns.series_default + "'.");
+        return ns.series_default;
+      }
+      curr = curr.parentElement;
+    }
+    return ns.series_default;
+  };
+
   const apply_style = function(title_node ,depth ,config){
     const base_size = 2.25;
     const size = Math.max(1.1 ,base_size - (depth * 0.35));
@@ -48,26 +117,38 @@
     if(section_seq.length === 0) return;
 
     const article = document.querySelector('RT·article, RT·memo');
-    const counter_name = 'RT·Section·counter';
 
-    // Check the global dictionary for existence rather than traversing the DOM
-    if(article && !U.Registry.has(ns, counter_name)){
-      const make = document.createElement('RT·counter·make');
-      make.setAttribute('counter' ,counter_name);
-      make.setAttribute('style' ,'CountingNumber');
-      make.setAttribute('mode' ,'scoped');
-      make.setAttribute('on-first-step' ,'0');
-      article.insertBefore(make ,article.firstChild);
-      
-      // Register the physical node and its attributes into the global namespace
-      U.Registry.register_make(ns, counter_name, make, ['splitable']);
-    }
+    /* One make tag per series ,emitted the first time that series is used. A
+       series never referenced costs nothing and leaves no counter behind. */
+    const counter_of = function(series_name){
+      const spec = ns.series[series_name];
+      const counter_name = spec.counter;
+
+      if(article && !U.Registry.has(ns ,counter_name)){
+        const make = document.createElement('RT·counter·make');
+        make.setAttribute('counter' ,counter_name);
+        make.setAttribute('style' ,spec.style || 'CountingNumber');
+        make.setAttribute('mode' ,'scoped');
+        make.setAttribute('on-first-step' ,spec.on_first_step !== undefined ? spec.on_first_step : '0');
+        if(spec.prefix) make.setAttribute('prefix' ,spec.prefix);
+        article.insertBefore(make ,article.firstChild);
+
+        // Register the physical node and its attributes into the global namespace
+        U.Registry.register_make(ns ,counter_name ,make ,['splitable']);
+      }
+
+      return counter_name;
+    };
 
     let section_idx = 0;
 
     section_seq.forEach(section => {
+      const series_name = resolve_series(section);
+      const spec = ns.series[series_name];
+      const counter_name = counter_of(series_name);
+
       // Utilize the abstracted structural depth utility
-      let depth = U.Dom.get_structural_depth(section, counter_name);
+      let depth = U.Dom.get_structural_depth(section ,counter_name);
 
       if(depth === 0){
         if(!section.previousElementSibling?.tagName?.toLowerCase().includes('page-break')){
@@ -80,10 +161,16 @@
       
       const step = document.createElement('RT·counter·step');
       step.setAttribute('counter' ,counter_name);
+
+      /* The series travels with the step ,so nested sections can read it and
+         so the contents list can gather every division without knowing which
+         counters exist. */
+      step.setAttribute('data-RT-series' ,series_name);
+      step.setAttribute('data-RT-section' ,'true');
       
       // Query the global dictionary for the splitable flag
-      if(U.Registry.has(ns[counter_name], 'splitable')) {
-         step.setAttribute('splitable', 'true');
+      if( U.Registry.has(ns[counter_name] ,'splitable') ){
+         step.setAttribute('splitable' ,'true');
       }
       
       step.id = snap_id; 
@@ -96,8 +183,17 @@
       const title_node = document.createElement('div');
       title_node.className = 'RT·section-title';
 
+      /* Marked as a heading ,for the paginator's widow control. A title is a
+         composed division rather than an <h1> ,so nothing about its tag says
+         what it is; the mark says it. */
+      title_node.setAttribute('data-RT-heading' ,'true');
+
       const read_count = document.createElement('RT·counter·read');
       read_count.setAttribute('snapshot' ,snap_id);
+      /* Prefix then number ,read in one tag: 'Appendix B' ,'Section 2.4'. The
+         word is chosen by the counter from its own nesting depth ,so a section
+         moved to another level is relabelled without being rewritten. */
+      if(spec.prefix) read_count.setAttribute('key' ,'prefix count');
 
       const title_content = document.createElement('span');
       title_content.style.marginLeft = '0.75rem';

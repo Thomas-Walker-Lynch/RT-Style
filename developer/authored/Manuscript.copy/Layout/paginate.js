@@ -76,6 +76,45 @@
     return tag + (bits.length ? ' [' + bits.join(' ') + ']' : '');
   }
 
+  /* ---------------------------------------------------------------
+     What counts as a heading ,and what counts as nothing.
+
+     A heading is not content. It announces the content beneath it ,and a page
+     that ends on one leaves the announcement on one leaf and the thing
+     announced on the next. The paginator therefore has to recognize a heading
+     when it sees one.
+
+     Tag name alone no longer answers this. Before sections were scoped and
+     counted ,a heading was an <h1>–<h6> and the test could be a regular
+     expression over the tag. A section title is now a composed division
+     carrying counter reads ,so that test matches nothing and the widow
+     control it guards has been silently inert since the change. Section titles
+     are marked at construction instead ,and the mark is what is read here:
+     the paginator does not need to know how a title is built.
+
+     'Ghost' names a node that occupies no space — a snapshot ,a make tag ,a
+     name tag ,a run of whitespace. They are not content ,so a fragment ending
+     in a heading followed by ghosts still ends in a heading. Deciding this by
+     tag rather than by measurement keeps it free.
+  --------------------------------------------------------------- */
+
+  function is_heading(el){
+    if(!el || el.nodeType !== Node.ELEMENT_NODE) return false;
+    if( /^H[1-6]$/i.test(el.tagName || '') ) return true;
+    return el.hasAttribute && el.hasAttribute('data-RT-heading');
+  }
+
+  const Set_ghost_tag = new Set([
+    'rt·counter·snapshot' ,'rt·counter·make' ,'rt·name' ,'rt·note·write'
+  ]);
+
+  function is_ghost(node){
+    if(!node) return true;
+    if(node.nodeType === Node.TEXT_NODE) return !node.textContent.trim();
+    if(node.nodeType !== Node.ELEMENT_NODE) return true;
+    return Set_ghost_tag.has((node.tagName || '').toLowerCase());
+  }
+
   let measure_container = null;
 
   // 1. DOM Measurement Utilities
@@ -417,6 +456,43 @@
       }
     }
 
+    /* Widow control.
+
+       A section fragment must not end on its own title ,nor on the title of a
+       subsection it has only just opened. The cut is moved back above the
+       heading ,which travels to the next page with the text it introduces.
+
+       Only the tail is examined ,and only when this scope cut its own child
+       list. Where a child was itself split ,that child's own splitter has
+       already applied this rule to its tail ,and the fragment ends inside the
+       child rather than on a heading.
+
+       If nothing but the heading fitted ,no fragment is emitted at all: the
+       whole scope moves on. The caller reads a null first as 'cannot be broken
+       here' and either closes the page and retries with a full page ,or ,on a
+       page that is already empty ,places the scope whole and grows the page.
+       Both terminate ,and neither can return here with the same room twice.
+    */
+    if(!split_child_result && best_count > 0){
+      let tail = best_count;
+      while( tail > 0 && is_ghost(children[tail - 1]) ) tail--;
+
+      if( tail > 0 && is_heading(children[tail - 1]) ){
+        trace_v('  -> fragment ends on ' + el_id(children[tail - 1])
+                + ' ,moving the cut above it');
+        best_count = tail - 1;
+
+        const kept = el.cloneNode(false);
+        for(let i = 0; i < best_count; i++) kept.appendChild(children[i].cloneNode(true));
+        best_height = best_count > 0 ? measure_fn(kept) : 0;
+
+        if( !(best_height > 0) ){
+          trace_v('  -> nothing but the heading fits; the whole scope moves on');
+          return { first: null ,rest: el ,firstHeight: 0 };
+        }
+      }
+    }
+
     /* Decide whether a remainder exists BEFORE marking the fragment.
 
        A fragment marked 'continued' is soft closed: the counter walk suppresses
@@ -515,8 +591,20 @@
     });
 
     function paginate_article(article){
+      /* An <RT·page> written by the author is kept ,not filtered away.
+
+         Some leaves are composed rather than flowed. A title page ,a
+         dedication ,a plate: the author has decided what is on it and the
+         paginator has no business measuring it or adding to it. Dropping such
+         pages ,which is what excluding them here used to do ,silently lost
+         whatever the author had put on them.
+
+         Written with no-number the leaf is neither numbered nor counted ,so a
+         title page does not consume the number that belongs to the first page
+         of text. Written plainly it takes its number in sequence like any
+         other. */
       const raw_element_seq = Array.from(article.children).filter(el =>
-        !['SCRIPT' ,'STYLE' ,'RT·PAGE' ,'RT·COUNTER·MAKE'].includes((el.tagName || '').toUpperCase()) 
+        !['SCRIPT' ,'STYLE' ,'RT·COUNTER·MAKE'].includes((el.tagName || '').toUpperCase()) 
       );
 
       const global_makes = Array.from(article.children).filter(el => (el.tagName || '').toUpperCase() === 'RT·COUNTER·MAKE');
@@ -533,6 +621,21 @@
 
       while(i < raw_element_seq.length){
         const el = raw_element_seq[i];
+
+        // A composed leaf. It closes whatever page is open and stands as one.
+        if( (el.tagName || '').toLowerCase() === 'rt·page' ){
+          trace(el_id(el) + ' -> AUTHORED PAGE ,carried through whole'
+                + (el.hasAttribute('no-number') ? ' ,unnumbered' : ''));
+          if(current_h > 0){
+            page_seq.push(current_batch_seq);
+            current_batch_seq = [];
+            current_h = 0;
+          }
+          page_seq.push(el);
+          i++;
+          continue;
+        }
+
         const splitter = is_splittable(el);
 
         if(splitter){
@@ -625,7 +728,7 @@
               
               while(current_batch_seq.length > 0){
                 const last = current_batch_seq[current_batch_seq.length - 1];
-                if(!last.tagName || !/^H[1-6]$/i.test(last.tagName)) break;
+                if(!is_heading(last)) break;
                 const popped = current_batch_seq.pop();
                 backtrack_seq.unshift(popped);
                 backtrack_h += get_el_height(popped);
@@ -679,7 +782,7 @@
           
           while(current_batch_seq.length > 0){
             const last = current_batch_seq[current_batch_seq.length - 1];
-            if(!last.tagName || !/^H[1-6]$/i.test(last.tagName)) break;
+            if(!is_heading(last)) break;
             const popped = current_batch_seq.pop();
             backtrack_seq.unshift(popped);
             backtrack_h += get_el_height(popped);
@@ -721,14 +824,25 @@
       let p = 0;
       while(p < page_seq.length){
         const batch = page_seq[p];
-        const page_el = document.createElement('RT·page');
+        const is_authored = !Array.isArray(batch);
+        const page_el = is_authored ? batch : document.createElement('RT·page');
         
         page_el.style.minHeight = page_height_limit + 'px';
         page_el.style.position = 'relative';
         page_el.style.paddingBottom = '5rem';
         page_el.style.boxSizing = 'border-box';
         
-        batch.forEach(item => page_el.appendChild(item));
+        if(!is_authored) batch.forEach( item => page_el.appendChild(item) );
+
+        /* An unnumbered leaf takes no step ,so the counter does not advance
+           across it and the leaf after it holds the number this one would have
+           taken. Not counted rather than counted and hidden ,which is what a
+           title page wants: the reader's page one is the first page of text. */
+        if(is_authored && page_el.hasAttribute('no-number')){
+          article.appendChild(page_el);
+          p++;
+          continue;
+        }
 
         const page_step = document.createElement('RT·counter·step');
         page_step.setAttribute('counter' ,'RT_page_number');

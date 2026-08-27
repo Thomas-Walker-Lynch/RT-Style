@@ -215,6 +215,50 @@ window.RT.Utility = {
 
   // DOM Structural Operations
   window.RT.Utility.Dom = window.RT.Utility.Dom || {};
+
+  /* A place to measure in ,out of the flow of the book.
+
+     Every question about how text wraps is one only the browser can answer ,
+     and it will only answer it about an element that is attached and laid out.
+     Attached in the flow ,though ,each answer is dear: setting a width dirties
+     the element ,which changes its height ,which moves everything below it ,
+     and the browser must lay the rest of the book out again before it can
+     reply. A shrink wrap asks a dozen such questions per label. A hundred
+     labels in a long manuscript is then a thousand full layouts ,and that is
+     where the time went when shrink wrapping was added — the cost is not in
+     the wrapping ,it is in the length of the document behind it.
+
+     The host is positioned ,so it is out of flow and its contents cannot
+     change the height of anything in the flow. Nothing below it moves ,so
+     there is nothing below it to lay out again. It is a child of the element
+     the content would really sit in ,so font ,size ,weight and colour are
+     inherited exactly as they will be in place ,and it is given that parent's
+     content width ,so the wrapping measured is the wrapping that will be
+     rendered. Measuring somewhere convenient instead would answer a question
+     about a document that does not exist.
+
+     Returns null where a width cannot be established ,which is the caller's
+     signal to measure in place as before rather than to measure wrongly.
+  */
+  window.RT.Utility.Dom.measure_host_make = function(context_el){
+    const parent = context_el && context_el.parentElement;
+    if(!parent) return null;
+
+    const ps = window.getComputedStyle(parent);
+    const width = parent.clientWidth
+                - parseFloat(ps.paddingLeft || 0)
+                - parseFloat(ps.paddingRight || 0);
+    if( !(width > 0) ) return null;
+
+    const host = document.createElement('div');
+    host.setAttribute('data-RT-measure-host' ,'true');
+    host.style.cssText =
+      'position:fixed; top:0; left:0; visibility:hidden; pointer-events:none;'
+      + ' contain:layout style; z-index:-1; width:' + width + 'px;';
+
+    parent.appendChild(host);
+    return host;
+  };
   
 
   /* Shrink wrap an attached element to a well set block of text.
@@ -333,10 +377,20 @@ window.RT.Utility = {
          Where no such width exists within the bound the balanced width stands:
          <strong>a stranded word is worse than a short first line</strong> ,and
          given the choice we decline to create one.
+
+         The bound is a count of probes rather than a step size ,because a
+         probe is the expensive thing here and sixteen of them per label ,on
+         top of the ten the bisection costs ,was most of the cost of shrink
+         wrapping a manuscript. Six probes over the same span find nearly every
+         width the sixteen found — the widths that satisfy the test are not
+         isolated points but runs ,since a range of widths keeps the same line
+         breaks — and where a coarser step steps over one ,the balanced width
+         stands and the loss is a short first line rather than a fault.
       */
+      const probe_budget = 6;
       const ceiling = Math.ceil(m.widest) || max_width;
       const span = Math.max(0 ,ceiling - best);
-      const step = Math.max(2 ,Math.round(span / 16));
+      const step = Math.max(2 ,Math.round(span / probe_budget));
       for(let w = best + step; w <= ceiling; w += step){
         el.style.width = w + 'px';
         const t = line_metrics(el);

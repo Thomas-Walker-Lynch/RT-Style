@@ -197,10 +197,7 @@
       wrapper.appendChild(el);
     });
 
-    container_node.replaceWith(wrapper);
-    freeze_columns(wrapper);
-    shrink_labels(wrapper);
-    execute_two_pass_measurement(wrapper, options);
+    place_and_size(container_node ,wrapper ,options);
   }
 
   function render_model_html_dictionary(container_node, grid_state, options, config) {
@@ -252,10 +249,7 @@
       wrapper.appendChild(el);
     });
 
-    container_node.replaceWith(wrapper);
-    freeze_columns(wrapper);
-    shrink_labels(wrapper);
-    execute_two_pass_measurement(wrapper, options);
+    place_and_size(container_node ,wrapper ,options);
   }
 
 
@@ -403,6 +397,47 @@
     for(let i = 0; i < labels.length; i++){
       window.RT.Utility.Dom.shrink_wrap(labels[i]);
     }
+  }
+
+  /* Size the grid ,then put it in the book.
+
+     The order matters and it used to be the other way round. Placing the
+     wrapper in the flow first meant every probe that followed — the column
+     freeze ,and a dozen width trials per label — was answered by laying out
+     the whole of the rest of the manuscript ,because a label that changes
+     width changes its row's height and moves everything below it. The cost
+     scaled with the length of the book rather than with the size of the table ,
+     which is why it appeared as general slowness rather than as slow tables.
+
+     Measured in the host the same probes cost nothing beyond the grid itself.
+     The host is out of flow ,so nothing below it moves ,and it is a child of
+     the parent the grid is bound for at that parent's content width ,so the
+     wrapping measured is the wrapping that will be rendered.
+
+     Both results are explicit lengths — a frozen column template ,a pixel
+     width per label — so they survive the move into the flow unchanged.
+
+     Where no host can be established the old order stands. Measuring in place
+     is slow ,and measuring at the wrong width is wrong ,and slow is better.
+  */
+  function place_and_size(container_node ,wrapper ,options){
+    const host = window.RT.Utility.Dom.measure_host_make
+               ? window.RT.Utility.Dom.measure_host_make(container_node)
+               : null;
+
+    if(host){
+      host.appendChild(wrapper);
+      freeze_columns(wrapper);
+      shrink_labels(wrapper);
+      container_node.replaceWith(wrapper);
+      host.remove();
+    }else{
+      container_node.replaceWith(wrapper);
+      freeze_columns(wrapper);
+      shrink_labels(wrapper);
+    }
+
+    execute_two_pass_measurement(wrapper ,options);
   }
 
   function freeze_columns(wrapper){

@@ -115,16 +115,25 @@
         }
       }
 
+      /* Every section ,whichever series it belongs to.
+
+         Naming the body counter here would have listed the chapters and left
+         the front matter and the appendices out of the contents ,which is
+         where a reader looks for them first. Steps mark themselves as sections
+         when they are built ,so the query does not have to know what counters
+         exist ,and depth is counted against the step's own counter so the
+         divisions nest independently. */
       const sections = [];
-      const all_sections = document.querySelectorAll('RT·counter·step[counter="RT·Section·counter"]');
+      const all_sections = document.querySelectorAll('RT·counter·step[data-RT-section]');
       
       all_sections.forEach(section => {
+        const counter_name = section.getAttribute('counter');
         let depth = 0;
         let curr = section.parentElement;
         
         while(curr){
           const tag = (curr.tagName || '').toLowerCase();
-          if(tag === 'rt·counter·step' && curr.getAttribute('counter') === 'RT·Section·counter'){
+          if(tag === 'rt·counter·step' && curr.getAttribute('counter') === counter_name){
             depth++;
           }
           curr = curr.parentElement;

@@ -173,6 +173,11 @@
       this.separator_placement = 'embedded';
       this.mode = 'scoped';
 
+      /* The word that precedes the number ,one per nesting level ,last entry
+         repeating. Empty by default: a counter says nothing about what it
+         counts unless told. */
+      this.prefix = [];
+
       if(config) this.write(config);
     }
 
@@ -190,13 +195,19 @@
         if(this.mode === 'scoped' && status === 'between') return this.count.read('name' ,'short');
         return this.count.read('name');
       }
+
+      if(path[0] === 'prefix') return this.prefix_for(this.count);
       
       return path.reduce((acc ,key) => (acc && acc[key] !== undefined) ? acc[key] : undefined ,this);
     }
 
     write(dict){
       for(const [key ,value] of Object.entries(dict)){
-        if(key === 'style'){
+        if(key === 'prefix'){
+          this.prefix = Array.isArray(value)
+            ? value.map(s => String(s).trim()).filter(s => s !== '')
+            : String(value || '').split(',').map(s => s.trim()).filter(s => s !== '');
+        }else if(key === 'style'){
           let parsed = Array.isArray(value) ? value : [value];
           if(parsed.length === 1 && parsed[0] === 'outline'){
             parsed = ['Roman' ,'Alpha' ,'roman' ,'alpha' ,'CountingNumber'];
@@ -243,6 +254,30 @@
       }
     }
 
+    /* The levels currently in force. A scoped counter sitting between two of
+       its own steps has already pushed the level it is about to number ,so the
+       innermost entry is not yet part of the value. Both the number and the
+       word that precedes it are taken from this same list ,or the two would
+       disagree at a scope boundary. */
+    active_list_of(count_obj){
+      const c = count_obj || this.count;
+      const status = c.read('status');
+      if(status === 'empty') return null;
+      return (this.mode === 'scoped' && status === 'between')
+        ? c.read('list' ,'short')
+        : c.read('list');
+    }
+
+    /* 'Chapter' ,'Section' ,'Appendix'. Chosen by depth ,with the last entry
+       repeating ,so a two word list covers a document nested to any depth. */
+    prefix_for(count_obj){
+      if(!this.prefix || this.prefix.length === 0) return '';
+      const active_list = this.active_list_of(count_obj);
+      if(!active_list || active_list.length === 0) return '';
+      const depth = Math.min(active_list.length ,this.prefix.length) - 1;
+      return this.prefix[depth] || '';
+    }
+
     to_string(count_obj){
       if(!count_obj) return '';
       
@@ -252,12 +287,7 @@
           return '[Empty Counter]';
       }
       
-      let active_list;
-      if(this.mode === 'scoped' && status === 'between'){
-        active_list = count_obj.read('list' ,'short');
-      }else{
-        active_list = count_obj.read('list');
-      }
+      const active_list = this.active_list_of(count_obj);
       
       if(!active_list || active_list.length === 0) return '';
 
@@ -337,6 +367,7 @@
       copy.separator = this.separator;
       copy.separator_placement = this.separator_placement;
       copy.mode = this.mode;
+      copy.prefix = [...this.prefix];
       return copy;
     }
   }
@@ -382,6 +413,7 @@
               ,separator: node.getAttribute('separator') || '.'
               ,separator_placement: node.getAttribute('separator-placement') || 'embedded'
               ,mode: node.getAttribute('mode') || 'scoped'
+              ,prefix: node.getAttribute('prefix') || ''
             });
 
             const on_first_step_str = node.getAttribute('on-first-step');
@@ -474,28 +506,42 @@
       process_read_node(reads[i]);
     }
 
+    /* One field of a read. 'count' is the formatted number ,'prefix' the word
+       that belongs in front of it ,and anything else is a path into the
+       machine ,written with dots as before. */
+    function read_field(machine ,field){
+      if(field === 'count'){
+        return machine.to_string(machine.read('count'));
+      }
+      if(field === 'prefix'){
+        return machine.prefix_for(machine.count);
+      }
+
+      const value = machine.read(...field.split('.'));
+      if(value === null) return 'null';
+      if(value === undefined) return `[Missing key: ${field}]`;
+      return Array.isArray(value) ? value.join(',') : value;
+    }
+
     function process_read_node(node){
       const snapshot_name = node.getAttribute('snapshot');
       const key = node.getAttribute('key') || 'count'; 
       
       if(snapshot_name && ns.dict_snapshot[snapshot_name]){
         const snapshot_machine = ns.dict_snapshot[snapshot_name];
-        
-        if(key === 'count'){
-          const raw_state = snapshot_machine.read('count');
-          node.innerHTML = snapshot_machine.to_string(raw_state);
-        }else{
-          const keys = key.split('.');
-          const value = snapshot_machine.read(...keys);
-          
-          if(value === null){
-            node.innerHTML = 'null';
-          }else if(value !== undefined){
-            node.innerHTML = Array.isArray(value) ? value.join(',') : value;
-          }else{
-            node.innerHTML = `[Missing key: ${key}]`;
-          }
-        }
+
+        /* A read may name several fields ,separated by whitespace ,and they
+           are emitted in the order written: key="prefix count" gives
+           'Appendix B' from one tag rather than two tags and a literal space
+           the author has to keep in step with them. A single field ,which is
+           every read written before this ,takes the same path and reads the
+           same. Empty fields are dropped rather than leaving a hanging space:
+           a counter with no prefix set reads as a bare number. */
+        const list_part = key.trim().split(/\s+/)
+          .map(field => read_field(snapshot_machine ,field))
+          .filter(text => text !== '' && text !== undefined && text !== null);
+
+        node.innerHTML = list_part.join(' ');
       }else{
         node.innerHTML = `[Unknown snapshot: ${snapshot_name}]`;
         console.error(`RT-Manuscript Layout Error: <RT·counter·read> failed. No snapshot named '${snapshot_name}' found.`);
