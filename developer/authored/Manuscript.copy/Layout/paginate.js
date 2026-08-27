@@ -1,4 +1,4 @@
-/* RT-Style  Layout/paginate.js  —  build: bisect-2
+/* RT-Style  Layout/paginate.js  —  build: inplace-3
    Check which copy is installed with:  grep build: paginate.js
 */
 /*
@@ -416,18 +416,47 @@
     let split_child_result = null;
     let forced_break = false;
 
-    /* One fragment ,moved to each probe ,rather than a fresh one per probe.
+    /* One fragment ,left attached ,grown and shrunk in place.
 
-       Rebuilding it deep cloned every child again at each step ,which turned
-       n clones into n log n of them — trading measurements for copying and
-       possibly buying nothing at all ,since a chapter's children are tables
-       and code blocks rather than bare paragraphs. Growing and shrinking a
-       single container costs 2n clones across the whole bisection ,because
-       each step halves the interval and the container never moves further
-       than the interval is wide.
+       This is where the time was ,and neither of the two previous attempts
+       touched it. Every probe used to attach a whole fragment to the measuring
+       container ,read its height ,and detach it again. Attaching a subtree
+       lays the whole subtree out; detaching throws that layout away. So a
+       probe covering half a chapter laid out half a chapter ,and the next
+       probe laid out most of it again from nothing.
+
+       Counting proved it. Bisection cut the number of probes about five fold
+       and the phase fell by a sixth ,because the probes it kept were the large
+       ones: sixteen point eight milliseconds each ,for a single height. The
+       number of measurements was never the quantity that mattered. The size of
+       each one was.
+
+       Kept attached ,a probe adds only the children between where the fragment
+       stands and where the probe wants it. The browser lays out the added
+       children and reflows the container; the children already there keep the
+       layout they were given. Bisection then costs about as much layout as a
+       single pass over the section ,rather than a full pass per probe.
+
+       The container is detached before recursing into a child splitter ,so a
+       nested measurement never sits beside this one — adjacent siblings can
+       collapse margins into each other ,and a height measured that way would
+       be a height of the wrong thing.
     */
+    const measure_host = get_measure_container();
     const temp_container = el.cloneNode(false);
     let filled = 0;
+    let attached = false;
+
+    const attach = function(){
+      if(attached) return;
+      measure_host.appendChild(temp_container);
+      attached = true;
+    };
+    const detach = function(){
+      if(!attached) return;
+      measure_host.removeChild(temp_container);
+      attached = false;
+    };
 
     const fill_to = function(count){
       while(filled < count){
@@ -440,6 +469,20 @@
         filled--;
       }
       return temp_container;
+    };
+
+    // Height of the first `count` children ,measured where the fragment stands.
+    const height_at = function(count){
+      const stat = window.RT.Stat_paginate;
+      stat.measure_call++;
+      const started = performance.now();
+
+      attach();
+      fill_to(count);
+      const h = get_el_height(temp_container);
+
+      stat.measure_ms += performance.now() - started;
+      return h;
     };
 
     /* A forced break bounds the search without costing a measurement ,so it is
@@ -475,7 +518,7 @@
     let hi = limit;
     while(lo <= hi){
       const mid = (lo + hi) >> 1;
-      const frag_height = measure_fn(fill_to(mid));
+      const frag_height = height_at(mid);
       if(frag_height <= remaining){
         best_count = mid;
         best_height = frag_height;
@@ -500,6 +543,10 @@
       if(child_splitter){
         trace_v('    child ' + el_id(child) + ' is splittable ,recursing with '
                 + (remaining - best_height) + 'px');
+        /* Detached first. A nested probe measuring beside this one would be a
+           sibling of it ,and adjacent siblings collapse margins into each
+           other ,so the height read would be a height of the wrong thing. */
+        detach();
         trace_depth++;
         const child_split = child_splitter(remaining - best_height);
         trace_depth--;
@@ -532,7 +579,7 @@
       */
       if(best_count < children.length){
         best_count++;
-        best_height = measure_fn(fill_to(best_count));
+        best_height = height_at(best_count);
         trace_v('  -> no progress; taking ' + el_id(children[best_count - 1])
                 + ' whole at ' + best_height + 'px ,remainder flows on');
       }else{
@@ -565,13 +612,11 @@
         trace_v('  -> fragment ends on ' + el_id(children[tail - 1])
                 + ' ,moving the cut above it');
         best_count = tail - 1;
-
-        const kept = el.cloneNode(false);
-        for(let i = 0; i < best_count; i++) kept.appendChild(children[i].cloneNode(true));
-        best_height = best_count > 0 ? measure_fn(kept) : 0;
+        best_height = best_count > 0 ? height_at(best_count) : 0;
 
         if( !(best_height > 0) ){
           trace_v('  -> nothing but the heading fits; the whole scope moves on');
+          detach();
           return { first: null ,rest: el ,firstHeight: 0 };
         }
       }
@@ -636,6 +681,7 @@
       rest = [make_tag ,rest];
     }
 
+    detach();
     return { first: first ,rest: rest ,firstHeight: best_height };
   };
 
