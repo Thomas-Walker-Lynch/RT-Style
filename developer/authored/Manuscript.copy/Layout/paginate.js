@@ -1,3 +1,6 @@
+/* RT-Style  Layout/paginate.js  —  build: bisect-2
+   Check which copy is installed with:  grep build: paginate.js
+*/
 /*
   Layout/paginate.js
   Processes <RT·article> tags and paginates their contents.
@@ -176,17 +179,42 @@
     container.style.fontSize = article_style.fontSize;
     container.style.lineHeight = article_style.lineHeight;
     container.style.fontWeight = article_style.fontWeight;
-    container.style.contain = 'layout paint style';
+
     document.body.appendChild(container);
     measure_container = container;
     return container;
   }
 
+  /* What pagination actually did ,counted rather than guessed at.
+
+     Two hypotheses about where thirty six seconds went have now been wrong:
+     that reads and writes were being interleaved ,and that the cumulative scan
+     was asking for too many measurements. Both were plausible ,neither was
+     measured first ,and each cost a round trip to find out. These counters
+     cost a few additions per call and settle it: once the book has opened ,
+     RT.Stat_paginate holds the tally ,and it survives the load because it
+     hangs off RT rather than being logged and lost.
+
+     measure_ms is time spent inside the browser answering height questions. If
+     that is most of the phase ,the cost is measurement and the number of
+     questions is the thing to attack. If it is not ,the cost is elsewhere —
+     in cloning ,or in the walk itself — and the remedy is a different one. */
+  window.RT.Stat_paginate = {
+    measure_call: 0 ,measure_ms: 0 ,clone_node: 0
+    ,splitter_call: 0 ,page_made: 0
+  };
+
   function measure_fragment(frag){
+    const stat = window.RT.Stat_paginate;
+    stat.measure_call++;
+    const started = performance.now();
+
     const container = get_measure_container();
     container.appendChild(frag);
     const h = get_el_height(frag);
     container.removeChild(frag);
+
+    stat.measure_ms += performance.now() - started;
     return h;
   }
 
@@ -380,49 +408,105 @@
   window.RT.Splitter = window.RT.Splitter || {};
 
   window.RT.Splitter['rt·counter·step'] = function(el ,remaining ,measure_fn ,is_splittable_fn){
+    window.RT.Stat_paginate.splitter_call++;
     trace_v('split ' + el_id(el) + ' into ' + remaining + 'px');
     const children = Array.from(el.childNodes);
     let best_count = 0;
     let best_height = 0;
-    const temp_container = el.cloneNode(false);
     let split_child_result = null;
     let forced_break = false;
 
+    /* One fragment ,moved to each probe ,rather than a fresh one per probe.
+
+       Rebuilding it deep cloned every child again at each step ,which turned
+       n clones into n log n of them — trading measurements for copying and
+       possibly buying nothing at all ,since a chapter's children are tables
+       and code blocks rather than bare paragraphs. Growing and shrinking a
+       single container costs 2n clones across the whole bisection ,because
+       each step halves the interval and the container never moves further
+       than the interval is wide.
+    */
+    const temp_container = el.cloneNode(false);
+    let filled = 0;
+
+    const fill_to = function(count){
+      while(filled < count){
+        temp_container.appendChild(children[filled].cloneNode(true));
+        window.RT.Stat_paginate.clone_node++;
+        filled++;
+      }
+      while(filled > count){
+        temp_container.removeChild(temp_container.lastChild);
+        filled--;
+      }
+      return temp_container;
+    };
+
+    /* A forced break bounds the search without costing a measurement ,so it is
+       found first by looking rather than by measuring up to it. */
+    let limit = children.length;
     for(let i = 0; i < children.length; i++){
       const child = children[i];
-
       const tag = child.nodeType === Node.ELEMENT_NODE ? (child.tagName || '').toLowerCase() : '';
-      if(tag === 'rt·page-break' || tag === 'rt·page-break-primitive'){
-        forced_break = true;
-        best_count = i;
-        break;
-      }
+      if(tag === 'rt·page-break' || tag === 'rt·page-break-primitive'){ limit = i; break; }
+    }
 
-      temp_container.appendChild(child.cloneNode(true));
-      const frag_height = measure_fn(temp_container);
+    /* Bisect for the cut ,rather than walking to it.
 
+       The old scan measured a cumulative fragment for every child in turn: the
+       first child ,then the first two ,then the first three. A page holding
+       sixty elements therefore cost sixty layouts of an average thirty element
+       fragment — some eighteen hundred element layouts — and a split happens
+       for every page of every chapter. That is where the thirty six seconds of
+       paginate_0 were going. Not in any one measurement ,each of which is
+       honest work ,but in how many of them were being asked for.
+
+       Height is monotonic in the number of children — adding a child never
+       makes a fragment shorter — so the largest count that fits can be found
+       by bisection. Sixty measurements become six. The fragments measured are
+       larger on average ,so the saving is not the full ten to one ,but it is
+       the difference between quadratic and linearithmic in the elements on a
+       page ,and that is the difference that was being felt.
+
+       The cut is identical. Bisection finds the same count the scan found ,
+       because it is the same predicate over the same monotonic sequence.
+    */
+    let lo = 1;
+    let hi = limit;
+    while(lo <= hi){
+      const mid = (lo + hi) >> 1;
+      const frag_height = measure_fn(fill_to(mid));
       if(frag_height <= remaining){
-        trace_v('  child ' + i + ' ' + el_id(child) + ': cumulative ' + frag_height
-                + 'px <= ' + remaining + 'px ,keep');
-        best_count = i + 1;
+        best_count = mid;
         best_height = frag_height;
+        lo = mid + 1;
       }else{
-        trace_v('  child ' + i + ' ' + el_id(child) + ': cumulative ' + frag_height
-                + 'px > ' + remaining + 'px ,cut here');
-        temp_container.removeChild(temp_container.lastChild);
-        const child_splitter = child.nodeType === Node.ELEMENT_NODE ? is_splittable_fn(child) : null;
-        if(child_splitter){
-          trace_v('    child is splittable ,recursing with ' + (remaining - best_height) + 'px');
-          trace_depth++;
-          const child_split = child_splitter(remaining - best_height);
-          trace_depth--;
-          if(child_split && child_split.first){
-            split_child_result = child_split;
-            best_height += child_split.firstHeight;
-            best_count = i;
-          }
+        hi = mid - 1;
+      }
+    }
+
+    trace_v('  bisected: ' + best_count + ' of ' + limit + ' children fit at '
+            + best_height + 'px' + (limit < children.length ? ' ,break at ' + limit : ''));
+
+    if(best_count === limit && limit < children.length){
+      // Everything up to the break fits ,so the break is this fragment's.
+      forced_break = true;
+    }else if(best_count < limit){
+      /* The child at the cut did not fit whole. Where it can be divided ,it is
+         given the room left over. */
+      const child = children[best_count];
+      const child_splitter = child && child.nodeType === Node.ELEMENT_NODE
+        ? is_splittable_fn(child) : null;
+      if(child_splitter){
+        trace_v('    child ' + el_id(child) + ' is splittable ,recursing with '
+                + (remaining - best_height) + 'px');
+        trace_depth++;
+        const child_split = child_splitter(remaining - best_height);
+        trace_depth--;
+        if(child_split && child_split.first){
+          split_child_result = child_split;
+          best_height += child_split.firstHeight;
         }
-        break;
       }
     }
 
@@ -447,9 +531,8 @@
          blank page between two full ones.
       */
       if(best_count < children.length){
-        temp_container.appendChild(children[best_count].cloneNode(true));
-        best_height = measure_fn(temp_container);
         best_count++;
+        best_height = measure_fn(fill_to(best_count));
         trace_v('  -> no progress; taking ' + el_id(children[best_count - 1])
                 + ' whole at ' + best_height + 'px ,remainder flows on');
       }else{
@@ -821,6 +904,10 @@
       page_counter_make.setAttribute('on-first-step' ,'1');
       page_counter_make.setAttribute('mode' ,'milestone');
       article.appendChild(page_counter_make);
+
+      window.RT.Stat_paginate.page_made = page_seq.length;
+      window.RT.Debug.log('paginate' ,'pagination counts: '
+        + JSON.stringify(window.RT.Stat_paginate));
 
       let p = 0;
       while(p < page_seq.length){
