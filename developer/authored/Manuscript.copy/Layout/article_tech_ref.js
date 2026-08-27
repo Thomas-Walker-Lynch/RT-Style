@@ -51,12 +51,13 @@
     
     // Apply viewport screen boundary color, defaulting to surface_0 if undefined
     const screen_bg = conf.surface_screen || conf.surface_0 || '#000000';
-    document.documentElement.style.backgroundColor = screen_bg;
 
-    /* Remembered for the next opening ,where it is applied at parse time ,
-       ahead of the first paint. This is the only place the resolved screen
-       colour exists ,so it is the only place that can record it. */
-    if(window.RT.screen_color_write) window.RT.screen_color_write(screen_bg);
+    /* The same colour the theme already applied at parse time ,by a longer
+       road. Repeated because a theme changed at run time arrives here and not
+       through the theme loader ,and because it costs one rule rewrite. */
+    if(window.RT.screen_color_apply) window.RT.screen_color_apply(screen_bg);
+
+    document.documentElement.style.backgroundColor = screen_bg;
 
     document.body.style.backgroundColor = screen_bg;
     document.body.style.margin = "0"; // Prevent default browser margin bleeding

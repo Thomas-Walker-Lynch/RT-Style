@@ -102,6 +102,19 @@
         }
 
         apply_and_validate_theme(RT.theme_library[theme_name] ,fallback);
+
+        /* The screen colour ,put to work immediately.
+
+           This runs at parse time — the author calls RT.theme_preference in
+           the head — so the canvas is coloured before the first paint rather
+           than when the layout configuration is compiled ,which does not
+           happen until the whole document has parsed. On a book carrying
+           MathJax that difference is the several seconds of white the reader
+           was being shown. Nothing here computes the colour: it is read from
+           the dictionary that has just been filled. */
+        if(RT.screen_color_apply){
+          RT.screen_color_apply(dictionary.surface.screen || dictionary.surface[0]);
+        }
         
         // --- CSS Fallback for Pseudo-Elements and External Libraries ---
         let style_el = document.getElementById('RT·theme-custom-css');
