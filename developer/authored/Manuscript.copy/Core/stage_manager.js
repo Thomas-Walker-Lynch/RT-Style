@@ -132,92 +132,37 @@
   /* ---------------------------------------------------------------
      The white page ,and the blank that follows it.
 
-     Two faults ,and they were being treated as one.
+     The canvas takes its colour from the root ,and until something sets it the
+     browser paints its own default. The colour was being applied when the
+     theme compiled ,in the element phase — after the whole document had
+     parsed. On a book carrying MathJax that is seconds of white. But the
+     colour is knowable far earlier: RT.theme_preference runs in the head ,at
+     parse time ,and RT.load's document.write ordering means every theme is
+     loaded before it. So the theme applies its screen colour the moment it
+     resolves ,and the canvas is never white at all.
 
-     The first is that the canvas takes its colour from the root ,and until
-     something sets it the browser paints its own default. The colour was being
-     applied when the theme compiled ,in the element phase — after the whole
-     document had parsed. On a book carrying MathJax that is seconds of white.
-     But the colour is knowable far earlier than that: RT.theme_preference runs
-     in the head ,at parse time ,and RT.load's document.write ordering means
-     every theme is loaded before it. So the theme applies its screen colour
-     the moment it resolves ,and the canvas is never white at all. Remembering
-     the last colour was a workaround for a problem that did not need one; it
-     is kept only for the window before the theme call ,where it costs nothing.
+     The colour is written to the root as an inline style ,which is how every
+     other element in this engine is styled. An earlier version of this put it
+     in a style sheet injected into the head. That was wrong twice over: the
+     engine keeps no style sheet ,so it introduced the one surface where
+     unrelated rules would accumulate ,and a sheet built as a string in a
+     source file is worse than a file for the purpose ,being invisible to
+     anyone looking for one.
 
-     The second is what the reader is shown while the work is done. Hiding the
-     root hides the progress panel with it — visibility inherits — and leaves
-     the canvas background in doubt ,since a root with visibility hidden is a
-     poor thing to be relying on to paint. So the lock is a class on the root
-     that hides the contents of the body and excepts the panel. Backgrounds
-     paint normally ,because nothing about the root is hidden any more.
+     The root's background reaches the canvas whether or not the root is
+     visible ,which is what makes the lock below and this colour independent of
+     each other.
 
-     Both live in one stylesheet ,written into the head at parse time.
+     Remembering the last colour is kept ,for the window before the theme call
+     ,where it costs nothing.
   --------------------------------------------------------------- */
 
-  const boot_style_id = 'RT·boot-style';
   const screen_color_key = 'RT-Manuscript·screen_color';
-  const lock_class = 'RT·locked';
 
-  function boot_style(){
-    let el = document.getElementById(boot_style_id);
-    if(el) return el;
-    el = document.createElement('style');
-    el.id = boot_style_id;
-    el.textContent = boot_style_text('');
-    (document.head || document.documentElement).appendChild(el);
-    return el;
-  }
-
-  /* The panel is animated by CSS and not by script ,which is the whole of why
-     it works. A phase holds the main thread from beginning to end ,so anything
-     driven from script stops dead for the length of it — which is exactly the
-     interval the reader most needs to see movement in. Transform and opacity
-     animate off the main thread ,so they keep running while a phase blocks.
-
-     The bar creeps rather than reports. It is not tied to the phases and does
-     not claim to be: it eases toward the end without arriving ,which is honest
-     about not knowing how long the work will take ,and it is always moving ,
-     which is the one thing the reader needs to see.
-
-     The panel fades in on a delay ,so a book that formats quickly never shows
-     it. That is done in the animation rather than in a timer for the same
-     reason as the bar: a timer would not fire. */
-  function boot_style_text(screen_color){
-    return (screen_color ? 'html ,body{ background-color:' + screen_color + '; }\n' : '')
-      + 'html.' + lock_class + ' body > *{ visibility:hidden; }\n'
-      + 'html.' + lock_class + ' #RT·progress{ visibility:visible; }\n'
-      + '#RT·progress{ position:fixed; top:0; left:0; right:0; bottom:0;'
-      + ' z-index:2147483647; display:flex; flex-direction:column;'
-      + ' align-items:center; justify-content:center; gap:1.1rem;'
-      + ' pointer-events:none; color:#8a8a8a; opacity:0;'
-      + " font:400 1rem/1.4 'Noto Sans JP' ,Arial ,sans-serif;"
-      + ' animation:RT·progress-appear 300ms ease-out 400ms forwards; }\n'
-      + '#RT·progress .RT·progress-label{ letter-spacing:0.08em; }\n'
-      + '#RT·progress .RT·progress-dot{ opacity:0.15;'
-      + ' animation:RT·progress-blink 1.4s ease-in-out infinite; }\n'
-      + '#RT·progress .RT·progress-dot:nth-child(2){ animation-delay:0.2s; }\n'
-      + '#RT·progress .RT·progress-dot:nth-child(3){ animation-delay:0.4s; }\n'
-      + '#RT·progress .RT·progress-track{ width:min(18rem ,60vw); height:2px;'
-      + ' background:currentColor; opacity:0.2; overflow:hidden; }\n'
-      + '#RT·progress .RT·progress-bar{ width:100%; height:100%;'
-      + ' background:currentColor; transform:scaleX(0);'
-      + ' transform-origin:left center;'
-      + ' animation:RT·progress-creep 40s cubic-bezier(0 ,0.7 ,0.15 ,1) forwards; }\n'
-      + '#RT·progress .RT·progress-time{ font-size:0.8rem; opacity:0.5;'
-      + ' font-variant-numeric:tabular-nums; }\n'
-      + '@keyframes RT·progress-appear{ to{ opacity:1; } }\n'
-      + '@keyframes RT·progress-blink{ 0% ,100%{ opacity:0.15; } 50%{ opacity:0.9; } }\n'
-      + '@keyframes RT·progress-creep{ to{ transform:scaleX(0.96); } }\n';
-  }
-
-  /* The screen colour ,written where it takes effect before the first paint.
-     Given to this from the theme the moment the theme resolves ,and again from
-     the layout configuration later ,which is the same colour by a longer road
-     and costs nothing to repeat. */
   window.RT.screen_color_apply = function(color){
     if(!color) return;
-    boot_style().textContent = boot_style_text(color);
+    document.documentElement.style.backgroundColor = color;
+    if(document.body) document.body.style.backgroundColor = color;
     try{ localStorage.setItem(screen_color_key ,color); }catch(e){}
   };
 
@@ -227,9 +172,7 @@
   }
 
   function prepaint_screen(){
-    boot_style();
-    const color = screen_color_read();
-    if(color) window.RT.screen_color_apply(color);
+    window.RT.screen_color_apply(screen_color_read());
   }
 
   /* ---------------------------------------------------------------
@@ -240,48 +183,121 @@
      eight seconds again.
 
      The panel is raised as early as there is a body to hang it on ,which is
-     during parsing and well before the pipeline begins. It is not raised on a
-     timer ,because a timer does not fire while a phase holds the thread ,and
-     the phases are the whole of the wait.
+     during parsing and well before the pipeline begins. Not on a timer: a
+     timer does not fire while a phase holds the thread ,and the phases are the
+     whole of the wait.
+
+     Movement is animated ,and the animations are built through the animation
+     interface rather than declared in key frames ,because key frames cannot be
+     written as an inline style and the engine keeps no style sheet to put them
+     in. The interface takes the same key frames as an argument and hands
+     transform and opacity to the compositor exactly as a declared animation
+     would ,which is the property that matters here: a phase holds the main
+     thread for its whole length ,so anything driven from script stops dead for
+     precisely the interval the reader most needs to see movement in.
+
+     The bar creeps rather than reports. It is not tied to the phases and does
+     not claim to be: it eases toward the end without arriving ,which is honest
+     about not knowing how long the work will take ,and it is always moving.
   --------------------------------------------------------------- */
 
-  const progress = { panel: null ,time: null ,start: 0 ,timer: 0 };
+  const progress = { panel: null ,time: null ,bar: null ,start: 0 ,timer: 0 };
+
+  // Every animation this file starts ,so each is honoured or skipped together.
+  function animate(el ,frame_seq ,timing){
+    if(!el || typeof el.animate !== 'function') return null;
+    try{ return el.animate(frame_seq ,timing); }
+    catch(e){ return null; }
+  }
+
+  function style_write(el ,dict){
+    for(const key in dict) el.style[key] = dict[key];
+    return el;
+  }
 
   function progress_make(){
     const panel = document.createElement('div');
     panel.id = 'RT·progress';
+    style_write(panel ,{
+      position: 'fixed' ,top: '0' ,left: '0' ,right: '0' ,bottom: '0'
+      ,zIndex: '2147483647'
+      /* The root is hidden and visibility inherits ,so the panel says
+         otherwise for itself. */
+      ,visibility: 'visible'
+      ,display: 'flex' ,flexDirection: 'column'
+      ,alignItems: 'center' ,justifyContent: 'center' ,gap: '1.1rem'
+      ,pointerEvents: 'none' ,color: '#8a8a8a'
+      ,font: "400 1rem/1.4 'Noto Sans JP' ,Arial ,sans-serif"
+      ,opacity: '0'
+    });
 
     const label = document.createElement('div');
-    label.className = 'RT·progress-label';
+    style_write(label ,{ letterSpacing: '0.08em' });
     label.appendChild(document.createTextNode('Loading'));
+
+    const dot_seq = [];
     for(let i = 0; i < 3; i++){
       const dot = document.createElement('span');
-      dot.className = 'RT·progress-dot';
       dot.textContent = ' .';
+      style_write(dot ,{ opacity: '0.15' });
       label.appendChild(dot);
+      dot_seq.push(dot);
     }
 
+    /* The dimming is in the track's own colour ,not in an opacity over it. An
+       opacity establishes a group ,and the bar is inside it ,so a translucent
+       track made the bar translucent too — and both were drawn in the same
+       colour ,which left the filled part of the groove identical to the empty
+       part. The bar swept across for the whole of a long load and could not be
+       seen doing it. */
     const track = document.createElement('div');
-    track.className = 'RT·progress-track';
+    style_write(track ,{
+      width: 'min(18rem ,60vw)' ,height: '3px' ,borderRadius: '2px'
+      ,background: 'rgba(138 ,138 ,138 ,0.22)' ,overflow: 'hidden'
+    });
+
     const bar = document.createElement('div');
-    bar.className = 'RT·progress-bar';
+    style_write(bar ,{
+      width: '100%' ,height: '100%' ,borderRadius: '2px'
+      ,background: '#c9c9c9'
+      ,transform: 'scaleX(0)' ,transformOrigin: 'left center'
+      ,willChange: 'transform'
+    });
     track.appendChild(bar);
 
     const time = document.createElement('div');
-    time.className = 'RT·progress-time';
+    style_write(time ,{
+      fontSize: '0.85rem' ,color: '#8f8f8f' ,fontVariantNumeric: 'tabular-nums'
+    });
 
     panel.appendChild(label);
     panel.appendChild(track);
     panel.appendChild(time);
 
+    /* Raised on a delay ,so a book that formats quickly never shows it. In the
+       animation and not in a timer ,for the same reason as everything else
+       here. */
+    animate(panel ,[{ opacity: 0 } ,{ opacity: 1 }]
+      ,{ duration: 300 ,delay: 400 ,easing: 'ease-out' ,fill: 'both' });
+
+    dot_seq.forEach((dot ,i) => animate(dot
+      ,[{ opacity: 0.15 } ,{ opacity: 0.9 } ,{ opacity: 0.15 }]
+      ,{ duration: 1400 ,delay: i * 200 ,iterations: Infinity }));
+
+    progress.bar_animation = animate(bar
+      ,[{ transform: 'scaleX(0)' } ,{ transform: 'scaleX(0.96)' }]
+      ,{ duration: 45000 ,easing: 'cubic-bezier(0 ,0.75 ,0.2 ,1)' ,fill: 'forwards' });
+
+    // Nothing animates where the interface is absent ,so the panel is at least
+    // legible rather than invisible at zero opacity.
+    if(!progress.bar_animation) style_write(panel ,{ opacity: '1' });
+
     progress.panel = panel;
     progress.time = time;
+    progress.bar = bar;
     return panel;
   }
 
-  /* Raised on the first frame at which a body exists. Frames are served while
-     the document is still parsing ,so on a long head — a book carrying MathJax
-     has one — the panel is up before the pipeline has been reached. */
   function progress_raise(){
     if(progress.panel) return;
     progress.start = performance.now();
@@ -307,28 +323,33 @@
 
   function progress_end(){
     const panel = progress.panel;
+    const bar = progress.bar;
+    const bar_animation = progress.bar_animation;
     progress.panel = null;
     progress.time = null;
+    progress.bar = null;
+    progress.bar_animation = null;
     if(progress.timer){ clearTimeout(progress.timer); progress.timer = 0; }
     if(!panel || !panel.parentNode) return;
 
-    /* Filled and faded rather than snatched away. An animation outranks an
-       inline declaration ,so each is stood down before its property is set. */
-    const bar = panel.querySelector('.RT·progress-bar');
-    if(bar){
-      bar.style.animation = 'none';
-      bar.style.transition = 'transform 160ms ease-out';
-      bar.style.transform = 'scaleX(1)';
+    // Filled and faded rather than snatched away.
+    if(bar && bar_animation){
+      bar_animation.cancel();
+      style_write(bar ,{ transform: 'scaleX(1)' });
+      animate(bar ,[{ transform: 'scaleX(0.96)' } ,{ transform: 'scaleX(1)' }]
+        ,{ duration: 160 ,easing: 'ease-out' });
     }
-    panel.style.animation = 'none';
-    panel.style.transition = 'opacity 220ms ease-out';
-    panel.style.opacity = '0';
-    progress.timer = setTimeout(() => panel.remove() ,260);
+
+    const fade = animate(panel ,[{ opacity: 1 } ,{ opacity: 0 }]
+      ,{ duration: 220 ,delay: 120 ,easing: 'ease-out' ,fill: 'forwards' });
+
+    if(fade) fade.onfinish = () => panel.remove();
+    else progress.timer = setTimeout(() => panel.remove() ,260);
   }
 
   function lock_layout(){
     is_layout_locked = true;
-    document.documentElement.classList.add(lock_class);
+    document.documentElement.style.visibility = 'hidden';
   }
 
   /* The safety net must not fire while the pipeline is still working.
@@ -361,7 +382,7 @@
 
     progress_end();
 
-    document.documentElement.classList.remove(lock_class);
+    document.documentElement.style.visibility = '';
     window.removeEventListener("load" ,unlock_on_load);
     document.dispatchEvent(new Event("RT_layout_complete"));
   }
@@ -513,7 +534,15 @@
 
       next_frame(function(){
         window.RT.Debug.log('stage' ,'phase: ' + phase_name);
+
+        /* Per phase timing ,under the existing token. Forty seconds spent
+           somewhere is not a thing to guess at ,and the phase boundaries are
+           already here to be measured between. Costs two clock reads when the
+           token is off. */
+        const phase_start = performance.now();
         run_phase(phase_name);
+        window.RT.Debug.log('stage' ,'  ' + phase_name + ' took '
+          + ((performance.now() - phase_start) / 1000).toFixed(2) + ' s');
 
         /* The reader is let in here ,and the remaining phases go on behind
            them. Scroll is settled first ,or the reader would be shown the top
