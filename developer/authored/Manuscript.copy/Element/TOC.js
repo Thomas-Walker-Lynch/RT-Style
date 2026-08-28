@@ -1,7 +1,7 @@
 /*
   Element/TOC.js
   Processes <RT·TOC> tags.
-  Iterates nested RT·Section·counter step boundaries, evaluates tree depth, 
+  Iterates nested section step boundaries, evaluates tree depth, 
   and duplicates the title payload for automated navigation.
 */
 
@@ -115,9 +115,9 @@
         }
       }
 
-      /* Every section ,whichever series it belongs to.
+      /* Every section ,whichever counter it belongs to.
 
-         Naming the body counter here would have listed the chapters and left
+         Naming one counter here would have listed the chapters and left
          the front matter and the appendices out of the contents ,which is
          where a reader looks for them first. Steps mark themselves as sections
          when they are built ,so the query does not have to know what counters

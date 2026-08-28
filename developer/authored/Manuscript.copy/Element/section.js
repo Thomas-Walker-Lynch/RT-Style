@@ -13,73 +13,63 @@
 
   ns.tags = ['RT·section'];
 
-  /* Series: one counter per division of the book.
+  /* One counter per division of the book.
 
      A single counter across the whole manuscript numbers the preface as
      chapter one and starts the appendices wherever the last chapter left off.
      The divisions of a book are not one sequence and never were ,so they do
      not share a counter.
 
-     A series names a counter ,the styles its levels are set in ,and the words
-     that precede a number at each level. The word list mirrors the counter
-     nesting and its last entry repeats ,so {Chapter ,Section} reads 'Chapter 3'
-     at the top and 'Section 3.2.1' at every level below the first.
+     A section names the counter it steps ,and that name is the word the reader
+     sees: a cross reference written key="counter count" against a counter
+     named 'Appendix' prints 'Appendix B'. Counters are named for print.
 
-     The table is open. An author wanting a numbered part ,or a second
-     appendix sequence ,adds an entry before the element phase runs:
+     This table holds the make configuration of the counters the section
+     element creates ,keyed by counter name. It is open. An author wanting a
+     numbered part ,or a second appendix sequence ,adds an entry before the
+     element phase runs:
 
-       RT.Element.Section.series.part =
-         { counter: 'RT·Section·counter·part'
-           ,style: 'Roman' ,prefix: 'Part' ,on_first_step: 'I' };
+       RT.Element.Section.dict_counter['Part'] =
+         { style: 'Roman' ,on_first_step: 'I' };
 
-     and writes <RT·section series="part">. Sections nested inside a section
-     inherit its series ,so the attribute is written once at the top of a
-     division and not repeated.
+     and writes <RT·section counter="Part">. A counter named on a section but
+     absent from the table is still made ,on the default configuration: the
+     table varies the style ,it does not gate the name. Sections nested inside
+     a section inherit its counter ,so the attribute is written once at the top
+     of a division and not repeated.
   */
-  ns.series = {
-    body: {
-      counter: 'RT·Section·counter'
-      ,style: 'CountingNumber'
-      ,prefix: 'Chapter,Section'
+  ns.dict_counter = {
+    'Chapter': {
+      style: 'CountingNumber'
       ,on_first_step: '0'
     }
-    ,front: {
-      counter: 'RT·Section·counter·front'
-      ,style: 'roman'
-      ,prefix: 'Front Matter,Front Matter Section'
+    ,'Front Matter': {
+      style: 'roman'
       ,on_first_step: 'i'
     }
-    ,appendix: {
-      counter: 'RT·Section·counter·appendix'
-      ,style: 'Alpha,CountingNumber'
-      ,prefix: 'Appendix,Appendix Section'
+    ,'Appendix': {
+      style: 'Alpha,CountingNumber'
       ,on_first_step: 'A'
     }
   };
 
-  ns.series_default = 'body';
+  ns.counter_default = 'Chapter';
 
-  /* The series is written on the outermost section of a division. Read it from
-     the nearest ancestor that has one.
+  /* The counter is written on the outermost section of a division. Read it
+     from the nearest ancestor that has one.
 
      Sections are expanded in document order ,so by the time a nested section is
-     reached its ancestors are already steps carrying data-RT-series. Both forms
-     are checked ,since an ancestor may be either. */
-  const resolve_series = function(section){
+     reached its ancestors are already steps carrying data-RT-counter. Both
+     forms are checked ,since an ancestor may be either. */
+  const resolve_counter = function(section){
     let curr = section;
     while(curr){
-      const declared = curr.getAttribute && (curr.getAttribute('series')
-                                          || curr.getAttribute('data-RT-series'));
-      if(declared){
-        if(ns.series[declared]) return declared;
-        window.RT.Debug.error('section'
-          ,"unknown section series '" + declared + "'. Known series: "
-          + Object.keys(ns.series).join(' ,') + ". Using '" + ns.series_default + "'.");
-        return ns.series_default;
-      }
+      const declared = curr.getAttribute && (curr.getAttribute('counter')
+                                          || curr.getAttribute('data-RT-counter'));
+      if(declared) return declared;
       curr = curr.parentElement;
     }
-    return ns.series_default;
+    return ns.counter_default;
   };
 
   const apply_style = function(title_node ,depth ,config){
@@ -118,19 +108,24 @@
 
     const article = document.querySelector('RT·article, RT·memo');
 
-    /* One make tag per series ,emitted the first time that series is used. A
-       series never referenced costs nothing and leaves no counter behind. */
-    const counter_of = function(series_name){
-      const spec = ns.series[series_name];
-      const counter_name = spec.counter;
+    /* One make tag per counter ,emitted the first time that counter is used. A
+       counter never referenced costs nothing and leaves nothing behind. */
+    const make_counter = function(counter_name){
+      const spec = ns.dict_counter[counter_name] || {};
 
       if(article && !U.Registry.has(ns ,counter_name)){
+        /* Named but not configured is allowed ,and worth saying once: it is
+           equally a new division and a misspelt one. */
+        if(!ns.dict_counter[counter_name] && debug.log){
+          debug.log('section' ,"counter '" + counter_name
+            + "' is not in dict_counter; made on the default configuration");
+        }
+
         const make = document.createElement('RT·counter·make');
         make.setAttribute('counter' ,counter_name);
         make.setAttribute('style' ,spec.style || 'CountingNumber');
         make.setAttribute('mode' ,'scoped');
         make.setAttribute('on-first-step' ,spec.on_first_step !== undefined ? spec.on_first_step : '0');
-        if(spec.prefix) make.setAttribute('prefix' ,spec.prefix);
         article.insertBefore(make ,article.firstChild);
 
         // Register the physical node and its attributes into the global namespace
@@ -143,9 +138,7 @@
     let section_idx = 0;
 
     section_seq.forEach(section => {
-      const series_name = resolve_series(section);
-      const spec = ns.series[series_name];
-      const counter_name = counter_of(series_name);
+      const counter_name = make_counter(resolve_counter(section));
 
       // Utilize the abstracted structural depth utility
       let depth = U.Dom.get_structural_depth(section ,counter_name);
@@ -162,10 +155,10 @@
       const step = document.createElement('RT·counter·step');
       step.setAttribute('counter' ,counter_name);
 
-      /* The series travels with the step ,so nested sections can read it and
+      /* The counter travels with the step ,so nested sections can read it and
          so the contents list can gather every division without knowing which
          counters exist. */
-      step.setAttribute('data-RT-series' ,series_name);
+      step.setAttribute('data-RT-counter' ,counter_name);
       step.setAttribute('data-RT-section' ,'true');
       
       // Query the global dictionary for the splitable flag
@@ -188,20 +181,19 @@
          what it is; the mark says it. */
       title_node.setAttribute('data-RT-heading' ,'true');
 
+      /* The number alone. A title that should read 'Appendix B' is a
+         key="counter count" read ,and that is the author's choice to make ,not
+         one the macro makes for every section in the book. */
       const read_count = document.createElement('RT·counter·read');
       read_count.setAttribute('snapshot' ,snap_id);
-      /* Prefix then number ,read in one tag: 'Appendix B' ,'Section 2.4'. The
-         word is chosen by the counter from its own nesting depth ,so a section
-         moved to another level is relabelled without being rewritten. */
-      if(spec.prefix) read_count.setAttribute('key' ,'prefix count');
 
       const title_content = document.createElement('span');
       title_content.style.marginLeft = '0.75rem';
       
-      const read_name = document.createElement('RT·counter·read');
-      read_name.setAttribute('snapshot' ,snap_id);
-      read_name.setAttribute('key' ,'name');
-      title_content.appendChild(read_name);
+      const read_step = document.createElement('RT·counter·read');
+      read_step.setAttribute('snapshot' ,snap_id);
+      read_step.setAttribute('key' ,'step');
+      title_content.appendChild(read_step);
 
       title_node.appendChild(read_count);
       title_node.appendChild(title_content);

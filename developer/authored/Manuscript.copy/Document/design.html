@@ -37,7 +37,7 @@
         </p>
 
         <p>
-          <strong>Headings capitalize the first word only.</strong> This is not house preference but a requirement of the notation: identifiers in this system carry meaning in their case, so <RT·code>RT.Element</RT·code>, <RT·code>RT·Section·counter</RT·code>, and <RT·code>CountingNumber</RT·code> must read the same in a heading as in code. Title casing every word makes an ordinary word indistinguishable from an identifier, and worse, makes a genuine identifier look like ordinary title casing. Sentence case keeps the distinction legible. The same rule applies to headings the engine generates for itself, such as a table of contents title.
+          <strong>Headings capitalize the first word only.</strong> This is not house preference but a requirement of the notation: identifiers in this system carry meaning in their case, so <RT·code>RT.Element</RT·code>, <RT·code>RT·Counter·step</RT·code>, and <RT·code>CountingNumber</RT·code> must read the same in a heading as in code. Title casing every word makes an ordinary word indistinguishable from an identifier, and worse, makes a genuine identifier look like ordinary title casing. Sentence case keeps the distinction legible. The same rule applies to headings the engine generates for itself, such as a table of contents title.
         </p>
 
         <p>
@@ -778,18 +778,18 @@
         <RT·section>
           <RT·name>The expansion</RT·name>
           <RT·code>
-            &lt;RT·Counter·step counter="RT·Section·counter" splitable="true" id="{snap_id}"&gt;
-              &lt;RT·Counter·snapshot counter="RT·Section·counter" snapshot="{snap_id}"&gt;
+            &lt;RT·Counter·step counter="Chapter" splitable="true" id="{snap_id}"&gt;
+              &lt;RT·Counter·snapshot counter="Chapter" snapshot="{snap_id}"&gt;
               &lt;div class="RT·section-title"&gt;
                 &lt;RT·Counter·read snapshot="{snap_id}"&gt;
-                &lt;span&gt;&lt;RT·Counter·read snapshot="{snap_id}" key="name"&gt;&lt;/span&gt;
+                &lt;span&gt;&lt;RT·Counter·read snapshot="{snap_id}" key="step"&gt;&lt;/span&gt;
               &lt;/div&gt;
               {original children ,with RT·name hidden}
             &lt;/RT·Counter·step&gt;
           </RT·code>
 
           <p>
-            The name child is hidden rather than removed, because the counter walk reads it to populate the names array. Its text reaches the page through the read tag keyed on name, not through its own rendering. A top level section additionally receives a preceding page break if it does not already have one.
+            The name child is hidden rather than removed, because the counter walk reads it to populate the names array. Its text reaches the page through the read tag keyed on step, not through its own rendering. A top level section additionally receives a preceding page break if it does not already have one.
           </p>
         </RT·section>
 
@@ -816,7 +816,7 @@
           </p>
 
           <p>
-            The counter is named <RT·code>RT·Section·counter</RT·code> in the source. Whether the trailing word should be <RT·code>counter</RT·code> or <RT·code>count</RT·code> is unsettled: the machine is a counter but the value it holds is a count, and the tag namespace already says Counter.
+            The default counter is named <RT·code>Chapter</RT·code>, and the others in <RT·code>dict_counter</RT·code> are <RT·code>Front Matter</RT·code> and <RT·code>Appendix</RT·code>. These names are not internal: a cross reference reads the counter's name to print the word in front of the number, so what a counter is called is what the reader sees. Counters are named for print, and a name that would embarrass a page is the wrong name.
           </p>
         </RT·section>
 

@@ -24,7 +24,9 @@
         <RT·Counter·snapshot counter="Sec" snapshot="s1_pre"></RT·Counter·snapshot>
 
         <p>Count: <strong><RT·Counter·read snapshot="s1_pre"></RT·Counter·read></strong> (Expected: <strong>I</strong>)</p>
-        <p>Name: <strong><RT·Counter·read snapshot="s1_pre" key="name"></RT·Counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
+        <p>Name: <strong><RT·Counter·read snapshot="s1_pre" key="step"></RT·Counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
+        <p>Counter: <strong><RT·Counter·read snapshot="s1_pre" key="counter"></RT·Counter·read></strong> (Expected: <strong>Sec</strong>)</p>
+        <p>Counter and count: <strong><RT·Counter·read snapshot="s1_pre" key="counter count"></RT·Counter·read></strong> (Expected: <strong>Sec I</strong>)</p>
 
         <p style="color: #B22222; margin-top: 2rem;">--- Issuing Forced Split Break ---</p>
         <RT·page-break></RT·page-break>
@@ -34,14 +36,15 @@
         <p>The state arrays, including the parallel name array, are successfully cloned across the page boundary.</p>
 
         <p>Count: <strong><RT·Counter·read snapshot="s1_post"></RT·Counter·read></strong> (Expected: <strong>I</strong>)</p>
-        <p>Name: <strong><RT·Counter·read snapshot="s1_post" key="name"></RT·Counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
+        <p>Name: <strong><RT·Counter·read snapshot="s1_post" key="step"></RT·Counter·read></strong> (Expected: <strong>Introduction to Systems Architecture</strong>)</p>
 
         <RT·Counter·step counter="Sec">
           <RT·name>Theoretical Foundations</RT·name>
           <RT·Counter·snapshot counter="Sec" snapshot="s2"></RT·Counter·snapshot>
 
           <p style="margin-top: 1rem; margin-left: 2rem;">Count: <strong><RT·Counter·read snapshot="s2"></RT·Counter·read></strong> (Expected: <strong>I.A</strong>)</p>
-          <p style="margin-left: 2rem;">Name: <strong><RT·Counter·read snapshot="s2" key="name"></RT·Counter·read></strong> (Expected: <strong>Theoretical Foundations</strong>)</p>
+          <p style="margin-left: 2rem;">Name: <strong><RT·Counter·read snapshot="s2" key="step"></RT·Counter·read></strong> (Expected: <strong>Theoretical Foundations</strong>)</p>
+          <p style="margin-left: 2rem;">Counter and count: <strong><RT·Counter·read snapshot="s2" key="counter count"></RT·Counter·read></strong> (Expected: <strong>Sec I.A</strong>)</p>
         </RT·Counter·step>
 
       </RT·Counter·step>

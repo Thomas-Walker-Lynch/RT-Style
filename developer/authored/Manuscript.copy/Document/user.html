@@ -18,7 +18,7 @@
       <RT·title 
         title="RT Style System: User Manual"
         author="Thomas Walker Lynch" 
-        date="2026-08-06 16:07Z" 
+        date="2026-08-28" 
         copyright="2026 Reasoning Technology">
       </RT·title>
 
@@ -205,7 +205,7 @@
               Clones the active count variables into the lookup dictionary. Snapshot processing operates independently of the layout pass, allowing global retrieval regardless of physical placement.
             </RT·entry>
             <RT·entry key="&lt;RT·Counter·read&gt;">
-              Retrieves the stored snapshot and projects it as innerHTML.
+              Retrieves the stored snapshot and projects it as innerHTML. See <em>Reading a counter</em> below for the field table.
             </RT·entry>
           </RT·dictionary>
         </RT·section>
@@ -250,6 +250,547 @@
         </RT·section>
       </RT·section>
 
+      <RT·section id="sec-sections">
+        <RT·name>Sections</RT·name>
+        <p>
+          <RT·code>&lt;RT·section&gt;</RT·code> is the workhorse of a manuscript. It is not an element with numbering logic of its own: it is a macro that expands into a counter step, a snapshot, and a title. Everything a section can do is therefore something a counter can do, and the counter tags are available directly when a section is not the right shape.
+        </p>
+
+        <RT·section>
+          <RT·name>Writing a section</RT·name>
+          <p>
+            A section takes its heading from an <RT·code>&lt;RT·name&gt;</RT·code> child. Sections nest, and the nesting is the numbering: a section inside a section is numbered one level deeper.
+          </p>
+          <RT·code>
+            &lt;RT·section id="wire-protocol"&gt;
+              &lt;RT·name&gt;Wire protocol&lt;/RT·name&gt;
+              &lt;p&gt;Prose belongs here.&lt;/p&gt;
+
+              &lt;RT·section&gt;
+                &lt;RT·name&gt;Framing&lt;/RT·name&gt;
+                &lt;p&gt;This section numbers one level deeper.&lt;/p&gt;
+              &lt;/RT·section&gt;
+            &lt;/RT·section&gt;
+          </RT·code>
+          <p>
+            The <RT·code>&lt;RT·name&gt;</RT·code> child is hidden rather than removed, because the counter reads it to populate the name of the step. Do not style it or rely on its position in the flow; its text reaches the page through the title the macro builds.
+          </p>
+          <p>
+            A title prints the number and then the name. It does not print the name of the counter. A heading that should read <em>Appendix B</em> rather than <em>B</em> is a cross reference, and is written where it is wanted rather than imposed on every section in the book.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Section attributes</RT·name>
+          <RT·dictionary key="Attribute" definition="Meaning">
+            <RT·entry key="id">
+              Optional, and worth writing on anything that will be referred to. It does three things at once: it anchors the section for table of contents links, it names the section's counter snapshot, and it is therefore the handle a cross reference reads. Without it the engine allocates an internal name that an author cannot predict.
+            </RT·entry>
+            <RT·entry key="counter">
+              Optional. Names the counter this section steps. Nested sections inherit it, so it is written once at the top of a division and not repeated. Default: <RT·code>Chapter</RT·code>.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Divisions of a book</RT·name>
+          <p>
+            The divisions of a book are not one sequence. A single counter across the whole manuscript would number the preface as chapter one and start the appendices wherever the last chapter left off. So each division names its own counter, and the counter's name is the word the reader sees.
+          </p>
+          <RT·dictionary key="Counter" definition="Numbering">
+            <RT·entry key="Chapter">
+              The default. Counting numbers at every level: 1, then 1.1, then 1.1.1.
+            </RT·entry>
+            <RT·entry key="Front Matter">
+              Lower case roman: i, then i.ii.
+            </RT·entry>
+            <RT·entry key="Appendix">
+              Upper case letters at the top level and counting numbers below: A, then A.1.
+            </RT·entry>
+          </RT·dictionary>
+          <RT·code>
+            &lt;RT·section counter="Front Matter"&gt;
+              &lt;RT·name&gt;Preface&lt;/RT·name&gt;
+              &hellip;
+            &lt;/RT·section&gt;
+
+            &lt;RT·section&gt;
+              &lt;RT·name&gt;Getting started&lt;/RT·name&gt;
+              &hellip;
+            &lt;/RT·section&gt;
+
+            &lt;RT·section counter="Appendix" id="app-wire"&gt;
+              &lt;RT·name&gt;Wire protocol&lt;/RT·name&gt;
+              &hellip;
+            &lt;/RT·section&gt;
+          </RT·code>
+          <p>
+            Counters are named for print. A cross reference reads the counter's name to print the word in front of the number, so a name that would embarrass a page is the wrong name.
+          </p>
+          <p>
+            A counter named on a section but not in the table is still made, on the default numbering. That is how a second appendix sequence or a numbered part is introduced with no configuration at all. To give a new counter a style of its own, add an entry before the document is processed. Put it in a second script element in the head, after the loads, so that the section element has been loaded by the time it runs:
+          </p>
+          <RT·code>
+            &lt;script&gt;
+              RT.Element.Section.dict_counter['Part'] =
+                { style: 'Roman' ,on_first_step: 'I' };
+            &lt;/script&gt;
+          </RT·code>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>What a section does to the page</RT·name>
+          <p>
+            Heading size, indent, and opacity all derive from nesting depth; there is nothing to set. A top level section is preceded by a page break unless one is already there, so divisions start on a fresh leaf. Deeper sections do not break.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section id="sec-counter-read">
+        <RT·name>Reading a counter</RT·name>
+        <p>
+          <RT·code>&lt;RT·Counter·read&gt;</RT·code> is how a number reaches the page. It reads a <em>snapshot</em>, never a live counter: a counter's value is a moving thing, and a reference to it has to name the moment it refers to. Snapshots are global, so a read may appear anywhere in the document, before or after the thing it refers to.
+        </p>
+        <RT·code>
+          &lt;RT·Counter·read snapshot="app-wire" key="counter count"&gt;&lt;/RT·Counter·read&gt;
+        </RT·code>
+        <p>
+          The tag is a container and must be closed. Its content is replaced, so anything written inside it is discarded.
+        </p>
+
+        <RT·section>
+          <RT·name>Where snapshots come from</RT·name>
+          <RT·dictionary key="Snapshot name" definition="Taken by">
+            <RT·entry key="the section's id">
+              Every <RT·code>&lt;RT·section&gt;</RT·code> snapshots itself under its <RT·code>id</RT·code>. This is the ordinary way to refer to a section.
+            </RT·entry>
+            <RT·entry key="whatever you name">
+              An explicit <RT·code>&lt;RT·Counter·snapshot&gt;</RT·code> takes one under a name of your choosing. Use this for figures, tables, and anything counted by a counter of your own.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The key attribute</RT·name>
+          <p>
+            <RT·code>key</RT·code> names the fields to emit. It is optional and defaults to <RT·code>count</RT·code>.
+          </p>
+          <RT·dictionary key="key" definition="What is emitted">
+            <RT·entry key="count">
+              The formatted number, styled and separated as the counter was configured. This is the default.
+            </RT·entry>
+            <RT·entry key="counter">
+              The name of the counter, which is the word that belongs in front of the number: Chapter, Appendix, Figure.
+            </RT·entry>
+            <RT·entry key="step">
+              The name of the step, which for a section is its title.
+            </RT·entry>
+            <RT·entry key="count.list">
+              The raw level numbers, comma separated, unformatted. Diagnostic.
+            </RT·entry>
+            <RT·entry key="count.list.short">
+              The same without the innermost level.
+            </RT·entry>
+            <RT·entry key="count.name">
+              The step name at the innermost level, without the scope correction that <RT·code>step</RT·code> applies. Diagnostic.
+            </RT·entry>
+            <RT·entry key="count.status">
+              <RT·code>empty</RT·code>, <RT·code>preamble</RT·code>, or <RT·code>between</RT·code>. Diagnostic.
+            </RT·entry>
+            <RT·entry key="style, separator, mode">
+              The counter's own settings, as configured on its make tag. Diagnostic.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Reading several fields at once</RT·name>
+          <p>
+            Fields may be named together, separated by spaces, and are emitted in the order written with a single space between them. This is how a reference reads as a phrase rather than as a number the author has to caption by hand:
+          </p>
+          <RT·dictionary key="Written" definition="Reads">
+            <RT·entry key='key="count"'>
+              B
+            </RT·entry>
+            <RT·entry key='key="counter count"'>
+              Appendix B
+            </RT·entry>
+            <RT·entry key='key="counter count step"'>
+              Appendix B Wire protocol
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            An empty field is dropped rather than left as a hanging space, so a read that names a field the counter has nothing for closes up rather than printing a gap.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>When a read fails</RT·name>
+          <p>
+            A read never throws and never silently vanishes. It prints its complaint where the value would have gone, so a broken reference is visible on the page rather than in a console nobody is reading.
+          </p>
+          <RT·dictionary key="Output" definition="Cause">
+            <RT·entry key="[Unknown snapshot: x]">
+              No snapshot by that name. Usually a misspelt <RT·code>id</RT·code>, or a <RT·code>snapshot</RT·code> attribute left off entirely.
+            </RT·entry>
+            <RT·entry key="[Missing key: f]">
+              The snapshot has no such field. Check the field table above.
+            </RT·entry>
+            <RT·entry key="[Empty Counter]">
+              A snapshot was taken of a counter that had not yet taken a step.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+      </RT·section>
+
+      <RT·section id="sec-own-counters">
+        <RT·name>Counters of your own</RT·name>
+        <p>
+          Figures, tables, equations, exhibits, and requirements are all the same shape: a sequence that numbers, is named, and is referred to from elsewhere. Sections are one instance of that shape, made convenient. The counter tags are the shape itself.
+        </p>
+
+        <RT·section>
+          <RT·name>The four tags</RT·name>
+          <RT·code>
+            &lt;RT·Counter·make counter="Figure" style="CountingNumber" on-first-step="0"&gt;&lt;/RT·Counter·make&gt;
+
+            &lt;RT·Counter·step counter="Figure"&gt;
+              &lt;RT·name&gt;Packet layout&lt;/RT·name&gt;
+              &lt;RT·Counter·snapshot counter="Figure" snapshot="fig-packet"&gt;&lt;/RT·Counter·snapshot&gt;
+              &lt;p&gt;&lt;RT·Counter·read snapshot="fig-packet" key="counter count"&gt;&lt;/RT·Counter·read&gt;: the frame.&lt;/p&gt;
+            &lt;/RT·Counter·step&gt;
+
+            &hellip; and elsewhere in the document &hellip;
+
+            As shown in &lt;RT·Counter·read snapshot="fig-packet" key="counter count"&gt;&lt;/RT·Counter·read&gt;&hellip;
+          </RT·code>
+          <p>
+            Put the make tag once, near the top of the article. Put a step around each item. Take a snapshot inside the step, after at least one step has run, and name it something you will remember. Read it wherever the reference belongs.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Make attributes</RT·name>
+          <RT·dictionary key="Attribute" definition="Meaning">
+            <RT·entry key="counter">
+              Required. The counter's name, and the word a reference prints in front of the number.
+            </RT·entry>
+            <RT·entry key="style">
+              Comma separated, one per nesting level, the last repeating. Default: <RT·code>NaturalNumber</RT·code>.
+            </RT·entry>
+            <RT·entry key="on-first-step">
+              What the first step reads, written in the counter's own top level style: <RT·code>on-first-step="A"</RT·code> for a counter styled <RT·code>Alpha</RT·code>. Default: the style's zero.
+            </RT·entry>
+            <RT·entry key="separator">
+              What goes between levels. Default: a period.
+            </RT·entry>
+            <RT·entry key="separator-placement">
+              <RT·code>embedded</RT·code>, or <RT·code>embedded-after</RT·code> to place a trailing separator after the last level. Default: <RT·code>embedded</RT·code>.
+            </RT·entry>
+            <RT·entry key="mode">
+              <RT·code>scoped</RT·code> or <RT·code>milestone</RT·code>. A scoped counter drops the innermost level once a scope closes, which is what nested sections want. A milestone counter keeps it, which is what a page number wants. Default: <RT·code>scoped</RT·code>.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Number styles</RT·name>
+          <RT·dictionary key="style" definition="Reads">
+            <RT·entry key="NaturalNumber">
+              0, 1, 2, 3. Counts from zero.
+            </RT·entry>
+            <RT·entry key="CountingNumber">
+              1, 2, 3, 4. Counts from one.
+            </RT·entry>
+            <RT·entry key="Roman">
+              I, II, III, IV.
+            </RT·entry>
+            <RT·entry key="roman">
+              i, ii, iii, iv.
+            </RT·entry>
+            <RT·entry key="Alpha">
+              A, B, C, D.
+            </RT·entry>
+            <RT·entry key="alpha">
+              a, b, c, d.
+            </RT·entry>
+            <RT·entry key="outline">
+              A shorthand, not a style. Expands to <RT·code>Roman, Alpha, roman, alpha, CountingNumber</RT·code>, which is the classical outline sequence: I, then I.A, then I.A.i.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Step and snapshot attributes</RT·name>
+          <RT·dictionary key="Attribute" definition="Meaning">
+            <RT·entry key="counter (on step)">
+              Required. Which counter to step. A step inside another step of the same counter numbers one level deeper.
+            </RT·entry>
+            <RT·entry key="&lt;RT·name&gt; (in step)">
+              Optional. Names the step, and is what <RT·code>key="step"</RT·code> reads back.
+            </RT·entry>
+            <RT·entry key="counter (on snapshot)">
+              Required. Which counter to snapshot.
+            </RT·entry>
+            <RT·entry key="snapshot">
+              Required. The name the snapshot is filed under, and the name a read asks for.
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            Steps also carry <RT·code>splitable</RT·code>, <RT·code>continued</RT·code>, <RT·code>continuation</RT·code>, and <RT·code>split-id</RT·code>. These are written by the paginator when a scope crosses a page boundary. They are not authored.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section id="sec-cross-reference">
+        <RT·name>Cross references and page numbers</RT·name>
+        <p>
+          There are two kinds of reference, and they answer different questions. A counter read answers <em>what is it called</em>. A note read answers <em>where is it</em>. A full reference usually wants both.
+        </p>
+
+        <RT·section>
+          <RT·name>Referring to a section</RT·name>
+          <p>
+            Give the section an <RT·code>id</RT·code> and read its snapshot. Wrap the reference in an anchor if it should also be clickable.
+          </p>
+          <RT·code>
+            &lt;RT·section counter="Appendix" id="app-wire"&gt;
+              &lt;RT·name&gt;Wire protocol&lt;/RT·name&gt;
+              &hellip;
+            &lt;/RT·section&gt;
+
+            &hellip; described in
+            &lt;a href="#app-wire"&gt;&lt;RT·Counter·read snapshot="app-wire" key="counter count"&gt;&lt;/RT·Counter·read&gt;&lt;/a&gt;,
+            &lt;RT·Counter·read snapshot="app-wire" key="step"&gt;&lt;/RT·Counter·read&gt;.
+          </RT·code>
+          <p>
+            That reads: <em>described in Appendix B, Wire protocol.</em> Neither the letter nor the title is repeated by hand, so neither can fall out of step with the section itself.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Referring to a page</RT·name>
+          <p>
+            A page number is not known until the document has been paginated, which is why it is a separate mechanism. Mark the target with <RT·code>&lt;RT·Note·write&gt;</RT·code> and read it with <RT·code>&lt;RT·Note·read&gt;</RT·code>.
+          </p>
+          <RT·code>
+            &lt;RT·name&gt;&lt;RT·Note·write key="env-setup"&gt;Article environment&lt;/RT·Note·write&gt;&lt;/RT·name&gt;
+
+            &hellip; see &lt;RT·Note·read key="env-setup"&gt;&lt;/RT·Note·read&gt;
+            on page &lt;RT·Note·read key="env-setup" field="page"&gt;&lt;/RT·Note·read&gt;.
+          </RT·code>
+          <RT·dictionary key="field" definition="What is emitted">
+            <RT·entry key="content">
+              The content that was wrapped by the write tag. This is the default.
+            </RT·entry>
+            <RT·entry key="page">
+              The number of the page the write tag landed on, after pagination.
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            A read against a key that was never written prints <RT·code>[Unknown note: k]</RT·code>; an unknown field prints <RT·code>[Invalid field: f]</RT·code>.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section id="sec-pagination">
+        <RT·name>Controlling pagination</RT·name>
+        <p>
+          Pages are produced by the paginator, not authored. Content is measured and poured into leaves, and elements that would be broken badly are moved whole. Three things are under an author's control.
+        </p>
+        <RT·dictionary key="Tag or attribute" definition="Effect">
+          <RT·entry key="&lt;RT·page-break&gt;">
+            Ends the current page. Everything after it starts on the next leaf. Top level sections already receive one, so writing another before a chapter produces a blank page.
+          </RT·entry>
+          <RT·entry key="&lt;RT·page&gt;">
+            An authored leaf, for a title page or a plate that must stand alone. Its content is not repoured.
+          </RT·entry>
+          <RT·entry key="no-number">
+            Written on an authored <RT·code>&lt;RT·page&gt;</RT·code>. The leaf is neither numbered nor counted, so the page after it takes the number this one would have had. This is what a title page wants: the reader's page one is the first page of text.
+          </RT·entry>
+        </RT·dictionary>
+        <p>
+          Page numbers are themselves a counter, named <RT·code>RT_page_number</RT·code>, stepped once per numbered leaf and printed in the footer. Do not step it, and do not name a counter of your own the same thing.
+        </p>
+      </RT·section>
+
+      <RT·section id="sec-order">
+        <RT·name>The order things happen in</RT·name>
+        <p>
+          Knowing the schedule explains most of what would otherwise look arbitrary: why a page number can be referenced at all, why a counter read may appear before the thing it refers to, and why nothing an author writes needs to be in dependency order.
+        </p>
+        <RT·dictionary key="Phase" definition="What runs">
+          <RT·entry key="configure">
+            The theme is compiled into a layout configuration.
+          </RT·entry>
+          <RT·entry key="element">
+            Generators expand and elements are styled. Sections become counter steps here.
+          </RT·entry>
+          <RT·entry key="paginate_0">
+            The continuous document is sliced into pages.
+          </RT·entry>
+          <RT·entry key="page_style">
+            Page geometry is applied.
+          </RT·entry>
+          <RT·entry key="counter">
+            Counters are walked and every read is resolved. After pagination, because a page number is itself a counter.
+          </RT·entry>
+          <RT·entry key="note">
+            Cross references are resolved. After counters, because a reference target may contain a counter value.
+          </RT·entry>
+          <RT·entry key="paginate_1">
+            Pages that overflowed are grown. This phase only ever grows a page; it never moves content between pages, because that would change page numbers, which would change reference lengths, which would move more content.
+          </RT·entry>
+        </RT·dictionary>
+        <p>
+          The consequence for an author is that document order does not matter to a reference. A read placed in chapter one may name a snapshot taken in an appendix, because every snapshot has been taken before any read is resolved.
+        </p>
+      </RT·section>
+
+      <RT·section id="sec-worked-example">
+        <RT·name>A worked document</RT·name>
+        <p>
+          Everything above, assembled. A title page that is not numbered, front matter in roman, chapters, an appendix, a figure counter of the author's own, and references that survive the material being moved.
+        </p>
+        <RT·code>
+          &lt;!DOCTYPE html&gt;
+          &lt;html lang="en"&gt;
+            &lt;head&gt;
+              &lt;meta charset="UTF-8"&gt;
+              &lt;title&gt;Wire Protocol Handbook&lt;/title&gt;
+              &lt;script src="RT-Manuscript_locator.js"&gt;&lt;/script&gt;
+              &lt;script&gt;
+                window.RT.theme_preference('inverse_wheat');
+                window.RT.load('Layout/paginate');
+                window.RT.load('Layout/article_tech_ref');
+                window.RT.load('Element/theme_selector');
+              &lt;/script&gt;
+              &lt;script&gt;
+                RT.Element.Section.dict_counter['Part'] =
+                  { style: 'Roman' ,on_first_step: 'I' };
+              &lt;/script&gt;
+            &lt;/head&gt;
+            &lt;body&gt;
+              &lt;RT·theme-selector&gt;&lt;/RT·theme-selector&gt;
+              &lt;RT·article&gt;
+
+                &lt;RT·page no-number&gt;
+                  &lt;RT·title
+                    title="Wire Protocol Handbook"
+                    author="A. Author"
+                    date="2026-08-28"
+                    copyright="2026 Reasoning Technology"&gt;
+                  &lt;/RT·title&gt;
+                &lt;/RT·page&gt;
+
+                &lt;RT·TOC level="1-2"&gt;&lt;/RT·TOC&gt;
+
+                &lt;RT·Counter·make counter="Figure" style="CountingNumber" on-first-step="0"&gt;&lt;/RT·Counter·make&gt;
+
+                &lt;RT·section counter="Front Matter" id="preface"&gt;
+                  &lt;RT·name&gt;Preface&lt;/RT·name&gt;
+                  &lt;p&gt;Numbered i, and its subsections i.ii and so on.&lt;/p&gt;
+                &lt;/RT·section&gt;
+
+                &lt;RT·section id="ch-framing"&gt;
+                  &lt;RT·name&gt;Framing&lt;/RT·name&gt;
+                  &lt;p&gt;
+                    A &lt;RT·term&gt;frame&lt;/RT·term&gt; is the unit of transmission.
+                    Its layout is given in
+                    &lt;RT·Counter·read snapshot="fig-packet" key="counter count"&gt;&lt;/RT·Counter·read&gt;,
+                    and the encoding rules in
+                    &lt;a href="#app-wire"&gt;&lt;RT·Counter·read snapshot="app-wire" key="counter count"&gt;&lt;/RT·Counter·read&gt;&lt;/a&gt;.
+                  &lt;/p&gt;
+
+                  &lt;RT·Counter·step counter="Figure"&gt;
+                    &lt;RT·name&gt;Packet layout&lt;/RT·name&gt;
+                    &lt;RT·Counter·snapshot counter="Figure" snapshot="fig-packet"&gt;&lt;/RT·Counter·snapshot&gt;
+                    &lt;RT·grid major="x"&gt;
+                      &lt;RT·e type="x-label" y="0" x="1"&gt;Octets&lt;/RT·e&gt;
+                      &lt;RT·e type="y-label" y="1" x="0"&gt;header&lt;/RT·e&gt;
+                      &lt;RT·e type="data"&gt;4&lt;/RT·e&gt;
+                    &lt;/RT·grid&gt;
+                    &lt;p style="text-align: center;"&gt;
+                      &lt;RT·Counter·read snapshot="fig-packet" key="counter count step"&gt;&lt;/RT·Counter·read&gt;
+                    &lt;/p&gt;
+                  &lt;/RT·Counter·step&gt;
+
+                  &lt;RT·section&gt;
+                    &lt;RT·name&gt;Escaping&lt;/RT·name&gt;
+                    &lt;p&gt;Numbered one level deeper than its parent.&lt;/p&gt;
+                  &lt;/RT·section&gt;
+                &lt;/RT·section&gt;
+
+                &lt;RT·section counter="Appendix" id="app-wire"&gt;
+                  &lt;RT·name&gt;Wire protocol&lt;/RT·name&gt;
+                  &lt;p&gt;
+                    Introduced in
+                    &lt;RT·Note·read key="framing-intro"&gt;&lt;/RT·Note·read&gt;,
+                    on page &lt;RT·Note·read key="framing-intro" field="page"&gt;&lt;/RT·Note·read&gt;.
+                  &lt;/p&gt;
+                &lt;/RT·section&gt;
+
+              &lt;/RT·article&gt;
+            &lt;/body&gt;
+          &lt;/html&gt;
+        </RT·code>
+        <p>
+          The forward reference in <RT·code>ch-framing</RT·code> to a figure that has not yet been stepped, and to an appendix that comes later in the file, both resolve. The backward reference from the appendix to a note written in the chapter resolves too, and carries a page number that nothing in the source states.
+        </p>
+      </RT·section>
+
+      <RT·section id="sec-reserved">
+        <RT·name>Reserved names and common mistakes</RT·name>
+
+        <RT·section>
+          <RT·name>Names the engine uses</RT·name>
+          <p>
+            Counters are a single flat namespace. A counter of your own that collides with one of these will be stepped by the engine as well as by you, and the numbering will be wrong in a way that is tedious to trace.
+          </p>
+          <RT·dictionary key="Name" definition="Used by">
+            <RT·entry key="Chapter, Front Matter, Appendix">
+              The section element. Safe to step by writing sections; do not step directly.
+            </RT·entry>
+            <RT·entry key="RT_page_number">
+              The paginator.
+            </RT·entry>
+            <RT·entry key="EndNoteCounter">
+              The endnote element.
+            </RT·entry>
+            <RT·entry key="page_snap_N">
+              A snapshot name, not a counter. Taken by the paginator for each numbered leaf. Read page numbers through <RT·code>&lt;RT·Note·read field="page"&gt;</RT·code> rather than by naming these.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Mistakes worth knowing about in advance</RT·name>
+          <RT·dictionary key="Symptom" definition="Cause">
+            <RT·entry key="A tag renders as literal text">
+              The separator is a middle dot, not a period or a hyphen. On macOS: Option + Shift + 9. On Windows: Alt and 0183 on the numeric keypad. On Linux: Compose, then period, then hyphen.
+            </RT·entry>
+            <RT·entry key="A read prints nothing at all">
+              Every RT tag is a container and must be closed. <RT·code>&lt;RT·Counter·read /&gt;</RT·code> is not a closed tag in HTML and swallows the rest of the document.
+            </RT·entry>
+            <RT·entry key="[Unknown snapshot: null]">
+              The <RT·code>snapshot</RT·code> attribute was omitted. There is no default and no reading of a live counter.
+            </RT·entry>
+            <RT·entry key="Inline code renders as a block">
+              A <RT·code>&lt;RT·code&gt;</RT·code> whose opening and closing tags are on the same line is inline; anything containing a newline is a block. The same rule applies to <RT·code>&lt;RT·math&gt;</RT·code>.
+            </RT·entry>
+            <RT·entry key="A section heading is blank">
+              The title comes from an <RT·code>&lt;RT·name&gt;</RT·code> child. A section without one numbers correctly and prints no name.
+            </RT·entry>
+            <RT·entry key="A term is not indexed">
+              Decorate every occurrence of a term, not just the first. The first is styled and given an id; later ones are recognised and left plain.
+            </RT·entry>
+            <RT·entry key="A blank page before a chapter">
+              Top level sections already insert a page break. Writing one as well produces an empty leaf.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
+      </RT·section>
+
       <RT·section>
         <RT·name>Global widgets</RT·name>
         <RT·dictionary key="Tag" definition="Description & Arguments">
@@ -258,7 +799,6 @@
           </RT·entry>
         </RT·dictionary>
       </RT·section>
-
     </RT·article>
   </body>
 </html>
