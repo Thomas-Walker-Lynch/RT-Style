@@ -45,6 +45,10 @@
         <p>
           As a quick review of terminology, note that <RT·term>content</RT·term> is found between the opening HTML tag and the closing HTML tag. E.g. <RT·code>&lt;RT·noop&gt;This is content.&lt;/RT·noop&gt;</RT·code>. Whereas an <RT·term>attribute</RT·term> is a name-value pair found within an opening HTML tag. E.g. <RT·code>&lt;RT·noop name="value"&gt;</RT·code>.
         </p>
+
+        <p>
+          Some attributes carry markup rather than a string, and those are written as child elements instead. <RT·code>&lt;RT·name&gt;</RT·code> is the one an author meets first: it gives a name to its container, and is understood by sections, by counter steps, by relation tuples, and by matrix vectors alike. It is deliberately not namespaced. An element looks only at its own direct children for such attributes, and never inside a child that is itself an element, so by the time the tag is read the namespace is already established by where it sits. Writing <RT·code>&lt;RT·Section·name&gt;</RT·code> would say twice what position has already said once.
+        </p>
       </RT·section>
 
       <RT·section>
@@ -241,10 +245,10 @@
           <RT·name>Pagination</RT·name>
           <RT·dictionary key="Tag" definition="Description & Arguments">
             <RT·entry key="&lt;RT·page&gt;">
-              Physical document boundary generated dynamically by the paginator. Not for manual insertion.
+              A composed leaf. See <em>Pages</em> below.
             </RT·entry>
             <RT·entry key="&lt;RT·page-break&gt;">
-              Explicit directive terminating the current <RT·code>&lt;RT·page&gt;</RT·code> evaluation and pushing subsequent data to the next boundary.
+              Ends the current page. See <em>Pages</em> below.
             </RT·entry>
           </RT·dictionary>
         </RT·section>
@@ -594,24 +598,103 @@
       </RT·section>
 
       <RT·section id="sec-pagination">
-        <RT·name>Controlling pagination</RT·name>
+        <RT·name>Pages</RT·name>
         <p>
-          Pages are produced by the paginator, not authored. Content is measured and poured into leaves, and elements that would be broken badly are moved whole. Three things are under an author's control.
+          Pages are produced, not written. The paginator measures the document and pours it into leaves, moving whole any element that would be broken badly. An author does not create a page in the ordinary course of writing, and should not try to: the number of leaves a chapter occupies is a consequence of the text, and it changes whenever the text does.
         </p>
-        <RT·dictionary key="Tag or attribute" definition="Effect">
-          <RT·entry key="&lt;RT·page-break&gt;">
-            Ends the current page. Everything after it starts on the next leaf. Top level sections already receive one, so writing another before a chapter produces a blank page.
-          </RT·entry>
-          <RT·entry key="&lt;RT·page&gt;">
-            An authored leaf, for a title page or a plate that must stand alone. Its content is not repoured.
-          </RT·entry>
-          <RT·entry key="no-number">
-            Written on an authored <RT·code>&lt;RT·page&gt;</RT·code>. The leaf is neither numbered nor counted, so the page after it takes the number this one would have had. This is what a title page wants: the reader's page one is the first page of text.
-          </RT·entry>
-        </RT·dictionary>
         <p>
-          Page numbers are themselves a counter, named <RT·code>RT_page_number</RT·code>, stepped once per numbered leaf and printed in the footer. Do not step it, and do not name a counter of your own the same thing.
+          Two things are nevertheless an author's business. Some leaves are composed rather than flowed &mdash; a title page, a dedication, a plate &mdash; and the author has decided what is on them. And some breaks are meant rather than measured.
         </p>
+
+        <RT·section>
+          <RT·name>Composed leaves</RT·name>
+          <p>
+            <RT·code>&lt;RT·page&gt;</RT·code> is a leaf the author has composed. The paginator carries it through whole: it is not measured against the page limit, its content is not poured, and nothing is added to it. It closes whatever page is open and stands alone.
+          </p>
+          <p>
+            It is recognised <strong>only as a direct child of <RT·code>&lt;RT·article&gt;</RT·code></strong>. Written inside a section it is not a leaf at all, and its content is poured like any other content.
+          </p>
+          <RT·dictionary key="Attribute" definition="Meaning">
+            <RT·entry key="no-number">
+              The leaf is neither numbered nor counted, and takes no footer. The leaf after it holds the number this one would have taken. Not counted rather than counted and hidden, which is what a title page wants: the reader's page one is the first page of text.
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            A composed leaf that holds more than fits is grown rather than split. Nothing is lost, but the leaf will be taller than its neighbours, so compose to roughly a page.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>The title page</RT·name>
+          <p>
+            This is the whole recipe. A composed leaf, marked unnumbered, holding the title block:
+          </p>
+          <RT·code>
+            &lt;RT·article&gt;
+
+              &lt;RT·page no-number&gt;
+                &lt;RT·title
+                  title="Wire Protocol Handbook"
+                  author="A. Author"
+                  date="2026-08-28"
+                  copyright="2026 Reasoning Technology"&gt;
+                &lt;/RT·title&gt;
+              &lt;/RT·page&gt;
+
+              &lt;RT·TOC level="1-2"&gt;&lt;/RT·TOC&gt;
+
+              &lt;RT·section&gt;
+                &lt;RT·name&gt;Framing&lt;/RT·name&gt;
+                &hellip;
+              &lt;/RT·section&gt;
+
+            &lt;/RT·article&gt;
+          </RT·code>
+          <p>
+            Page one is then the first numbered leaf, which here is the leaf the contents starts on. To leave the contents out of the numbering as well, put it in a composed leaf of its own and mark that unnumbered too &mdash; but a contents list long enough to overflow will grow its leaf rather than run onto a second one, so this suits a short document better than a long one.
+          </p>
+          <p>
+            Nothing else is needed. In particular there is no break to write after the composed leaf: it closes the page itself, and the break the first section inserts falls on an already empty page and is discarded.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Forced breaks</RT·name>
+          <p>
+            <RT·code>&lt;RT·page-break&gt;</RT·code> ends the current page; what follows starts on the next leaf. A break that falls where the page is already empty is discarded, so breaks do not accumulate into blank leaves and a break written next to one the engine inserts is harmless.
+          </p>
+          <p>
+            Top level sections already receive a break, so a division starts on a fresh leaf without being asked. Write a break for the cases the engine cannot know about: a plate that should face its discussion, a table that should not straddle a fold.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Numbering, and what it cannot do yet</RT·name>
+          <p>
+            Page numbers are a counter, named <RT·code>RT_page_number</RT·code>, stepped once per numbered leaf and printed centred in the footer. It is made by the paginator, not by the document. Do not step it, and do not give a counter of your own that name.
+          </p>
+          <p>
+            There is at present no way to configure it from the document. Numbering cannot be restarted partway through, cannot be restyled &mdash; roman front matter followed by arabic body is not currently expressible &mdash; and the footer cannot be given other content. <RT·code>no-number</RT·code> on a composed leaf is the only control there is. Plan the front matter accordingly rather than looking for an attribute that is not there.
+          </p>
+          <p>
+            To refer to a page from elsewhere in the text, do not read the page counter directly. Mark the target with <RT·code>&lt;RT·Note·write&gt;</RT·code> and read <RT·code>field="page"</RT·code>, as described under <em>Cross references and page numbers</em>.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>What belongs at the top of an article</RT·name>
+          <p>
+            Two kinds of tag are document furniture rather than content, and both are best written as direct children of <RT·code>&lt;RT·article&gt;</RT·code>, before the first section.
+          </p>
+          <RT·dictionary key="Tag" definition="Why it goes there">
+            <RT·entry key="&lt;RT·Counter·make&gt;">
+              A counter must be made before it is stepped, and the walk runs in document order. A make tag at the top of the article is in force for the whole document.
+            </RT·entry>
+            <RT·entry key="&lt;RT·page&gt;">
+              Recognised as a composed leaf only at this level. A title page therefore comes first, before the contents and before any section.
+            </RT·entry>
+          </RT·dictionary>
+        </RT·section>
       </RT·section>
 
       <RT·section id="sec-order">
@@ -784,8 +867,8 @@
             <RT·entry key="A term is not indexed">
               Decorate every occurrence of a term, not just the first. The first is styled and given an id; later ones are recognised and left plain.
             </RT·entry>
-            <RT·entry key="A blank page before a chapter">
-              Top level sections already insert a page break. Writing one as well produces an empty leaf.
+            <RT·entry key="A composed leaf is ignored">
+              <RT·code>&lt;RT·page&gt;</RT·code> is recognised only as a direct child of <RT·code>&lt;RT·article&gt;</RT·code>. Nested inside a section it is not a leaf, and its content is poured like anything else.
             </RT·entry>
           </RT·dictionary>
         </RT·section>
