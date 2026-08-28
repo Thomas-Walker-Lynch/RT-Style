@@ -49,6 +49,105 @@
       </RT·section>
 
       <RT·section>
+        <RT·name>The Harmony project and the build loop</RT·name>
+        <p>
+          RT-Style is a <RT·term>Harmony</RT·term> project. Harmony is a language agnostic project skeleton: a directory structure, a role based environment, and a build and promotion workflow, checked into a repository and copied to start a new project. This section covers what a person has to know about Harmony to work on the engine. The project's own introduction, <RT·code>document/introduction_Harmony.html</RT·code>, covers the skeleton in full, and the Harmony project itself is the authority when the two disagree.
+        </p>
+
+        <RT·section>
+          <RT·name>Roles</RT·name>
+          <p>
+            Work is done under a <RT·term>role</RT·term>. The roles are <RT·code>administrator</RT·code>, <RT·code>developer</RT·code>, <RT·code>tester</RT·code>, and <RT·code>consumer</RT·code>, and each owns a top level directory. A person takes a role by sourcing the setup script from the top of the project, which sets <RT·code>REPO_HOME</RT·code> and <RT·code>SETUP</RT·code>, puts the role's tool directory on the path, and changes into the role's workspace:
+          </p>
+          <RT·code>
+            &gt; . setup developer
+          </RT·code>
+          <p>
+            The build and promotion tools live in <RT·code>developer/tool</RT·code> and refuse to run outside that environment: both check that <RT·code>SETUP</RT·code> reads <RT·code>developer/tool/setup</RT·code> and exit with an error otherwise. A tester who needs to rebuild the engine therefore takes the developer role for the duration, then leaves it.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Authored, scratchpad, consumer</RT·name>
+          <p>
+            Three directory properties carry the work product, and the build loop moves it from one to the next.
+          </p>
+          <RT·dictionary key="Directory" definition="Property">
+            <RT·entry key="developer/authored">
+              Written by a person, tracked by git, and treated as strictly read only by every tool. The engine source lives here, under <RT·code>Manuscript.copy</RT·code>.
+            </RT·entry>
+            <RT·entry key="developer/scratchpad">
+              Untracked and volatile. A clone always has an empty one. Build output is staged here.
+            </RT·entry>
+            <RT·entry key="consumer">
+              Untracked, and the sink for finished work product. Nothing arrives here except by promotion.
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            An authored directory is named <RT·code>&lt;Namespace&gt;.&lt;Tool&gt;</RT·code>, and the suffix selects the build component that handles it, found at <RT·code>developer/tool/build_component/&lt;Tool&gt;</RT·code>. This project has three namespaces: <RT·code>Manuscript.copy</RT·code>, the engine; <RT·code>RT_Formatter.copy</RT·code>; and <RT·code>ExampleGreet.make</RT·code>. The engine is staged by the <RT·code>copy</RT·code> component because it is JavaScript delivered as written, with nothing to compile.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Build and promote</RT·name>
+          <p>
+            Two commands, in this order:
+          </p>
+          <RT·code>
+            &gt; build Manuscript
+            &gt; promote write
+          </RT·code>
+          <p>
+            <RT·code>build</RT·code> stages a namespace: it reads <RT·code>developer/authored/Manuscript.copy</RT·code> and writes <RT·code>developer/scratchpad/Manuscript</RT·code>. Run with no arguments it prints its usage and lists the namespaces it found, which is the reliable way to see what is buildable. An argument after a colon is passed to the component, so <RT·code>build Manuscript:clean</RT·code> removes the staged copy, and the pattern is expanded against the namespace list, so <RT·code>build "*:clean"</RT·code> cleans all of them. Quote the pattern or the shell expands it first.
+          </p>
+          <p>
+            <RT·code>promote write</RT·code> copies the scratchpad into <RT·code>consumer/</RT·code>, updating only files that are newer and leaving the base <RT·code>.gitignore</RT·code> alone. It has three commands worth knowing beyond that: <RT·code>promote diff</RT·code> reports what is pending, orphaned, or modified in place; <RT·code>promote dry write</RT·code> previews without touching the filesystem; and <RT·code>promote ls</RT·code> prints the consumer tree with permissions and ownership.
+          </p>
+          <p>
+            Neither command reaches back. Building without promoting leaves the new engine staged and invisible; promoting without building copies whatever was staged last, which might be old. Run the pair.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Which documents need a build</RT·name>
+          <p>
+            This is the detail that wastes an afternoon when it is not known. A document reaches the engine through <RT·code>RT-Manuscript_locator.js</RT·code>, and there are several locators. Which one sits beside a document decides whether an edit to the engine is visible on a reload or has to travel through the build loop first.
+          </p>
+          <RT·dictionary key="Document location" definition="Locator, and what it loads">
+            <RT·entry key="developer/authored/Manuscript.copy/Document">
+              The <RT·code>immediate</RT·code> locator, which resolves to <RT·code>..</RT·code>, the authored tree itself. The design and user manuals live here, so they exercise the engine as written. Edit an element file, reload, and the change is there. No build.
+            </RT·entry>
+            <RT·entry key="Everywhere else">
+              The <RT·code>direct</RT·code> locator, which resolves to <RT·code>consumer/Manuscript</RT·code>. This covers <RT·code>developer/document</RT·code>, the top level <RT·code>document</RT·code> tree, and every test under <RT·code>tester/authored</RT·code>. These load the promoted engine, so an edit is invisible until <RT·code>build Manuscript</RT·code> and <RT·code>promote write</RT·code> have both run.
+            </RT·entry>
+          </RT·dictionary>
+          <p>
+            The practical consequence: a change verified against the manuals has not been verified against the tests. The counter tests under <RT·code>tester/authored/Counter</RT·code> read the promoted engine, and running them against a stale promotion tests the previous change. Build and promote before opening a test, every time.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>Scratchpads</RT·name>
+          <p>
+            A directory named <RT·code>scratchpad</RT·code> is untracked and volatile, and there is one in each role's workspace. Tools stage intermediate output there, under a subdirectory named for the namespace, and a person is welcome to use the rest of it as a temporary directory. Nothing on a scratchpad survives a clone, and nothing on it is a source of truth: if the only copy of something is on a scratchpad, it is not saved.
+          </p>
+          <p>
+            Harmony supplies a maintenance tool for it, named <RT·code>scratchpad</RT·code>, which operates on the scratchpad of the current directory. <RT·code>scratchpad ls</RT·code> prints the tree with permissions and ownership, <RT·code>scratchpad size</RT·code> reports whether anything is there, and <RT·code>scratchpad write</RT·code> copies a file or directory onto the pad.
+          </p>
+          <p>
+            <strong><RT·code>scratchpad clear</RT·code> deletes the entire contents of the current directory's scratchpad</strong>, preserving only the top level <RT·code>.gitignore</RT·code>. It does not prompt. Given a name, as in <RT·code>scratchpad clear Manuscript</RT·code>, it removes that subdirectory alone, which is the form to reach for. A cleared pad means the next <RT·code>promote write</RT·code> has nothing to promote, so clear and rebuild rather than clear and promote.
+          </p>
+        </RT·section>
+
+        <RT·section>
+          <RT·name>A note on the introduction document</RT·name>
+          <p>
+            <RT·code>document/introduction_Harmony.html</RT·code> describes promotion as a flat copy from <RT·code>scratchpad/made</RT·code>. The tool copies the whole of <RT·code>developer/scratchpad</RT·code>, preserving structure. Where the two disagree, the tool is what runs.
+          </p>
+        </RT·section>
+      </RT·section>
+
+      <RT·section>
         <RT·name>The global object</RT·name>
         <p>
           Everything the engine owns hangs off <RT·code>window.RT</RT·code>. There is no other global state and no CSS file. The root has four kinds of member, and keeping the kinds distinct is the main thing to understand about it.
