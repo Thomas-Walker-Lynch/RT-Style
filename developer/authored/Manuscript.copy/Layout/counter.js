@@ -174,6 +174,13 @@
       this.mode = 'scoped';
 
       /* The counter's own name ,the key it is filed under in dict_instance.
+
+         A comma separated list names the counter differently at different
+         depths ,with the last name repeating: 'Chapter,Section' answers
+         Chapter at the top level and Section at every level below it. The word
+         in front of a number is the counter's name at that depth ,not a
+         separate thing to configure.
+
          Held on the machine so that a snapshot ,which is a clone cut loose
          from the dictionary ,can still say what it counts. */
       this.counter = '';
@@ -187,6 +194,14 @@
       if(path[0] === 'count'){
         if(path.length === 1) return this.count.clone();
         return this.count.read(...path.slice(1));
+      }
+
+      /* The counter's name at the depth in force. A single name answers at
+         every depth; a list answers by depth. 'counter.list' returns the name
+         as written ,for a caller that wants the whole list. */
+      if(path[0] === 'counter'){
+        if(path[1] === 'list') return this.counter;
+        return this.counter_for(this.count);
       }
 
       /* The name of the step in force. Taken from the level the number is
@@ -262,6 +277,36 @@
       return (this.mode === 'scoped' && status === 'between')
         ? c.read('list' ,'short')
         : c.read('list');
+    }
+
+    /* The counter's name ,parsed. Held on the machine as the string it was
+       made under ,so that identity and clone stay one field ,and split here
+       on the few occasions a name is read. */
+    name_seq(){
+      return String(this.counter || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s !== '');
+    }
+
+    /* 'Chapter' at the top ,'Section' below it. Chosen by depth ,with the last
+       entry repeating ,so a two name list covers a document nested to any
+       depth. The depth is taken from the same active list the number is taken
+       from ,or the word and the number would disagree at a scope boundary.
+
+       A counter that has taken no step has no depth to speak of ,and answers
+       with its top level name: a counter has a name whether or not it has yet
+       counted anything. */
+    counter_for(count_obj){
+      const name_seq = this.name_seq();
+      if(name_seq.length === 0) return '';
+
+      const active_list = this.active_list_of(count_obj);
+      const depth = (!active_list || active_list.length === 0)
+        ? 0
+        : Math.min(active_list.length ,name_seq.length) - 1;
+
+      return name_seq[depth] || '';
     }
 
     to_string(count_obj){
@@ -498,8 +543,9 @@
 
     /* One field of a read. 'count' is the formatted number ,and anything else
        is a path into the machine ,written with dots: 'counter' for the name of
-       the counter ,'step' for the name of the step ,'count.list' ,'count.name'
-       and 'count.status' for the raw state. */
+       the counter at the depth in force ,'step' for the name of the step ,and
+       'counter.list' ,'count.list' ,'count.name' ,'count.status' for the raw
+       state. */
     function read_field(machine ,field){
       if(field === 'count'){
         return machine.to_string(machine.read('count'));

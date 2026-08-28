@@ -915,7 +915,10 @@
           </p>
 
           <p>
-            The default counter is named <RT·code>Chapter</RT·code>, and the others in <RT·code>dict_counter</RT·code> are <RT·code>Front Matter</RT·code> and <RT·code>Appendix</RT·code>. These names are not internal: a cross reference reads the counter's name to print the word in front of the number, so what a counter is called is what the reader sees. Counters are named for print, and a name that would embarrass a page is the wrong name.
+            The default counter is named <RT·code>Chapter,Section</RT·code>, and the others in <RT·code>dict_counter</RT·code> are <RT·code>Front Matter,Front Matter Section</RT·code> and <RT·code>Appendix,Appendix Section</RT·code>. These names are not internal: a cross reference reads the counter's name to print the word in front of the number, so what a counter is called is what the reader sees. Counters are named for print, and a name that would embarrass a page is the wrong name.
+          </p>
+          <p>
+            A name is a comma separated list, resolved by depth with the last entry repeating, and <RT·code>read('counter')</RT·code> chooses from it using the same active list that <RT·code>to_string</RT·code> uses to choose a style. The word and the number are therefore taken from one source, and cannot disagree at a scope boundary: a snapshot taken in a chapter after a subsection has closed reads <RT·code>Chapter 12</RT·code>, not <RT·code>Section 12</RT·code>. The whole string remains the counter's identity in <RT·code>dict_instance</RT·code>, so nesting and inheritance are untouched; only the word selected from the list varies. This replaces the earlier <RT·code>prefix</RT·code> attribute, which carried the same list on a second field that could disagree with the name.
           </p>
         </RT·section>
 

@@ -24,36 +24,43 @@
      sees: a cross reference written key="counter count" against a counter
      named 'Appendix' prints 'Appendix B'. Counters are named for print.
 
+     A name can be a comma separated list ,which names the counter differently
+     at different depths with the last name repeating. 'Chapter,Section' prints
+     'Chapter 12' at the top level and 'Section 12.3' below it. The whole
+     string is the counter's identity ,so every section of a division inherits
+     it and they all step the one counter; only the word chosen from it varies
+     with depth.
+
      This table holds the make configuration of the counters the section
      element creates ,keyed by counter name. It is open. An author wanting a
      numbered part ,or a second appendix sequence ,adds an entry before the
      element phase runs:
 
-       RT.Element.Section.dict_counter['Part'] =
+       RT.Element.Section.dict_counter['Part,Chapter'] =
          { style: 'Roman' ,on_first_step: 'I' };
 
-     and writes <RT·section counter="Part">. A counter named on a section but
-     absent from the table is still made ,on the default configuration: the
-     table varies the style ,it does not gate the name. Sections nested inside
-     a section inherit its counter ,so the attribute is written once at the top
-     of a division and not repeated.
+     and writes <RT·section counter="Part,Chapter">. A counter named on a
+     section but absent from the table is still made ,on the default
+     configuration: the table varies the style ,it does not gate the name.
+     Sections nested inside a section inherit its counter ,so the attribute is
+     written once at the top of a division and not repeated.
   */
   ns.dict_counter = {
-    'Chapter': {
+    'Chapter,Section': {
       style: 'CountingNumber'
       ,on_first_step: '0'
     }
-    ,'Front Matter': {
+    ,'Front Matter,Front Matter Section': {
       style: 'roman'
       ,on_first_step: 'i'
     }
-    ,'Appendix': {
+    ,'Appendix,Appendix Section': {
       style: 'Alpha,CountingNumber'
       ,on_first_step: 'A'
     }
   };
 
-  ns.counter_default = 'Chapter';
+  ns.counter_default = 'Chapter,Section';
 
   /* The counter is written on the outermost section of a division. Read it
      from the nearest ancestor that has one.

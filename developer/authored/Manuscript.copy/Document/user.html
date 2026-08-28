@@ -302,13 +302,13 @@
             The divisions of a book are not one sequence. A single counter across the whole manuscript would number the preface as chapter one and start the appendices wherever the last chapter left off. So each division names its own counter, and the counter's name is the word the reader sees.
           </p>
           <RT·dictionary key="Counter" definition="Numbering">
-            <RT·entry key="Chapter">
+            <RT·entry key="Chapter,Section">
               The default. Counting numbers at every level: 1, then 1.1, then 1.1.1.
             </RT·entry>
-            <RT·entry key="Front Matter">
+            <RT·entry key="Front Matter,Front Matter Section">
               Lower case roman: i, then i.ii.
             </RT·entry>
-            <RT·entry key="Appendix">
+            <RT·entry key="Appendix,Appendix Section">
               Upper case letters at the top level and counting numbers below: A, then A.1.
             </RT·entry>
           </RT·dictionary>
@@ -330,6 +330,9 @@
           </RT·code>
           <p>
             Counters are named for print. A cross reference reads the counter's name to print the word in front of the number, so a name that would embarrass a page is the wrong name.
+          </p>
+          <p>
+            A name can be a comma separated list, which names the counter differently at different depths with the last name repeating. That is why the default is written <RT·code>Chapter,Section</RT·code>: a reference to a top level section reads <em>Chapter 12</em>, and one to a section inside it reads <em>Section 12.3</em>, from the same read written the same way. The whole string is the counter's identity, so every section of a division still steps the one counter and nesting is unaffected; only the word chosen from the list varies with depth.
           </p>
           <p>
             A counter named on a section but not in the table is still made, on the default numbering. That is how a second appendix sequence or a numbered part is introduced with no configuration at all. To give a new counter a style of its own, add an entry before the document is processed. Put it in a second script element in the head, after the loads, so that the section element has been loaded by the time it runs:
@@ -384,10 +387,13 @@
               The formatted number, styled and separated as the counter was configured. This is the default.
             </RT·entry>
             <RT·entry key="counter">
-              The name of the counter, which is the word that belongs in front of the number: Chapter, Appendix, Figure.
+              The name of the counter, which is the word that belongs in front of the number: Chapter, Appendix, Figure. When the counter was named with a comma separated list, the name is chosen by the depth of the snapshot, with the last name repeating: <RT·code>Chapter,Section</RT·code> reads Chapter at the top level and Section below it.
             </RT·entry>
             <RT·entry key="step">
               The name of the step, which for a section is its title.
+            </RT·entry>
+            <RT·entry key="counter.list">
+              The counter's name as it was written, list and all, without choosing by depth. Diagnostic.
             </RT·entry>
             <RT·entry key="count.list">
               The raw level numbers, comma separated, unformatted. Diagnostic.
@@ -477,7 +483,7 @@
           <RT·name>Make attributes</RT·name>
           <RT·dictionary key="Attribute" definition="Meaning">
             <RT·entry key="counter">
-              Required. The counter's name, and the word a reference prints in front of the number.
+              Required. The counter's name, and the word a reference prints in front of the number. A comma separated list names the counter by depth, with the last name repeating.
             </RT·entry>
             <RT·entry key="style">
               Comma separated, one per nesting level, the last repeating. Default: <RT·code>NaturalNumber</RT·code>.
