@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>RT-Manuscript initialize</title>
+<title>RT-Manuscript setup</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--
-  RT-Manuscript_initialize.html
+  setup.html
 
-  Sits in a Manuscript directory. Opening or reloading it from disk records
+  Sits in a RT-Style Manuscript directory. Opening or reloading it from disk records
   that directory in the browser as the RT-Manuscript library for local
-  documents. The last initializer opened or reloaded wins, so with several
-  installs open in tabs, reloading a tab selects its install.
+  documents. The last setup.html opened or reloaded wins, so with several
+  installs open in tabs, say for testing, reloading a tab selects its install.
 
   The record is one localStorage key, shared by all file:// pages in Chrome:
     RT.dirpr_library   the URL of this directory, without a trailing slash
@@ -18,7 +18,7 @@
   Documents read it in their header block and fall back to the server when
   it is absent.
 
-  This page does not use RT-Manuscript, so it works when the library is broken.
+  This page does not use RT-Manuscript, so it works even when the library is broken.
 -->
 <style>
   :root{ --bg: #fbfaf6; --fg: #222; --muted: #6b6b6b; --accent: #8a5a00; --button: #efe9da; --line: #d8d4c8; }

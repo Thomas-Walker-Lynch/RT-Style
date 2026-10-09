@@ -4,7 +4,15 @@
     <meta charset="UTF-8">
     <title>Test 0: Table of Contents</title>
     <!-- Adjust the locator path relative to the specific tester/authored subdirectory -->
-    <script src="RT-Manuscript_locator.js"></script>
+    <script>
+      {
+        let dirpr_library = null;
+        try{ dirpr_library = localStorage.getItem("RT.dirpr_library"); }catch(e){}
+        window.RT = window.RT || {};
+        RT.dirpr_library = RT.dirpr_library || dirpr_library || "https://style.ReasoningTechnology.com/Manuscript";
+        document.write('<script src="' + RT.dirpr_library + '/Core/RT-Manuscript_make.js"><\/script>');
+      }
+    </script>
     <script>
       window.RT.theme_preference('inverse_wheat');
       window.RT.load('Layout/paginate');

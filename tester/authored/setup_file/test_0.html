@@ -1,0 +1,118 @@
+<!-- library location test
+
+Checks the header block that locates the RT-Manuscript library, and the
+initializer that records it.
+
+  stored  = localStorage "RT.dirpr_library", written by RT-Style Manuscript setup.html
+  server  = https://style.ReasoningTechnology.com/Manuscript
+  used    = RT.dirpr_library after the header block
+
+Automatic checks, made while the page parses:
+
+  1. used == stored, or used == server when nothing is stored
+  2. the engine ran: RT.load and RT.Module exist
+  3. every engine script on the page came from used, so no install is mixed with another
+
+Manual procedure, with two installs A and B (for example the authored
+Manuscript.copy and consumer/Manuscript):
+
+  open A's initializer, reload this page   -> used == A, checks pass
+  open B's initializer, reload this page   -> used == B, checks pass
+  reload A's initializer tab, reload this  -> used == A
+  Uninstall in either initializer, reload  -> used == server
+  record a directory that does not exist   -> page does not format; the plain
+                                              text report still shows used
+
+The report is written as plain text during parsing, so it can be read when
+the engine fails to load.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Library Location</title>
+    <script>
+      {
+        let dirpr_library = null;
+        try{ dirpr_library = localStorage.getItem("RT.dirpr_library"); }catch(e){}
+        window.RT = window.RT || {};
+        RT.dirpr_library = RT.dirpr_library || dirpr_library || "https://style.ReasoningTechnology.com/Manuscript";
+        document.write('<script src="' + RT.dirpr_library + '/Core/RT-Manuscript_make.js"><\/script>');
+      }
+    </script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+    <style>
+      .line { margin-bottom: 0.5rem; font-family: monospace; word-break: break-all; }
+      .comment { color: #6a9955; }
+      .pass { color: #4caf50; font-weight: bold; }
+      .fail { color: #e53935; font-weight: bold; }
+      .line a { color: #6fa8dc; }
+    </style>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title
+        author="Thomas Walker Lynch"
+        date="2026-10-09"
+        title="Library Location">
+      </RT·title>
+
+      <script>
+        {
+          const SERVER = "https://style.ReasoningTechnology.com/Manuscript";
+          const esc = s => String(s).replace(/&/g ,"&amp;").replace(/</g ,"&lt;");
+
+          let stored = null ,storage_ok = true;
+          try{ stored = localStorage.getItem("RT.dirpr_library"); }catch(e){ storage_ok = false; }
+
+          const used = window.RT && window.RT.dirpr_library;
+          const expected = stored || SERVER;
+
+          const engine_scripts = Array.from(document.scripts)
+            .map(s => s.getAttribute("src"))
+            .filter(src => src && /\/(Core|Layout|Element|Theme|Math)\//.test(src));
+          const foreign = engine_scripts.filter(src => !src.startsWith(used + "/"));
+
+          const checks = [
+            ["header chose " + (stored ? "the stored library" : "the server")
+              ,used === expected]
+            ,["engine ran (RT.load and RT.Module exist)"
+              ,!!(window.RT && typeof window.RT.load === "function" && window.RT.Module)]
+            ,["all " + engine_scripts.length + " engine scripts came from the chosen library"
+              ,engine_scripts.length > 0 && foreign.length === 0]
+          ];
+
+          const line = (label ,value) =>
+            '<div class="line"><span class="comment">// ' + esc(label) + '</span><br>' + esc(value) + '</div>';
+
+          let html = "";
+          html += line("stored (localStorage RT.dirpr_library)"
+                       ,storage_ok ? (stored || "(nothing stored)") : "(storage blocked)");
+          html += line("used (RT.dirpr_library)" ,used);
+          html += line("source" ,used === SERVER ? "server" : "local install");
+          for(const [label ,ok] of checks){
+            html += '<div class="line"><span class="' + (ok ? 'pass">PASS' : 'fail">FAIL')
+                  + '</span> ' + esc(label) + '</div>';
+          }
+          if(foreign.length) html += line("scripts from elsewhere" ,foreign.join("\n"));
+          if(used !== SERVER){
+            html += '<div class="line"><span class="comment">// initializer for this library</span><br>'
+                  + '<a href="' + esc(used) + '/RT-Manuscript_initialize.html">'
+                  + esc(used) + '/RT-Manuscript_initialize.html</a></div>';
+          }
+          document.write(html);
+
+          console.log("Library location test:" ,{stored ,used ,engine_scripts ,foreign
+            ,pass: checks.every(c => c[1])});
+        }
+      </script>
+
+    </RT·article>
+  </body>
+</html>
