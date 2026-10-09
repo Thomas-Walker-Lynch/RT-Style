@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RT-Manuscript initialize</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  RT-Manuscript_initialize.html
+
+  Sits in a Manuscript directory. Opening or reloading it from disk records
+  that directory in the browser as the RT-Manuscript library for local
+  documents. The last initializer opened or reloaded wins, so with several
+  installs open in tabs, reloading a tab selects its install.
+
+  The record is one localStorage key, shared by all file:// pages in Chrome:
+    RT.dirpr_library   the URL of this directory, without a trailing slash
+
+  Documents read it in their header block and fall back to the server when
+  it is absent.
+
+  This page does not use RT-Manuscript, so it works when the library is broken.
+-->
+<style>
+  :root{ --bg: #fbfaf6; --fg: #222; --muted: #6b6b6b; --accent: #8a5a00; --button: #efe9da; --line: #d8d4c8; }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg: #141414; --fg: #e8e2d0; --muted: #9a958a; --accent: #f0b000; --button: #2a2822; --line: #3a372f; }
+  }
+  body{ background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif;
+        max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+  h1{ color: var(--accent); font-size: 1.5rem; }
+  #message{ border-left: 4px solid var(--accent); padding: 0.5rem 0.9rem; margin: 1.5rem 0; }
+  code{ font-family: ui-monospace, monospace; font-size: 0.9em; word-break: break-all; }
+  button{ background: var(--button); color: var(--fg); border: 1px solid var(--line);
+          border-radius: 4px; padding: 0.25rem 0.7rem; font: inherit; cursor: pointer; }
+  .muted{ color: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>RT-Manuscript initialize</h1>
+  <div id="message"></div>
+  <p>Local RT documents load RT-Manuscript from:<br><code id="current"></code></p>
+  <p><button id="uninstall">Uninstall</button></p>
+  <p class="muted">Reload an open document to apply a change. Reload this page to make
+  this directory the library again. With nothing recorded, documents load from
+  <code id="server"></code>.</p>
+
+<script>
+(function(){
+  const KEY = "RT.dirpr_library";
+  const SERVER = "https://style.ReasoningTechnology.com/Manuscript";
+  const el = id => document.getElementById(id);
+  el("server").textContent = SERVER;
+
+  function show(){
+    let v = null;
+    try{ v = localStorage.getItem(KEY); }catch(e){}
+    el("current").textContent = v || SERVER + "  (server)";
+  }
+
+  if(location.protocol !== "file:"){
+    el("message").textContent = "Open this page from disk (a file:// address). Nothing was recorded.";
+    el("uninstall").disabled = true;
+    show();
+    return;
+  }
+
+  const here = location.href.split("#")[0].split("?")[0].replace(/\/[^\/]*$/ ,"");
+
+  try{
+    const before = localStorage.getItem(KEY);
+    localStorage.setItem(KEY ,here);
+    el("message").textContent =
+      before === here ? "This directory is the RT-Manuscript library."
+      : before ? "Switched the RT-Manuscript library to this directory."
+      : "Installed. This directory is now the RT-Manuscript library.";
+  }catch(e){
+    el("message").textContent = "This browser blocks storage for local pages. Nothing was recorded.";
+  }
+
+  el("uninstall").onclick = () => {
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    el("message").textContent = "Uninstalled. Documents now load from the server.";
+    show();
+  };
+
+  show();
+})();
+</script>
+</body>
+</html>
