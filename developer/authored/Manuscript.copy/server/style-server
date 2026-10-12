@@ -1,0 +1,258 @@
+#!/usr/bin/env node
+// -*- mode: js; js-indent-level: 2; indent-tabs-mode: nil -*-
+/*
+style-server
+
+Interim HTTPS server for the RT-Style library at style.reasoningtechnology.com.
+Serves static files from one directory. It is meant to sit behind Cloudflare,
+which connects to it with Full (strict) TLS using the Cloudflare origin
+certificate. It is to be replaced by a server built on the TM library.
+
+Usage: style-server <command> ...
+
+  help | -h | --help                      print this message (also printed when given no arguments)
+  check <root> <cert> <key>               load the certificate and key, check the root directory, serve nothing
+  serve <root> <cert> <key> [port]        serve <root> over HTTPS on [port], 443 when not given
+
+  <root>   directory whose files are served; a request for /a/b.js is answered from <root>/a/b.js
+  <cert>   PEM certificate file
+  <key>    PEM private key file
+
+What it does for each request:
+  only GET and HEAD are answered; other methods get 405
+  the path is decoded and resolved inside <root>; any path, or symbolic link,
+    that would lead outside <root> gets 404
+  a directory is answered with its index.html, after a redirect that adds a
+    trailing slash to the address
+  files are sent with a content type chosen by extension, Cache-Control,
+    Access-Control-Allow-Origin "*", and Last-Modified; a request carrying
+    If-Modified-Since for an unchanged file gets 304 and no body
+
+One log line per request goes to standard output: client address, method,
+path, status, bytes. Behind Cloudflare the client address is taken from the
+CF-Connecting-IP header.
+*/
+
+const https = require("https");
+const fs = require("fs");
+const fsp = require("fs/promises");
+const path = require("path");
+
+const CACHE_CONTROL = "public, max-age=3600";
+
+const CONTENT_TYPE = {
+  ".html": "text/html; charset=utf-8"
+  ,".js": "text/javascript; charset=utf-8"
+  ,".mjs": "text/javascript; charset=utf-8"
+  ,".css": "text/css; charset=utf-8"
+  ,".json": "application/json; charset=utf-8"
+  ,".txt": "text/plain; charset=utf-8"
+  ,".svg": "image/svg+xml"
+  ,".png": "image/png"
+  ,".jpg": "image/jpeg"
+  ,".jpeg": "image/jpeg"
+  ,".gif": "image/gif"
+  ,".ico": "image/x-icon"
+  ,".woff": "font/woff"
+  ,".woff2": "font/woff2"
+  ,".ttf": "font/ttf"
+  ,".otf": "font/otf"
+  ,".pdf": "application/pdf"
+};
+
+// ---------------------------------------------------------------- work
+
+// Resolves a URL path to a real file path inside root_real, or null.
+// root_real is the root directory with its own symbolic links resolved.
+async function resolve_inside(root_real ,url_path){
+  let decoded;
+  try{ decoded = decodeURIComponent(url_path); }
+  catch(e){ return null; }                          // malformed %-encoding
+  if(decoded.includes("\0")) return null;
+
+  // Resolve lexically first: "." + "/a/../b" stays under root_real.
+  const candidate = path.resolve(root_real ,"." + path.posix.normalize("/" + decoded));
+  if(!is_inside(root_real ,candidate)) return null;
+
+  // Then follow symbolic links, and check again.
+  let real;
+  try{ real = await fsp.realpath(candidate); }
+  catch(e){ return null; }                          // does not exist
+  if(!is_inside(root_real ,real)) return null;
+  return real;
+}
+
+function is_inside(root ,p){
+  return p === root || p.startsWith(root + path.sep);
+}
+
+// Read when the request arrives: by the time a response is logged, the
+// connection may already be gone, and its address with it.
+function client_address(request){
+  return request.headers["cf-connecting-ip"] || request.socket.remoteAddress || "-";
+}
+
+function log_line(request ,status ,bytes){
+  const when = new Date().toISOString();
+  console.log(`${when} ${request.rt_client} ${request.method} ${request.url} ${status} ${bytes}`);
+}
+
+function send_status(request ,response ,status ,extra_headers = {}){
+  const body = status + "\n";
+  response.writeHead(status ,{
+    "Content-Type": "text/plain; charset=utf-8"
+    ,"Content-Length": Buffer.byteLength(body)
+    ,"Cache-Control": "no-store"
+    ,...extra_headers
+  });
+  response.end(request.method === "HEAD" ? undefined : body);
+  log_line(request ,status ,0);
+}
+
+async function handle(root_real ,request ,response){
+  request.rt_client = client_address(request);
+  if(request.method !== "GET" && request.method !== "HEAD"){
+    send_status(request ,response ,405 ,{"Allow": "GET, HEAD"});
+    return;
+  }
+
+  // Only the path part of the address is used; any ?query is ignored.
+  const url_path = (request.url || "/").split("?")[0].split("#")[0];
+  let file = await resolve_inside(root_real ,url_path);
+  if(file === null){ send_status(request ,response ,404); return; }
+
+  let stat = await fsp.stat(file);
+  if(stat.isDirectory()){
+    if(!url_path.endsWith("/")){
+      send_status(request ,response ,301 ,{"Location": url_path + "/"});
+      return;
+    }
+    file = await resolve_inside(root_real ,url_path + "index.html");
+    if(file === null){ send_status(request ,response ,404); return; }
+    stat = await fsp.stat(file);
+  }
+  if(!stat.isFile()){ send_status(request ,response ,404); return; }
+
+  const headers = {
+    "Content-Type": CONTENT_TYPE[path.extname(file).toLowerCase()] || "application/octet-stream"
+    ,"Cache-Control": CACHE_CONTROL
+    ,"Access-Control-Allow-Origin": "*"
+    ,"X-Content-Type-Options": "nosniff"
+    ,"Last-Modified": stat.mtime.toUTCString()
+  };
+
+  // HTTP dates have whole-second precision, so compare whole seconds.
+  const since = Date.parse(request.headers["if-modified-since"] || "");
+  if(!Number.isNaN(since) && Math.floor(stat.mtimeMs / 1000) * 1000 <= since){
+    response.writeHead(304 ,headers);
+    response.end();
+    log_line(request ,304 ,0);
+    return;
+  }
+
+  headers["Content-Length"] = stat.size;
+  response.writeHead(200 ,headers);
+  if(request.method === "HEAD"){
+    response.end();
+    log_line(request ,200 ,0);
+    return;
+  }
+  // Log once, when the response finishes or the connection closes, whichever
+  // comes first. A client that has received all Content-Length bytes may hang
+  // up before the response formally ends, so a response counts as complete
+  // when the whole file was read and passed on, and as aborted otherwise.
+  const stream = fs.createReadStream(file);
+  let logged = false;
+  const log_once = () => {
+    if(logged) return;
+    logged = true;
+    log_line(request ,200 ,stream.bytesRead === stat.size ? stat.size : `aborted@${stream.bytesRead}`);
+  };
+  response.on("finish" ,log_once);
+  response.on("close" ,log_once);
+  stream.on("error" ,() => response.destroy());
+  stream.pipe(response);
+}
+
+function load_tls(cert_path ,key_path){
+  return {
+    cert: fs.readFileSync(cert_path)
+    ,key: fs.readFileSync(key_path)
+    ,minVersion: "TLSv1.2"
+  };
+}
+
+async function check(root ,cert_path ,key_path){
+  const root_real = await fsp.realpath(root);
+  if(!(await fsp.stat(root_real)).isDirectory()) throw new Error(`${root} is not a directory`);
+  const tls = load_tls(cert_path ,key_path);
+  // Building a secure context fails if the key does not match the certificate.
+  require("tls").createSecureContext(tls);
+  return root_real;
+}
+
+async function serve(root ,cert_path ,key_path ,port){
+  const root_real = await check(root ,cert_path ,key_path);
+  const server = https.createServer(load_tls(cert_path ,key_path) ,(request ,response) => {
+    handle(root_real ,request ,response).catch(e => {
+      console.error(`error: ${request.url}: ${e.message}`);
+      if(!response.headersSent) send_status(request ,response ,500);
+      else response.destroy();
+    });
+  });
+  server.on("tlsClientError" ,() => {});           // scanners and broken clients; not worth a log line
+  await new Promise((ok ,fail) => { server.once("error" ,fail); server.listen(port ,ok); });
+  console.log(`style-server: serving ${root_real} on port ${port}`);
+
+  const stop = () => {
+    console.log("style-server: stopping");
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0) ,5000).unref();
+  };
+  process.on("SIGTERM" ,stop);
+  process.on("SIGINT" ,stop);
+}
+
+// ---------------------------------------------------------------- command line
+
+function print_help(){
+  const source = fs.readFileSync(__filename ,"utf8");
+  const start = source.indexOf("/*\n") + 3;
+  console.log(source.slice(start ,source.indexOf("*/" ,start)).trim());
+  return 0;
+}
+
+async function CLI(argv){
+  if(argv.length === 0 || ["help" ,"-h" ,"--help"].includes(argv[0])) return print_help();
+  const [command ,...rest] = argv;
+
+  if(command === "check"){
+    if(rest.length !== 3){ console.error("Error: check needs <root> <cert> <key>."); return 1; }
+    const root_real = await check(...rest);
+    console.log(`style-server: ok: root ${root_real}, certificate and key load and match`);
+    return 0;
+  }
+
+  if(command === "serve"){
+    if(rest.length !== 3 && rest.length !== 4){
+      console.error("Error: serve needs <root> <cert> <key> [port].");
+      return 1;
+    }
+    const port = rest.length === 4 ? Number(rest[3]) : 443;
+    if(!Number.isInteger(port) || port < 1 || port > 65535){
+      console.error(`Error: bad port '${rest[3]}'.`);
+      return 1;
+    }
+    await serve(rest[0] ,rest[1] ,rest[2] ,port);
+    return null;                                    // keep running
+  }
+
+  console.error(`Error: unknown command '${command}'.\n`);
+  print_help();
+  return 1;
+}
+
+CLI(process.argv.slice(2)).then(
+  code => { if(code !== null) process.exit(code); }
+  ,e => { console.error(`Error: ${e.message}`); process.exit(1); }
+);

@@ -18,16 +18,22 @@ sys.path.insert(0, os.path.join(SCRIPT_DIR, "build_component"))
 import sync_engine
 
 HELP = """usage: promote {write|clean|ls|diff|help|dry write}
-  write       Writes promoted files from scratchpad into consumer. Only updates newer files.
+  write       Copies what is staged in scratchpad/made into consumer. Only updates newer files.
   clean       Remove all contents of the consumer directory (preserves .gitignore).
   ls          List consumer as an indented tree: PERMS  OWNER  NAME.
-  diff        List missing, orphaned, or out of sync files between scratchpad and consumer.
+  diff        List missing, orphaned, or out of sync files between scratchpad/made and consumer.
   help        Show this message.
   dry write   Preview what write would do without modifying the filesystem.
+
+Promoted files are read-only: 400, or 500 when executable. Directories below
+consumer/ are 500, so not even the owner can add, replace or remove a file in
+them; write and clean open them (700) for the duration and lock them again.
+consumer/ itself stays 700, as it holds the .gitignore git manages.
 """
 
 SETUP_MUST_BE = "developer/tool/setup"
 DEFAULT_DIR_MODE = 0o700
+LOCKED_DIR_MODE = 0o500
 
 def exit_with_status(msg, code=1):
   print(f"promote: {msg}", file=sys.stderr)
@@ -38,7 +44,7 @@ def assert_setup():
   if setup_val != SETUP_MUST_BE:
     hint = (
       "SETUP is not 'developer/tool/setup'.\n"
-      "Enter the project with:  . setup developer\n"
+      "Enter the developer role with:  ./setup developer\n"
       "That script exports: ROLE=developer; SETUP=$ROLE/tool/setup"
     )
     exit_with_status(f"bad environment: SETUP='{setup_val}'. {hint}")
@@ -64,6 +70,18 @@ def ensure_dir(path_str, mode=DEFAULT_DIR_MODE, dry=False):
     return
   os.makedirs(path_str, exist_ok=True)
   ensure_mode(path_str, mode)
+
+def consumer_subdirs(root_dp):
+  """Every directory below root_dp; root_dp itself is not included."""
+  found = []
+  for TM_root, TM_dirs, TM_files in os.walk(root_dp):
+    for TM_d in TM_dirs:
+      found.append(os.path.join(TM_root, TM_d))
+  return found
+
+def set_subdir_modes(root_dp, mode):
+  for TM_d in consumer_subdirs(root_dp):
+    ensure_mode(TM_d, mode)
 
 def filemode(m):
   try: return stat.filemode(m)
@@ -123,20 +141,26 @@ def list_tree(root_dp):
 def cmd_write(dry=False):
   dst_root = cpath()
   ensure_dir(dst_root, DEFAULT_DIR_MODE, dry=dry)
-  src_root = dpath("scratchpad")
-  
-  sync_engine.execute_sync(
-    src_root, 
-    dst_root, 
-    prefix="promote", 
-    dry=dry, 
-    apply_modes=True, 
-    ignore_list=[".gitignore"]
-  )
+  src_root = dpath("scratchpad", "made")
+
+  # Files are replaced by writing a temporary file beside them and renaming
+  # it into place, which needs write permission on the directory.
+  if not dry: set_subdir_modes(dst_root, DEFAULT_DIR_MODE)
+  try:
+    sync_engine.execute_sync(
+      src_root,
+      dst_root,
+      prefix="promote",
+      dry=dry,
+      apply_modes=True,
+      ignore_list=[".gitignore"]
+    )
+  finally:
+    if not dry: set_subdir_modes(dst_root, LOCKED_DIR_MODE)
 
 def cmd_diff():
   dst_root = cpath()
-  src_root = dpath("scratchpad")
+  src_root = dpath("scratchpad", "made")
 
   src_files = set()
   if os.path.isdir(src_root):
@@ -166,7 +190,7 @@ def cmd_diff():
       print(f"Pending promotion (missing in consumer): {TM_rel}")
       found_diff = True
     elif TM_rel not in src_files:
-      print(f"Orphaned in consumer (missing in scratchpad): {TM_rel}")
+      print(f"Orphaned in consumer (missing in scratchpad/made): {TM_rel}")
       found_diff = True
     else:
       src_abs = os.path.join(src_root, TM_rel)
@@ -177,18 +201,20 @@ def cmd_diff():
         dst_mtime = os.stat(dst_abs).st_mtime
 
         if src_mtime > dst_mtime:
-          print(f"Pending update (contents differ, newer in scratchpad): {TM_rel}")
+          print(f"Pending update (contents differ, newer in scratchpad/made): {TM_rel}")
         else:
           print(f"Contents differ (locally modified in consumer): {TM_rel}")
         found_diff = True
 
   if not found_diff:
-    print("No differences found. Consumer matches developer scratchpad.")
+    print("No differences found. Consumer matches developer scratchpad/made.")
 
 def cmd_clean():
   consumer_root_dir = cpath()
   if not os.path.isdir(consumer_root_dir):
     return
+  # Removing an entry needs write permission on the directory holding it.
+  set_subdir_modes(consumer_root_dir, DEFAULT_DIR_MODE)
   for TM_name in os.listdir(consumer_root_dir):
     if TM_name == ".gitignore":
       continue

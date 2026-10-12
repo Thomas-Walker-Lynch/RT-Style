@@ -1,0 +1,39 @@
+# /etc/systemd/system/style-server.service
+#
+# Runs style-server as an unprivileged, throwaway user, with only the one
+# privilege it needs: binding to port 443.
+
+[Unit]
+Description=RT-Style interim HTTPS server (style.reasoningtechnology.com)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# systemd copies these into a private directory that only this service can
+# read, named by %d below. The key itself stays root-only in /etc/ssl/private.
+LoadCredential=cert:/etc/ssl/certs/style.reasoningtechnology.com.pem
+LoadCredential=key:/etc/ssl/private/style.reasoningtechnology.com.key
+
+ExecStart=/usr/local/bin/style-server serve /srv/style %d/cert %d/key 443
+Restart=on-failure
+RestartSec=5
+
+# A user made up for this service, existing only while it runs.
+DynamicUser=yes
+# The one privilege it needs: binding to a port below 1024.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+
+# It reads /srv/style and nothing else of note; it writes nothing.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
