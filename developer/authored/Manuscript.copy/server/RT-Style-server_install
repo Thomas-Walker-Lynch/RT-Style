@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+# -*- mode: sh; sh-basic-offset: 2; indent-tabs-mode: nil -*-
+
+print_help(){ cat <<'HELP'
+RT-Style-server_install
+
+Sets up x6 to serve the promoted RT-Style library and runs the server. Run it
+as root, after the developer has built and promoted.
+
+Usage: RT-Style-server_install <command>
+  help | -h | --help   print this message (also printed when given no arguments)
+  preview              show what would be done, including the unit file diff;
+                       change nothing
+  apply                do it
+
+Steps
+  1. /etc/fstab: adds the bindfs line for the site directory, unless a line
+     for that mount point is already there. The view is read-only, and files
+     owned by Thomas_developer appear owned by web.
+  2. Mount point: creates it when missing; mounts the view when not mounted;
+     then confirms it is a bindfs mount and shows the server file in it.
+  3. Unit file: shows the diff between the promoted unit and the installed
+     one; installs the promoted one, owned by root, when they differ. Removes
+     the old drop-in directory if one is left.
+  4. systemd: daemon-reload, enable, restart; then fetches setup.html over
+     localhost and prints the HTTP status.
+
+A step already in the wanted state is reported and skipped, so rerunning is
+safe. Rerun after a promote that changed the unit file or the server code:
+step 3 installs a changed unit and step 4 restarts the server.
+
+This script is kept in a directory the code owner can change, and root runs
+it. Read it before running it.
+HELP
+}
+
+set -euo pipefail
+
+CODE_OWNER=Thomas_developer
+RUN_AS=web
+SITE=style.reasoningtechnology.com
+CONSUMER=/home/$CODE_OWNER/project/RT-Style/consumer
+MOUNT_POINT=/srv/$SITE
+FSTAB_LINE="$CONSUMER  $MOUNT_POINT  fuse.bindfs  ro,map=$CODE_OWNER/$RUN_AS,chmod-deny,chown-deny,chgrp-deny  0  0"
+UNIT=RT-Style-server
+UNIT_SOURCE=$CONSUMER/Manuscript/server/$UNIT.service
+UNIT_FILE=/etc/systemd/system/$UNIT.service
+DROP_IN=/etc/systemd/system/$UNIT.service.d
+SERVER_IN_VIEW=$MOUNT_POINT/Manuscript/server/RT-Style-server.js
+
+MODE=""
+
+run(){
+  printf '  '; printf '%q ' "$@"; printf '\n'
+  if [[ $MODE == apply ]]; then "$@"; fi
+}
+step(){ printf '\n%s\n' "$*"; }
+
+checks(){
+  local problems=()
+  [[ $EUID -eq 0 ]] || { echo "Error: run as root." >&2; exit 1; }
+  command -v bindfs >/dev/null || problems+=("bindfs is not installed: apt-get install bindfs")
+  [[ -x /usr/bin/node ]]      || problems+=("node is not installed: apt-get install nodejs")
+  id "$RUN_AS" &>/dev/null     || problems+=("user $RUN_AS does not exist")
+  [[ -d $CONSUMER ]]           || problems+=("$CONSUMER not found: build and promote first")
+  [[ -f $UNIT_SOURCE ]]        || problems+=("$UNIT_SOURCE not found: build and promote first")
+  if (( ${#problems[@]} )); then
+    for p in "${problems[@]}"; do echo "Error: $p" >&2; done
+    echo "Nothing was changed." >&2
+    exit 1
+  fi
+}
+
+fstab_line(){
+  step "1. /etc/fstab"
+  if grep -qE "^[^#]*[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
+    echo "  a line for $MOUNT_POINT is present:"
+    grep -E "^[^#]*[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab | sed 's/^/    /'
+  else
+    echo "  append: $FSTAB_LINE"
+    if [[ $MODE == apply ]]; then printf '%s\n' "$FSTAB_LINE" >> /etc/fstab; fi
+  fi
+}
+
+mount_view(){
+  step "2. mount"
+  if [[ ! -d $MOUNT_POINT ]]; then
+    run install -d -m 755 "$MOUNT_POINT"
+  fi
+  if mountpoint -q "$MOUNT_POINT"; then
+    echo "  mounted"
+  else
+    # systemd turns fstab lines into .mount units only on a reload.
+    run systemctl daemon-reload
+    run mount "$MOUNT_POINT"
+  fi
+  if [[ $MODE == apply ]]; then
+    findmnt -n -o FSTYPE,OPTIONS "$MOUNT_POINT" | sed 's/^/  /'
+    ls -l "$SERVER_IN_VIEW" | sed 's/^/  /'
+  fi
+}
+
+unit_file(){
+  step "3. unit file"
+  if [[ -d $DROP_IN ]]; then
+    echo "  old drop-in directory, superseded by the unit file:"
+    ls "$DROP_IN" | sed 's/^/    /'
+    run rm -r "$DROP_IN"
+  fi
+  if [[ -f $UNIT_FILE ]] && cmp -s "$UNIT_FILE" "$UNIT_SOURCE"; then
+    echo "  installed unit matches the promoted one"
+    return
+  fi
+  echo "  diff installed -> promoted:"
+  diff -u "$UNIT_FILE" "$UNIT_SOURCE" 2>/dev/null | sed 's/^/    /' || true
+  [[ -f $UNIT_FILE ]] || sed 's/^/    + /' "$UNIT_SOURCE"
+  run install -m 644 -o root -g root "$UNIT_SOURCE" "$UNIT_FILE"
+}
+
+start(){
+  step "4. systemd"
+  run systemctl daemon-reload
+  run systemctl enable "$UNIT"
+  run systemctl restart "$UNIT"
+  if [[ $MODE != apply ]]; then
+    echo "  would fetch https://$SITE/Manuscript/setup.html from 127.0.0.1"
+    return
+  fi
+  sleep 2
+  systemctl --no-pager --lines=5 status "$UNIT" || true
+  if command -v curl >/dev/null; then
+    printf '  https://%s/Manuscript/setup.html: ' "$SITE"
+    curl -sSk --resolve "$SITE:443:127.0.0.1" -o /dev/null -w '%{http_code}\n' \
+      "https://$SITE/Manuscript/setup.html" || true
+  fi
+}
+
+main(){
+  if (( $# == 0 )) || [[ $1 == help || $1 == -h || $1 == --help ]]; then print_help; return 0; fi
+  if (( $# != 1 )) || [[ $1 != preview && $1 != apply ]]; then
+    echo "Error: unknown command '$*'." >&2; echo >&2; print_help; return 1
+  fi
+  MODE=$1
+  checks
+  echo "RT-Style-server_install $MODE"
+  fstab_line
+  mount_view
+  unit_file
+  start
+  [[ $MODE == apply ]] || printf '\npreview only: nothing was changed\n'
+}
+
+main "$@"

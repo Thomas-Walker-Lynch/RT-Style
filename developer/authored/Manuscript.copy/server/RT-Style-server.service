@@ -7,9 +7,12 @@
 # made by /etc/fstab, in which files owned by Thomas_developer appear owned by
 # web. The library and the server's own code both arrive through that view:
 #   /srv/style.reasoningtechnology.com/Manuscript/...            the library
-#   /srv/style.reasoningtechnology.com/Manuscript/server/server.js   this server
-# A promote replaces the files on disk; node reads server.js only when the
-# service starts, so new server code runs only after a restart by root.
+#   /srv/style.reasoningtechnology.com/Manuscript/server/RT-Style-server.js   this server
+# A promote replaces the files on disk; node reads RT-Style-server.js only when
+# the service starts, so new server code runs only after a restart by root.
+#
+# Installed, and kept up to date, by RT-Style-server_install, run as root.
+# Edit the copy in the project, not this one.
 
 [Unit]
 Description=RT-Style HTTPS server (style.reasoningtechnology.com)
@@ -27,6 +30,8 @@ Group=web
 LoadCredential=cert:/etc/ssl/certs/style.reasoningtechnology.com.pem
 LoadCredential=key:/etc/ssl/private/style.reasoningtechnology.com.key
 
+# Refuse to start against the empty directory underneath the mount.
+ExecStartPre=/usr/bin/mountpoint -q /srv/style.reasoningtechnology.com
 ExecStart=/usr/bin/node /srv/style.reasoningtechnology.com/Manuscript/server/RT-Style-server.js serve /srv/style.reasoningtechnology.com %d/cert %d/key 443
 Restart=on-failure
 RestartSec=5
