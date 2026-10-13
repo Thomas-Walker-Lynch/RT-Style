@@ -57,24 +57,27 @@ umask 0077
 
 # --------------------------------------------------------------------------------
 # PATH & Plugin Sourcing
-#   precedence: last defined, first discovered
-  
-  PATH="$REPO_HOME/shared/authored:$PATH"
-  PATH="$REPO_HOME/shared/made:$PATH"
-  PATH="$REPO_HOME/shared/tool:$PATH"
+#   Each addition goes to the front, so the last added is searched first.
+#   Resulting search order, most specific first:
+#     shared/authored, shared/made, shared/tool, project dependencies, the rest.
+#   The top-level setup then puts the role's tool directory in front of these.
 
-  # Remove duplicates
-  clean_path() {
-    PATH=$(echo ":$PATH" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/^://; s/:$//')
-  }
-  clean_path
-
-  # Plugin Sourcing: Dynamically load all the linked project configurations
-  for init_file in "$REPO_HOME/shared/linked-project/"*.init; do
+  # Project dependencies: source each .init file. Each prepends its own entries.
+  for init_file in "$REPO_HOME/shared/project-dependency/"*.init; do
     if [[ -f "$init_file" ]]; then
       source "$init_file"
     fi
   done
+
+  PATH="$REPO_HOME/shared/tool:$PATH"
+  PATH="$REPO_HOME/shared/made:$PATH"
+  PATH="$REPO_HOME/shared/authored:$PATH"
+
+  # Remove duplicates, keeping the first occurrence
+  clean_path() {
+    PATH=$(echo ":$PATH" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/^://; s/:$//')
+  }
+  clean_path
 
   export PATH
 

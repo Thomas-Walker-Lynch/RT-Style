@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.join(os.path.abspath("tool"), "build_component"))
 import sync_engine
 
 HELP = """usage: copy {all|clean|help}
-  all     Stages files from authored to scratchpad.
-  clean   Removes the specified namespace from scratchpad.
+  all     Stages files from authored to scratchpad/made/<namespace>.
+  clean   Removes scratchpad/made/<namespace>.
   help    Shows this message.
 """
 
@@ -24,7 +24,7 @@ def cmd_all():
     sys.exit(1)
 
   src_root = os.path.join("authored", namespace_dir)
-  dst_root = os.path.join("scratchpad", namespace)
+  dst_root = os.path.join("scratchpad", "made", namespace)
 
   sync_engine.execute_sync(src_root, dst_root, prefix="copy", apply_modes=False)
 
@@ -34,7 +34,7 @@ def cmd_clean():
     print("copy: error: NAMESPACE environment variable must be set.", file=sys.stderr)
     sys.exit(1)
 
-  dst_root = os.path.join("scratchpad", namespace)
+  dst_root = os.path.join("scratchpad", "made", namespace)
   if os.path.exists(dst_root):
     shutil.rmtree(dst_root)
   print(f"copy: Cleaned {dst_root}")

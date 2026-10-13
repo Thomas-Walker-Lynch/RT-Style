@@ -30,11 +30,6 @@ def main():
 
     print(f"ROLE_HOME {role_home}")
 
-    # Python-domain logic: PATH injection
-    path_parts = env.get("PATH", "").split(os.pathsep)
-    if tool_dir not in path_parts:
-        env["PATH"] = f"{tool_dir}{os.pathsep}{env.get('PATH', '')}"
-
     # Python-domain logic: Directory validation
     if not os.path.isdir(role):
         print(f"setup: failed to locate directory for role '{role}'")
@@ -47,6 +42,8 @@ def main():
         'if [[ -f ~/.bashrc ]]; then source ~/.bashrc; fi',
         'if [[ -f "shared/tool/setup" ]]; then source "shared/tool/setup"; fi',
         'if [[ -f "shared/authored/setup" ]]; then source "shared/authored/setup"; fi',
+        '# the role tool directory is searched before everything the shared setup added',
+        f'PATH="{tool_dir}:$PATH"; export PATH',
         f'cd "{role}"',
         'if [[ -f "tool/setup" ]]; then',
         '    source "tool/setup"',
