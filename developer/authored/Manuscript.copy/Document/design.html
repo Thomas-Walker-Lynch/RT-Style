@@ -147,7 +147,8 @@
             Harmony supplies a maintenance tool for it, named <RT·code>scratchpad</RT·code>, which operates on the scratchpad of the current directory. <RT·code>scratchpad ls</RT·code> prints the tree with permissions and ownership, <RT·code>scratchpad size</RT·code> reports whether anything is there, and <RT·code>scratchpad write</RT·code> copies a file or directory onto the pad.
           </p>
           <p>
-            <strong><RT·code>scratchpad clear</RT·code> deletes the entire contents of the current directory's scratchpad</strong>, preserving only the top level <RT·code>.gitignore</RT·code>. It does not prompt. Given a name, as in <RT·code>scratchpad clear Manuscript</RT·code>, it removes that subdirectory alone, which is the form to reach for. A cleared pad means the next <RT·code>promote write</RT·code> has nothing to promote, so clear and rebuild rather than clear and promote.
+            <RT·code>scratchpad clear</RT·code> deletes the entire contents of the scratchpad, except for <RT·code>.gitignore</RT·code>. Given a directory name or path it deletes that directory.
+            <RT·code>scratchpad clear made</RT·code> deletes the entire contents of the accumulated builds, while <RT·code>scratchpad clear made/Manuscript</RT·code> deletes Manuscript build. The <RT·code>clear</RT·clear> command does not prompt for confirmation.
           </p>
         </RT·section>
 
@@ -441,7 +442,7 @@
               Each plugs in and registers its tasks.
             </RT·entry>
             <RT·entry key="10. DOMContentLoaded">
-              Parsing completes, the browser fires the event, and the pipeline runs. Nothing within the engine invokes the pipeline; the browser is the trigger. The locator requests the make file, which loads the stage manager, whose body attaches the pipeline to the event. There is no explicit call anywhere.
+              Parsing completes, the browser fires the event, and the pipeline runs. Nothing within the engine invokes the pipeline; the browser is the trigger. The header block requests the make file, which loads the stage manager, whose body attaches the pipeline to the event. There is no explicit call anywhere.
             </RT·entry>
           </RT·dictionary>
 
