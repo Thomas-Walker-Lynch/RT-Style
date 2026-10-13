@@ -14,9 +14,13 @@ Usage: RT-Style-server_install <command>
   apply                do it
 
 Steps
+  0. Packages and account: installs bindfs and nodejs when missing; creates
+     the system account web, with no home and no login shell, when missing.
   1. /etc/fstab: adds the bindfs line for the site directory, unless a line
      for that mount point is already there. The view is read-only, and files
-     owned by Thomas_developer appear owned by web.
+     owned by Thomas_developer appear owned by web. The line carries nofail,
+     so a failed mount leaves the server stopped but lets the machine boot.
+     An existing line that differs from the wanted one is shown, not changed.
   2. Mount point: creates it when missing; mounts the view when not mounted;
      then confirms it is a bindfs mount and shows the server file in it.
   3. Unit file: shows the diff between the promoted unit and the installed
@@ -41,7 +45,7 @@ RUN_AS=web
 SITE=style.reasoningtechnology.com
 CONSUMER=/home/$CODE_OWNER/project/RT-Style/consumer
 MOUNT_POINT=/srv/$SITE
-FSTAB_LINE="$CONSUMER  $MOUNT_POINT  fuse.bindfs  ro,map=$CODE_OWNER/$RUN_AS,chmod-deny,chown-deny,chgrp-deny  0  0"
+FSTAB_LINE="$CONSUMER  $MOUNT_POINT  fuse.bindfs  ro,nofail,map=$CODE_OWNER/$RUN_AS,chmod-deny,chown-deny,chgrp-deny  0  0"
 UNIT=RT-Style-server
 UNIT_SOURCE=$CONSUMER/Manuscript/server/$UNIT.service
 UNIT_FILE=/etc/systemd/system/$UNIT.service
@@ -59,9 +63,7 @@ step(){ printf '\n%s\n' "$*"; }
 checks(){
   local problems=()
   [[ $EUID -eq 0 ]] || { echo "Error: run as root." >&2; exit 1; }
-  command -v bindfs >/dev/null || problems+=("bindfs is not installed: apt-get install bindfs")
-  [[ -x /usr/bin/node ]]      || problems+=("node is not installed: apt-get install nodejs")
-  id "$RUN_AS" &>/dev/null     || problems+=("user $RUN_AS does not exist")
+  id "$CODE_OWNER" &>/dev/null || problems+=("user $CODE_OWNER does not exist")
   [[ -d $CONSUMER ]]           || problems+=("$CONSUMER not found: build and promote first")
   [[ -f $UNIT_SOURCE ]]        || problems+=("$UNIT_SOURCE not found: build and promote first")
   if (( ${#problems[@]} )); then
@@ -71,11 +73,36 @@ checks(){
   fi
 }
 
+packages_and_account(){
+  step "0. packages and account"
+  local missing=()
+  command -v bindfs >/dev/null || missing+=(bindfs)
+  [[ -x /usr/bin/node ]]       || missing+=(nodejs)
+  if (( ${#missing[@]} )); then
+    run apt-get update
+    run apt-get install -y "${missing[@]}"
+  else
+    echo "  bindfs and nodejs present"
+  fi
+  if id "$RUN_AS" &>/dev/null; then
+    echo "  account $RUN_AS present"
+  else
+    run adduser --system --group --no-create-home --home /nonexistent "$RUN_AS"
+  fi
+}
+
 fstab_line(){
   step "1. /etc/fstab"
-  if grep -qE "^[^#]*[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab; then
-    echo "  a line for $MOUNT_POINT is present:"
-    grep -E "^[^#]*[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab | sed 's/^/    /'
+  local present
+  present=$(grep -E "^[^#]*[[:space:]]$MOUNT_POINT[[:space:]]" /etc/fstab || true)
+  if [[ -n $present ]]; then
+    if [[ $present == "$FSTAB_LINE" ]]; then
+      echo "  present"
+    else
+      echo "  a different line for $MOUNT_POINT is present; edit it by hand if it should change:"
+      echo "    present: $present"
+      echo "    wanted:  $FSTAB_LINE"
+    fi
   else
     echo "  append: $FSTAB_LINE"
     if [[ $MODE == apply ]]; then printf '%s\n' "$FSTAB_LINE" >> /etc/fstab; fi
@@ -143,6 +170,7 @@ main(){
   MODE=$1
   checks
   echo "RT-Style-server_install $MODE"
+  packages_and_account
   fstab_line
   mount_view
   unit_file
