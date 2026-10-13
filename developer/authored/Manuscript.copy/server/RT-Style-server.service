@@ -27,7 +27,7 @@ Group=web
 LoadCredential=cert:/etc/ssl/certs/style.reasoningtechnology.com.pem
 LoadCredential=key:/etc/ssl/private/style.reasoningtechnology.com.key
 
-ExecStart=/usr/bin/node /srv/style.reasoningtechnology.com/Manuscript/server/server.js serve /srv/style.reasoningtechnology.com %d/cert %d/key 443
+ExecStart=/usr/bin/node /srv/style.reasoningtechnology.com/Manuscript/server/RT-Style-server.js serve /srv/style.reasoningtechnology.com %d/cert %d/key 443
 Restart=on-failure
 RestartSec=5
 
