@@ -105,11 +105,12 @@
             &gt; build Manuscript
             &gt; promote write
           </RT·code>
+
           <p>
-            <RT·code>build</RT·code> stages a namespace: it reads <RT·code>developer/authored/Manuscript.copy</RT·code> and writes <RT·code>developer/scratchpad/Manuscript</RT·code>. Run with no arguments it prints its usage and lists the namespaces it found, which is the reliable way to see what is buildable. An argument after a colon is passed to the component, so <RT·code>build Manuscript:clean</RT·code> removes the staged copy, and the pattern is expanded against the namespace list, so <RT·code>build "*:clean"</RT·code> cleans all of them. Quote the pattern or the shell expands it first.
+            <RT·code>build</RT·code> stages a namespace: it reads <RT·code>developer/authored/Manuscript.copy</RT·code> and writes <RT·code>developer/scratchpad/made/Manuscript</RT·code>. Run with no arguments it prints its usage and lists the namespaces it found, which is the reliable way to see what is buildable. An argument after a colon is passed to the component, so <RT·code>build Manuscript:clean</RT·code> removes the staged copy, and the pattern is expanded against the namespace list, so <RT·code>build "*:clean"</RT·code> cleans all of them. Quote the pattern or the shell expands it first.
           </p>
           <p>
-            <RT·code>promote write</RT·code> copies the scratchpad into <RT·code>consumer/</RT·code>, updating only files that are newer and leaving the base <RT·code>.gitignore</RT·code> alone. It has three commands worth knowing beyond that: <RT·code>promote diff</RT·code> reports what is pending, orphaned, or modified in place; <RT·code>promote dry write</RT·code> previews without touching the filesystem; and <RT·code>promote ls</RT·code> prints the consumer tree with permissions and ownership.
+            <RT·code>promote write</RT·code> copies <RT·code>developer/scratchpad/made</RT·code> into <RT·code>consumer/</RT·code>, updating only files that are newer and leaving the base <RT·code>.gitignore</RT·code> alone. Promoted files are read-only, and so are the directories below <RT·code>consumer/</RT·code>; promote opens the directories while it writes and locks them again when it is done. It has three commands worth knowing beyond that: <RT·code>promote diff</RT·code> reports what is pending, orphaned, or modified in place; <RT·code>promote dry write</RT·code> previews without touching the filesystem; and <RT·code>promote ls</RT·code> prints the consumer tree with permissions and ownership.
           </p>
           <p>
             Neither command reaches back. Building without promoting leaves the new engine staged and invisible; promoting without building copies whatever was staged last, which might be old. Run the pair.
@@ -119,18 +120,21 @@
         <RT·section>
           <RT·name>Which documents need a build</RT·name>
           <p>
-            This is the detail that wastes an afternoon when it is not known. A document reaches the engine through <RT·code>RT-Manuscript_locator.js</RT·code>, and there are several locators. Which one sits beside a document decides whether an edit to the engine is visible on a reload or has to travel through the build loop first.
+            This is the detail that wastes an afternoon when it is not known. A document does not name where the engine is. Its header reads the library location recorded in the browser, and falls back to <RT·code>https://style.ReasoningTechnology.com/Manuscript</RT·code> when nothing is recorded. The record is made by opening a <RT·code>setup.html</RT·code>: each Manuscript directory carries one, and opening it records that directory as the library. Which <RT·code>setup.html</RT·code> was opened last decides whether an edit to the engine is visible on a reload or has to travel through the build loop first.
           </p>
-          <RT·dictionary key="Document location" definition="Locator, and what it loads">
-            <RT·entry key="developer/authored/Manuscript.copy/Document">
-              The <RT·code>immediate</RT·code> locator, which resolves to <RT·code>..</RT·code>, the authored tree itself. The design and user manuals live here, so they exercise the engine as written. Edit an element file, reload, and the change is there. No build.
+          <RT·dictionary key="setup.html opened last" definition="What every document then loads">
+            <RT·entry key="developer/authored/Manuscript.copy/setup.html">
+              The authored tree itself. Edit an element file, reload, and the change is there. No build.
             </RT·entry>
-            <RT·entry key="Everywhere else">
-              The <RT·code>direct</RT·code> locator, which resolves to <RT·code>consumer/Manuscript</RT·code>. This covers <RT·code>developer/document</RT·code>, the top level <RT·code>document</RT·code> tree, and every test under <RT·code>tester/authored</RT·code>. These load the promoted engine, so an edit is invisible until <RT·code>build Manuscript</RT·code> and <RT·code>promote write</RT·code> have both run.
+            <RT·entry key="consumer/Manuscript/setup.html">
+              The promoted engine. An edit is invisible until <RT·code>build Manuscript</RT·code> and <RT·code>promote write</RT·code> have both run.
+            </RT·entry>
+            <RT·entry key="None">
+              The engine served from <RT·code>style.ReasoningTechnology.com</RT·code>, which is the last one deployed there.
             </RT·entry>
           </RT·dictionary>
           <p>
-            The practical consequence: a change verified against the manuals has not been verified against the tests. The counter tests under <RT·code>tester/authored/Counter</RT·code> read the promoted engine, and running them against a stale promotion tests the previous change. Build and promote before opening a test, every time.
+            The record is one per browser, not one per document. Chrome keeps a single local storage for every file opened from disk, so the manuals and the tests alike load whatever engine the last opened <RT·code>setup.html</RT·code> named. A change verified against the authored tree has not been verified against the promoted engine. To test a promotion, build, promote, and open <RT·code>consumer/Manuscript/setup.html</RT·code> before opening a test under <RT·code>tester/authored</RT·code>.
           </p>
         </RT·section>
 
@@ -405,12 +409,12 @@
         <RT·section>
           <RT·name>The sequence</RT·name>
           <p>
-            A document's head names only the locator and a short configuration block. Everything else arrives transitively.
+            A document's head carries the header block and a short configuration block. Everything else arrives transitively.
           </p>
 
           <RT·dictionary key="Step" definition="Effect">
-            <RT·entry key="1. Locator">
-              Sets <RT·code>RT.dirpr_library</RT·code>, fixing the root against which every later module path resolves, then requests the make file. Four locator variants exist, differing only in how that root is computed, which is what allows the same document to build inside the distribution or outside it.
+            <RT·entry key="1. Header block">
+              Sets <RT·code>RT.dirpr_library</RT·code>, fixing the root against which every later module path resolves, then requests the make file. The root is the value already set on the page if there is one, else the location a <RT·code>setup.html</RT·code> recorded in the browser, else the Reasoning Technology server. This is what allows the same document to load the authored engine, the promoted engine, or the served one without being edited.
             </RT·entry>
             <RT·entry key="2. Manuscript make">
               Establishes <RT·code>RT.Module</RT·code> and <RT·code>RT.load</RT·code>, then requests the utilities, the stage manager, the theme machinery, the theme manifest, the counter layout, and the note layout.

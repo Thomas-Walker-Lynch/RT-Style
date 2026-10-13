@@ -40,13 +40,13 @@
         These roles interact directly with the repository. To enter a workspace, change directory to the top-level of the project and source the setup file for the desired role:
       </p>
       <RT·code>
-        > . setup administrator
-        > . setup developer
-        > . setup tester
-        > . setup consumer
+        > ./setup administrator
+        > ./setup developer
+        > ./setup tester
+        > ./setup consumer
       </RT·code>
-      <p>
-        It is common for a person to have multiple terminal sessions or IDEs open, each running under a different role environment.
+
+      <p>This will run a new shell with the proper environment setting. It is common for a person to have multiple shells, terminal sessions, or IDEs open, each running under a different role environment.  Development and tests is a common pair, though tests are intended to be production tests. The developer has an <RT·code>experiment</RT·code> directory for experiments.
       </p>
 
       <h3>Administrator role</h3>
