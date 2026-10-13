@@ -1,0 +1,52 @@
+# /etc/systemd/system/RT-Style-server.service
+#
+# Serves the RT-Style library at style.reasoningtechnology.com.
+#
+# /srv/style.reasoningtechnology.com is a read-only bindfs view of
+#   ~Thomas_developer/project/RT-Style/consumer
+# made by /etc/fstab, in which files owned by Thomas_developer appear owned by
+# web. The library and the server's own code both arrive through that view:
+#   /srv/style.reasoningtechnology.com/Manuscript/...            the library
+#   /srv/style.reasoningtechnology.com/Manuscript/server/server.js   this server
+# A promote replaces the files on disk; node reads server.js only when the
+# service starts, so new server code runs only after a restart by root.
+
+[Unit]
+Description=RT-Style HTTPS server (style.reasoningtechnology.com)
+After=network-online.target
+Wants=network-online.target
+# Start only after the bindfs view is mounted, and stop if it goes away.
+RequiresMountsFor=/srv/style.reasoningtechnology.com
+
+[Service]
+User=web
+Group=web
+
+# systemd copies these into a directory only this service can read, named by
+# %d below. The key itself stays root-only in /etc/ssl/private.
+LoadCredential=cert:/etc/ssl/certs/style.reasoningtechnology.com.pem
+LoadCredential=key:/etc/ssl/private/style.reasoningtechnology.com.key
+
+ExecStart=/usr/bin/node /srv/style.reasoningtechnology.com/Manuscript/server/server.js serve /srv/style.reasoningtechnology.com %d/cert %d/key 443
+Restart=on-failure
+RestartSec=5
+
+# The one privilege it needs: binding to a port below 1024.
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+
+# The whole file system is read-only to it, and /home, /root and /run/user
+# are hidden; it writes nothing.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
