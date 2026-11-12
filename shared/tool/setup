@@ -74,8 +74,19 @@ umask 0077
   PATH="$REPO_HOME/shared/authored:$PATH"
 
   # Remove duplicates, keeping the first occurrence
-  clean_path() {
-    PATH=$(echo ":$PATH" | awk -v RS=: -v ORS=: '!seen[$0]++' | sed 's/^://; s/:$//')
+  #   Done with bash built-ins only. A pipeline through awk and sed left PATH
+  #   empty whenever either program failed to run.
+  clean_path(){
+    local entry result=""
+    local -A seen=()
+    local -a part
+    IFS=: read -r -a part <<< "$PATH"
+    for entry in "${part[@]}"; do
+      [[ -z "$entry" || -n "${seen[$entry]:-}" ]] && continue
+      seen[$entry]=1
+      result="${result:+$result:}$entry"
+    done
+    PATH="$result"
   }
   clean_path
 

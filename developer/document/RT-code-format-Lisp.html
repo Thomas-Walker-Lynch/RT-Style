@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-  <!DOCTYPE html>
-<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>RT Code Format: Lisp Addendum</title>
@@ -26,7 +24,7 @@
     <RT·article>
       <RT·title 
         author="Thomas Walker Lynch" 
-        date="2026-03-28" 
+        date="2026-11-12" 
         title="RT Code Format: Lisp Addendum">
       </RT·title>
 
@@ -69,16 +67,12 @@
 
       <p>Header case, for all RT documents and code, is an initial capital letter, and no trailing period. Acronyms and tagged code or terms keep their original capitalization or lack thereof.</p>
 
-      <h1>Identifier Naming and Namespaces</h1>
-
-      <h2>Primary and Secondary Separators</h2>
+      <h1>Identifier name and namespace</h1>
       <p>
-        Because Emacs Lisp and Common Lisp support the hyphen character in identifiers, Lisp code utilizes <RT·code>snake-kebab_case</RT·code>. The hyphen acts as the primary word separator. The underscore is reserved strictly as a secondary separator to group logically related portions of an identifier or to denote semantic boundaries, acting as a structural namespace within the symbol (e.g., <RT·code>city-scape_building-height</RT·code>).
+        Names follow <RT·code>naming.html</RT·code>. Emacs Lisp and Common Lisp accept the hyphen in identifiers, so Lisp names are written in the full form of the separator ladder, with no demotion: the hyphen joins the words of a component and the underscore joins components, as in <RT·code>city-scape_building-height</RT·code>.
       </p>
-
-      <h2>Ad Hoc Namespaces</h2>
       <p>
-        Emacs Lisp shares a global environment. To prevent global environment pollution, functions and global variables use the center dot (<RT·code>·</RT·code>) to separate namespace hierarchies. Spaces are omitted around the dot to ensure the symbol evaluates contiguously.
+        Emacs Lisp shares one global environment. To keep it unpolluted, functions and global variables carry an ad hoc namespace, its levels separated by the middle dot. No spaces surround the dot, so the symbol stays one token.
       </p>
       <RT·code>
         (defconst RT·first-order-list·control·continue 0)

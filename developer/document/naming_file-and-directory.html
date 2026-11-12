@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>File and directory naming conventions</title>
+    <title>File and directory naming in Harmony</title>
     <script>
       {
         let dirpr_library = null;
@@ -22,78 +22,52 @@
   <body>
     <RT·theme-selector></RT·theme-selector>
     <RT·article>
-      <RT·title 
-        author="RT" 
-        date="2026-03-09" 
-        title="File and directory naming conventions">
+      <RT·title
+        author="RT"
+        date="2026-11-12"
+        title="File and directory naming in Harmony">
       </RT·title>
 
       <RT·TOC level="1"></RT·TOC>
 
-      <h1>Program file system objects</h1>
-
+      <h1>Scope</h1>
       <p>
-        Harmony files and directories are considered to be program file systems objects.
+        Harmony's files and directories are named by the rules in RT-Style's <RT·code>naming.html</RT·code>: the separator ladder, demotion where a language reads the name, proper nouns, namespaces, and directories named for a property of their files. This document adds only the names Harmony's layout and build give meaning to.
       </p>
 
-      <h2>Files</h2>
+      <h1>Directory</h1>
       <p>
-        Files that hold a single class, have he same base name as that class. If a file holds multiple classes, but there is a class of primary importance and auxiliary classes, the file carries the name of the primary class.
-      </p>
-
-      <p>
-        If a file represents a module or name space, follow the same naming conventions specified for classes and name spaces in the <RT·code>format_RT·code.html</RT·code> document.
-      </p>
-
-      <p>
-        Other program files follow the same naming conventions specified in the <RT·code>format_RT·code.html</RT·code> document for an identifier of the
-        contained or related language.
-      </p>
-
-      <h2>Hyphens and spaces</h2>
-
-      <p>In a C language culture, file names use underscores between words. In a Lisp language culture use snake-kebab_case. Spaces are generally not used in program file names. Though the Harmony skeleton is language agnostic, it was first used with C, hence file names use primarily underscores.
-      </p>
-
-
-      <h1>Program Directories</h1>
-      <p>
-        A directory that is a package, follows the convention for name spaces.
-      </p>
-
-      <p>
-        A directory that is used to give the contained files a property is an identifier.
-      </p>
-      
-      <p>
-        What is a reasonable primary property for a set of files? Perhaps:
+        Each directory of the skeleton names a property every file in it has:
       </p>
       <ul>
-        <li>Who uses each file with this property. Home directories are named like this.</li>
-        <li>The role of the people using the file. The <RT·code>developer</RT·code> and <RT·code>tester</RT·code> directories were named in this manner.</li>
-        <li>What program are the files for.</li>
-        <li>The generic category of program said files are for. We prefer the names <RT·code>authored</RT·code> and <RT·code>made</RT·code>. <RT·code>authored</RT·code> files are those written by humans or AI, while <RT·code>made</RT·code> files are products of tools.</li>
+        <li>who works with the files, by role: <RT·code>administrator</RT·code>, <RT·code>developer</RT·code>, <RT·code>tester</RT·code>, <RT·code>consumer</RT·code>;</li>
+        <li>how the files came to be: <RT·code>authored</RT·code> files are written by people or by AI, and <RT·code>made</RT·code> files are products of tools;</li>
+        <li>what the files are for: <RT·code>tool</RT·code>, <RT·code>document</RT·code>, <RT·code>experiment</RT·code>, <RT·code>project-dependency</RT·code>;</li>
+        <li>how long they last: <RT·code>scratchpad</RT·code> holds work that the tools make again and that is not kept.</li>
       </ul>
 
-      <h1>Property indicators on files</h1>
+      <h1>Namespace source directory</h1>
       <p>
-        We add a second property to a file using dot extensions to the file's name. We can extend the dot suffix model by using multiple dot suffixes. File name extensions are used to signal to the build tools how the file is to be processed:
+        Each directory in <RT·code>developer/authored</RT·code> holds the source of one namespace, and is named <RT·code>&lt;namespace&gt;.&lt;build tool&gt;</RT·code>. The suffix names the build component that builds it, in <RT·code>developer/tool/build_component</RT·code>: <RT·code>copy</RT·code> stages its files as they are, and <RT·code>make</RT·code> runs Harmony.mk on them. The part before the suffix is the namespace's name. The build passes it to the compiler, which puts it in macro names, so it is written in its demoted form:
       </p>
       <ul>
-        <li><RT·code>.cli.c</RT·code> : Compiler fodder made into a stand-alone executable.</li>
-        <li><RT·code>.lib.c</RT·code> : Library code source, compiled as an object file and added to the project archive.</li>
-        <li><RT·code>.mod.c</RT·code> : Kernel module sources.</li>
+        <li><RT·code>Account_Tree.copy</RT·code> holds the namespace of the project Account-Tree.</li>
+        <li><RT·code>Man_In_Grey__Gate.make</RT·code> holds the namespace <RT·code>Man-In-Grey_Gate</RT·code>.</li>
       </ul>
-
-      <h1>Exercises</h1>
-      <h2>Exercise 1: Program file names</h2>
       <p>
-        Rename the following poorly named files to strictly adhere to the RT naming conventions. Pay close attention to the language culture, the capitalization of acronyms, and the rule for spelling out abbreviations in outer scope identifiers.
+        The build stages each namespace into <RT·code>scratchpad/made/&lt;namespace&gt;</RT·code>, and promotion copies it to <RT·code>consumer/&lt;namespace&gt;</RT·code>. A directory without a suffix, such as <RT·code>deprecated</RT·code>, is not built.
+      </p>
+
+      <h1>Property suffix</h1>
+      <p>
+        The build reads these suffixes on file names:
       </p>
       <ul>
-        <li>A C-culture makefile that builds a target library and command line interface: <RT·code>target-lib-cli.mk</RT·code></li>
-        <li>A Lisp-culture source file for an HTML parsing module: <RT·code>html_parser_mod.el</RT·code></li>
-        <li>A C language source file that initializes an HTTP server: <RT·code>init-http-srv.c</RT·code></li>
+        <li><RT·code>.lib.c</RT·code> : a library module, compiled to an object file and added to the project's archive. Its base name is the module's name, and the build defines <RT·code>&lt;namespace&gt;·&lt;module&gt;</RT·code> when compiling it, so the base name is written demoted.</li>
+        <li><RT·code>.CLI.c</RT·code> : a program, compiled and linked into a stand-alone executable of the same base name.</li>
+        <li><RT·code>.kmod.c</RT·code> : the source of a kernel module.</li>
+        <li><RT·code>.mk</RT·code> : makefile text that is included, never run. In a namespace source directory, Harmony.mk reads it after its own defaults and the project's <RT·code>developer/tool/build_component/project.mk</RT·code>, so it has the last say; the build stages it with the namespace's library.</li>
+        <li><RT·code>.init</RT·code> : in <RT·code>shared/project-dependency</RT·code>, a bash fragment that a role's setup sources, to put a dependency on the paths.</li>
       </ul>
 
     </RT·article>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Naming</title>
+    <script>
+      {
+        let dirpr_library = null;
+        try{ dirpr_library = localStorage.getItem("RT.dirpr_library"); }catch(e){}
+        window.RT = window.RT || {};
+        RT.dirpr_library = RT.dirpr_library || dirpr_library || "https://style.ReasoningTechnology.com/Manuscript";
+        document.write('<script src="' + RT.dirpr_library + '/Core/RT-Manuscript_make.js"><\/script>');
+      }
+    </script>
+    <script>
+      window.RT.theme_preference('inverse_wheat');
+      window.RT.load('Layout/paginate');
+      window.RT.load('Layout/article_tech_ref');
+      window.RT.load('Element/theme_selector');
+    </script>
+  </head>
+  <body>
+    <RT·theme-selector></RT·theme-selector>
+    <RT·article>
+      <RT·title
+        author="Thomas Walker Lynch"
+        date="2026-11-12"
+        title="Naming">
+      </RT·title>
+
+      <RT·TOC level="1"></RT·TOC>
+
+      <h1>Scope</h1>
+      <p>
+        This document is the one authority on how RT names things: identifiers in every programming language, files and directories, projects, namespaces, commands, and the names a program gives to things on a system. The other RT and Harmony documents hold only what is particular to their context, and refer here for the rest.
+      </p>
+      <p>
+        Names are made of words, and words are grouped into components. The rules below say how words and components are separated, how they are capitalized, and what happens when a language or a system does not accept a separator. Much existing code and many existing files predate these rules. A name that does not conform is updated when work brings us to it.
+      </p>
+
+      <h1>Separator</h1>
+
+      <h2>The separator ladder</h2>
+      <p>
+        Each separator binds more loosely than the one before it:
+      </p>
+      <ul>
+        <li><RT·code>-</RT·code> joins the words of one component.</li>
+        <li><RT·code>_</RT·code> joins the components of a compound.</li>
+        <li><RT·code>·</RT·code>, the middle dot, separates the levels of a namespace.</li>
+        <li><RT·code>.</RT·code> adds a property to a file name, for the tools that process the file. In program text the dot belongs to the language.</li>
+      </ul>
+      <p>
+        In <RT·code>rounded_x-coordinate</RT·code> there are two components, <RT·code>rounded</RT·code> and <RT·code>x-coordinate</RT·code>, and the second has two words. The hyphen binds <RT·code>x</RT·code> to <RT·code>coordinate</RT·code> more tightly than the underscore binds either to <RT·code>rounded</RT·code>. Which grouping is meant decides which separator goes where: <RT·code>city-scape_building-height</RT·code> is the building height of a city scape.
+      </p>
+      <p>
+        Spaces are not used in names.
+      </p>
+
+      <h2>Demotion</h2>
+      <p>
+        Many languages do not accept <RT·code>-</RT·code> in an identifier: C, Python, Java, the shell, and SQL without quoting among them. There the ladder moves down one step, and each separator keeps its meaning:
+      </p>
+      <ul>
+        <li>each <RT·code>_</RT·code> becomes <RT·code>__</RT·code>, then</li>
+        <li>each <RT·code>-</RT·code> becomes <RT·code>_</RT·code>.</li>
+      </ul>
+      <p>
+        So <RT·code>rounded_x-coordinate</RT·code> is written <RT·code>rounded__x_coordinate</RT·code>. The order of the two steps matters: done the other way round, the underscores made from hyphens would be doubled too. The rule is reversible. To read a demoted name, take each <RT·code>__</RT·code> back to <RT·code>_</RT·code>, and each remaining <RT·code>_</RT·code> back to <RT·code>-</RT·code>.
+      </p>
+      <p>
+        Demotion applies to every identifier in such a language, not only to names that came from elsewhere. That is what makes it reversible: in a C or Python identifier a single underscore always joins words, and a double underscore always joins components. A predicate <RT·code>has_right-neighbor</RT·code> in Lisp is <RT·code>has__right_neighbor</RT·code> in Python, and a path variable <RT·code>dirpa_root</RT·code> is <RT·code>dirpa__root</RT·code>.
+      </p>
+      <p>
+        A name never begins with a separator. That keeps clear of the names C reserves, those beginning with <RT·code>__</RT·code> or with <RT·code>_</RT·code> and a capital letter, and of Python, which treats a leading <RT·code>__</RT·code> as a request for name mangling. Python's other special names, such as <RT·code>__init__</RT·code>, are the language's own and keep their form. C++ reserves every identifier that contains <RT·code>__</RT·code> anywhere; RT code is not written in C++, and a C++ project would need its own exception.
+      </p>
+      <p>
+        A variable that passes through the process environment takes the demoted form, since the shell will not accept a hyphen in a variable name, even when the language that sets it would.
+      </p>
+
+      <h2>Component order</h2>
+      <p>
+        As long as it is sensible and does not break a parallel construction, the broadest category or the least changing component goes on the left, and each component after it narrows the meaning. A conditional write function is <RT·code>write-conditional</RT·code>, not <RT·code>conditional-write</RT·code>, because it is a refinement in the general category of write functions.
+      </p>
+
+      <h2>Word or component</h2>
+      <p>
+        Words that together name one thing are one component. A boundary between components falls where the name steps from one thing to another: from a kind to what is of that kind, from an owner to what it owns, from a category to the member or the operation within it. With so fine a hierarchy some names can be read two ways. These readings settle most of them:
+      </p>
+      <ul>
+        <li>A phrase is one component: a verb and its object, as <RT·code>install-gate</RT·code>; an adjective and its noun, as <RT·code>system-account</RT·code>; a compound noun, as <RT·code>publication-count</RT·code>, <RT·code>gate-path</RT·code> and <RT·code>tree-dir</RT·code>.</li>
+        <li>A prefix that gives a type, a container or a predicate is a component of its own: <RT·code>list_problem</RT·code>, <RT·code>map_type</RT·code>, <RT·code>set_key</RT·code>, <RT·code>is_absent</RT·code>, <RT·code>has_result</RT·code>. So is a type or container given as a suffix: <RT·code>work_dpath</RT·code>, <RT·code>uid_set</RT·code>.</li>
+        <li>When one part of a name is itself a phrase, the boundary beside it is a component boundary: <RT·code>system-account_name</RT·code> is the name of a system account, and <RT·code>parent_database-uid</RT·code> is the database uid of a parent. A two word compound has no such part, and stays one component: <RT·code>storage-name</RT·code>.</li>
+        <li>A modifier that stands outside a compound is a component: <RT·code>rounded_x-coordinate</RT·code>, <RT·code>free_system-uid</RT·code>, <RT·code>display-name_max</RT·code>.</li>
+        <li>A category followed by the operation on it, or by the member of it, is two components: <RT·code>storage_make</RT·code>, <RT·code>system-account_delete</RT·code>, <RT·code>state_idle</RT·code>, <RT·code>format_open</RT·code>.</li>
+      </ul>
+      <p>
+        Where a name still reads two ways, the author picks one, and a later reader who sees it differently changes it.
+      </p>
+
+      <h1>Case</h1>
+      <ul>
+        <li>Types, modules, classes, interfaces and namespaces: <RT·code>PascalCase</RT·code>.</li>
+        <li>Functions and variables: <RT·code>snake-kebab_case</RT·code>, lower case words joined by the ladder, as <RT·code>rounded_x-coordinate</RT·code>; demoted, <RT·code>rounded__x_coordinate</RT·code>.</li>
+        <li>Globals and constants: the same in capitals, as <RT·code>MAX_RETRY-COUNT</RT·code>; demoted, <RT·code>MAX__RETRY_COUNT</RT·code>.</li>
+      </ul>
+      <p>
+        <RT·code>PascalCase</RT·code> joins the words of a component by capital letters rather than by a separator, so demotion leaves it unchanged. Its components are still joined by <RT·code>_</RT·code>, as in any other name, and that underscore is demoted to <RT·code>__</RT·code>.
+      </p>
+
+      <h1>Proper noun and acronym</h1>
+      <p>
+        A proper noun names one particular thing: a person, a product, a project, a standard. Whether its words describe the thing does not matter. Emacs, Ariadne, the Golden Gate Bridge and Account-Tree are all proper nouns.
+      </p>
+      <p>
+        A proper noun has one written form, chosen by whoever named the thing, and keeps it in every case style, including its capitalization. Acronyms keep their capitals. Pseudo-acronyms keep the casing given them, as <RT·code>SubU</RT·code> does. So a count of publications from the IEEE is <RT·code>IEEE_publication-count</RT·code>, demoted <RT·code>IEEE__publication_count</RT·code>.
+      </p>
+      <p>
+        The words of a multi-word proper noun are joined by <RT·code>-</RT·code>: <RT·code>Man-In-Grey</RT·code>, <RT·code>Account-Tree</RT·code>, <RT·code>RT-Style</RT·code>, <RT·code>GNU-Emacs</RT·code>. Where the hyphen is not accepted, the name is demoted by the rule above, and nowhere else is it spelled differently: <RT·code>Man_In_Grey</RT·code>.
+      </p>
+      <p>
+        In a name with other components, a proper noun is a component of its own, joined to the rest by <RT·code>_</RT·code>, even when it is one word. In a namespace that groups variables of GNU Emacs, <RT·code>GNU-EmacsVariables</RT·code> would suggest that <RT·code>EmacsVariables</RT·code> binds more tightly than <RT·code>GNU-Emacs</RT·code>; the name is <RT·code>GNU-Emacs_Variables</RT·code>, demoted <RT·code>GNU_Emacs__Variables</RT·code>. Likewise <RT·code>Emacs_Variables</RT·code>, not <RT·code>EmacsVariables</RT·code>. One rule then covers every proper noun, a reader sees where the name ends, and a tool can find the proper noun by its boundary without a list of proper nouns.
+      </p>
+
+      <h1>Project name</h1>
+      <p>
+        A project name is a proper noun. It is written as chosen, with hyphens between its words, in prose, as the name of the project's directory and repository, in document and file names, and in command names. Where the project's name must be an identifier, it takes the demoted form:
+      </p>
+      <ul>
+        <li><RT·code>Man-In-Grey</RT·code> the project; <RT·code>Man_In_Grey</RT·code> its namespace and Python module.</li>
+        <li><RT·code>Account-Tree</RT·code> the project; <RT·code>Account_Tree</RT·code> its namespace.</li>
+      </ul>
+      <p>
+        An external registry with naming rules of its own, such as a distribution's package names, which are lower case, gets a form made from the project name by a fixed rule, used only in that registry.
+      </p>
+
+      <h1>Namespace</h1>
+      <p>
+        In a language without native namespaces, the middle dot separates the levels of an ad hoc namespace within an identifier: <RT·code>Math·rounded__x_coordinate</RT·code> is a variable in the <RT·code>Math</RT·code> namespace, or a function on the <RT·code>Math</RT·code> interface. Most parsers accept the middle dot in identifiers.
+      </p>
+      <p>
+        A namespace is named in <RT·code>PascalCase</RT·code>, with a proper noun as a component of its own. A namespace for the gates of Man-In-Grey is <RT·code>Man-In-Grey_Gate</RT·code>, demoted <RT·code>Man_In_Grey__Gate</RT·code>, and the function <RT·code>run</RT·code> of its <RT·code>Gate</RT·code> module is <RT·code>Man_In_Grey__Gate·Gate·run</RT·code> in C.
+      </p>
+      <p>
+        A namespace's name is read by languages: it becomes the prefix of C macros and of the names of importable modules. So wherever it appears, in a directory name, a file name or code, it is written in its demoted form if any language that reads it does not accept the hyphen.
+      </p>
+      <p>
+        A file that holds a namespace's main module is named for the namespace alone, as <RT·code>Guard.py</RT·code>. A file specific to a namespace carries the namespace's name before a middle dot, as <RT·code>Guard·WellFormed.py</RT·code>. An application's files parallel these inside its own namespace, as <RT·code>Emplace_Bio·Guard.py</RT·code>.
+      </p>
+
+      <h1>File and directory name</h1>
+      <p>
+        File system names follow the identifier rules. The file system accepts the hyphen, so file and directory names use <RT·code>snake-kebab_case</RT·code>, undemoted, as <RT·code>how-to_add-project-dependency.html</RT·code> and <RT·code>single-file_C-module-and-namespace.html</RT·code> do. The exception is a name some language reads as an identifier, which takes the demoted form:
+      </p>
+      <ul>
+        <li>a Python module meant to be imported, since <RT·code>import</RT·code> needs an identifier;</li>
+        <li>a source file whose base name becomes a macro or a symbol, such as a C library module;</li>
+        <li>a directory named for a namespace.</li>
+      </ul>
+      <p>
+        A file that holds one class or module carries the class's or module's name. A file holding a primary class and auxiliary ones carries the primary class's name.
+      </p>
+      <p>
+        A directory gives each file in it a property, and its name names that property, in the singular, as an identifier does: who uses the files, the role of the people who use them, the program they belong to, or the kind of thing they are. Harmony's <RT·code>developer</RT·code>, <RT·code>tester</RT·code>, <RT·code>authored</RT·code> and <RT·code>made</RT·code> are named this way. A directory that is a package or a namespace follows the namespace rules.
+      </p>
+      <p>
+        A dot suffix gives a file a further property, telling the tools how the file is to be processed. A file can carry more than one, as <RT·code>Math.lib.c</RT·code> does. The suffixes a particular build uses are listed with that build, for Harmony in <RT·code>naming_file-and-directory.html</RT·code>.
+      </p>
+
+      <h1>Command name</h1>
+      <p>
+        A command is named as a function is, and its name is a file name, so it takes the hyphen: <RT·code>Account-Tree_admin</RT·code>, <RT·code>new-project</RT·code>, <RT·code>skeleton_diff</RT·code>. A command written in Python that is also imported as a module takes the demoted form, since <RT·code>import</RT·code> needs an identifier; a file with a hyphen in its name can still be loaded by path.
+      </p>
+
+      <h1>Name on a system</h1>
+      <p>
+        A program gives names to things on the systems it runs on: accounts, directories, devices, service units, configuration files. These follow the file and identifier rules as far as the system allows. Where a system gives a character a meaning of its own, the system's rule wins; systemd, for one, reads a <RT·code>-</RT·code> in a unit name made from a path as a <RT·code>/</RT·code>, and writes a literal hyphen there as <RT·code>\x2d</RT·code>.
+      </p>
+      <p>
+        A name a program has already given out on systems and on storage is data other things depend on: a directory holding files, a mark by which the program recognizes its own files, a string that feeds a hash. Changing such a name needs a migration of what already exists, and is decided name by name.
+      </p>
+
+      <h1>Name in data</h1>
+      <p>
+        A name that is only ever a string follows the rule of where it is written. A word on a command line, a tag at the head of a line of output, a flag a program prints: each of these accepts the hyphen, and takes it, as <RT·code>check-only</RT·code>, <RT·code>constraint-broken</RT·code> and <RT·code>uid-differ</RT·code> do.
+      </p>
+      <p>
+        A name in data that some language reads as an identifier takes the demoted form. The table and column names of a database are identifiers of SQL. The names an instruction language defines, its types, formats, variables and operation specifiers, are identifiers of that language, and many are also names in the code that implements it, so they are written as that code writes them: <RT·code>list__instruction</RT·code>, <RT·code>format__open</RT·code>.
+      </p>
+
+      <h1>Convention dictated from outside</h1>
+      <p>
+        Where a library, a kernel interface, a file format or a protocol fixes a name, we use the name as it is fixed, since nothing else will work. A call to a library function named <RT·code>incrementCount</RT·code> is written <RT·code>incrementCount</RT·code>, though we use camel case nowhere ourselves; a kernel constant keeps the kernel's spelling, and a structure's fields keep the names its definition gives them.
+      </p>
+      <p>
+        We do not wrap such a name in a gasket, a function of our own whose only work is to give the outside name a conforming one. A gasket is written when the outside name cannot be used as it stands, because the code would not function or because the name is confusing enough to mislead a person reading the code.
+      </p>
+
+      <h1>Abbreviation</h1>
+      <p>
+        Outer scope identifiers are spelled out for clarity, as in Lisp programming culture. That lets people who are not in the club start reading the code, and tends to make it self documenting. File system names mirror the identifier rules, so names such as <RT·code>library</RT·code> and <RT·code>source</RT·code> are spelled out.
+      </p>
+      <p>
+        For long words, inner scope identifiers, temporary variables and conventional suffixes, abbreviations become more common. By the time we reach the variables of an inner loop, such as a loop counter, a name is typically one letter long.
+      </p>
+
+      <h1>The term make</h1>
+      <p>
+        When the language allows it, a factory function is called <RT·code>make</RT·code>. It is not called <RT·code>create</RT·code>, nor <RT·code>new</RT·code>. The same holds for commands that produce things.
+      </p>
+
+      <h1>Container and type prefix</h1>
+      <p>
+        The name of a container is not made plural. Instead, the container's abstract type or actual type is put before the name as a component of its own. Recall that types are <RT·code>PascalCase</RT·code>.
+      </p>
+      <ul>
+        <li><RT·code>list_*</RT·code> / <RT·code>seq_*</RT·code> : generic ordered items / indexed items</li>
+        <li><RT·code>Map_*</RT·code> / <RT·code>dict_*</RT·code> : keyed containers</li>
+      </ul>
+      <p>
+        A type prefix is added when it adds clarity:
+      </p>
+      <ul>
+        <li><RT·code>count-of_*</RT·code> : number of elements</li>
+        <li><RT·code>Bool_*</RT·code> : <RT·code>Bool</RT·code> type</li>
+        <li><RT·code>flag_*</RT·code> : value used as a Boolean flag</li>
+      </ul>
+      <p>
+        For names of directories and files:
+      </p>
+      <ul>
+        <li><RT·code>dir_*</RT·code> / <RT·code>dirn_*</RT·code> : directory name</li>
+        <li><RT·code>dirp_*</RT·code> : directory path</li>
+        <li><RT·code>dirpr_*</RT·code> / <RT·code>dirpa_*</RT·code> : relative / absolute directory path</li>
+        <li><RT·code>file_*</RT·code> / <RT·code>filen_*</RT·code> : file name</li>
+        <li><RT·code>filep_*</RT·code> : file path</li>
+        <li><RT·code>filepr_*</RT·code> / <RT·code>fpr_*</RT·code> : relative file path</li>
+        <li><RT·code>filepa_*</RT·code> / <RT·code>fpa_*</RT·code> : absolute file path</li>
+        <li><RT·code>fsnodn_*</RT·code> : file system node name</li>
+        <li><RT·code>fsnodp_*</RT·code> : file system node path</li>
+        <li><RT·code>fsnodpr_*</RT·code> / <RT·code>fsnpr_*</RT·code> : relative file system node path</li>
+        <li><RT·code>fsnodpa_*</RT·code> / <RT·code>fsnpa_*</RT·code> : absolute file system node path</li>
+      </ul>
+      <p>
+        The prefix is a component, so in a language without the hyphen its underscore is demoted with the rest: <RT·code>list_HTTP-server</RT·code> is <RT·code>list__HTTP_server</RT·code>, and <RT·code>dirpa_root</RT·code> is <RT·code>dirpa__root</RT·code>.
+      </p>
+      <p>
+        A predicate function is named with the prefix <RT·code>is_*</RT·code> or <RT·code>has_*</RT·code>, as <RT·code>is_document</RT·code> or <RT·code>has_right-neighbor</RT·code>. The prefix is a component too, so in Python these are <RT·code>is__document</RT·code> and <RT·code>has__right_neighbor</RT·code>.
+      </p>
+
+      <h1>Exercise</h1>
+
+      <h2>Exercise 1: identifiers without the hyphen</h2>
+      <p>
+        Rename the following poorly named variables to follow these rules, for C or Python, where the hyphen is not accepted. Pay attention to proper nouns, acronyms, container prefixes and demotion.
+      </p>
+      <ul>
+        <li>A variable holding a list of addresses for HTTP servers: <RT·code>httpServers</RT·code></li>
+        <li>A variable counting the total number of parsed HTML nodes: <RT·code>num_html_nodes</RT·code></li>
+        <li>A custom type representing a JSON payload: <RT·code>json_payload</RT·code></li>
+        <li>A boolean indicating if the NASA data download is complete: <RT·code>isNasaDone</RT·code></li>
+        <li>A variable holding multiple absolute file paths for images: <RT·code>imageFiles</RT·code></li>
+      </ul>
+
+      <h2>Exercise 2: identifiers with the hyphen</h2>
+      <p>
+        Rename the same variables for a language that accepts the hyphen, such as Lisp, and check that demoting each answer gives the answer to Exercise 1.
+      </p>
+
+      <h2>Exercise 3: file names</h2>
+      <p>
+        Rename the following poorly named files. Pay attention to the language that reads each name, acronyms, and spelling out abbreviations in outer scope names.
+      </p>
+      <ul>
+        <li>A makefile, included by another, that builds a target library and command line interface: <RT·code>target-lib-cli.mk</RT·code></li>
+        <li>An Emacs Lisp source file for an HTML parsing module: <RT·code>html_parser_mod.el</RT·code></li>
+        <li>A C library module that initializes an HTTP server: <RT·code>init-http-srv.c</RT·code></li>
+      </ul>
+
+      <h2>Exercise 4: namespaces</h2>
+      <p>
+        Name a namespace for the configuration of RT-Style, in Lisp and in C, and a Python module file for its loader.
+      </p>
+
+    </RT·article>
+  </body>
+</html>

@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-  <!DOCTYPE html>
-<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>C modules, namespaces, and the build lifecycle</title>
@@ -26,7 +24,7 @@
     <RT·article>
       <RT·title 
         author="Thomas Walker Lynch" 
-        date="2026-03-11" 
+        date="2026-11-12" 
         title="C modules, namespaces, and the build lifecycle">
       </RT·title>
 
@@ -45,12 +43,11 @@
         The C language lacks native namespaces. To prevent symbol collisions in large projects, RT code format uses a center dot (<RT·code>·</RT·code>) to denote ad hoc namespaces within identifiers. 
       </p>
       <p>
-        A programmer maps the directory structure directly to these namespaces. For example, a file located at <RT·code>authored/ExampleGreet/Math.lib.c</RT·code> belongs to the <RT·code>ExampleGreet</RT·code> namespace and defines the <RT·code>Math</RT·code> module. 
+        A programmer maps the directory structure directly to these namespaces. For example, a file located at <RT·code>developer/authored/ExampleGreet.make/Math.lib.c</RT·code> belongs to the <RT·code>ExampleGreet</RT·code> namespace and defines the <RT·code>Math</RT·code> module. 
       </p>
-      <ul>
-        <li>Types and modules use <RT·code>PascalCase</RT·code>.</li>
-        <li>Functions and variables use <RT·code>snake_case</RT·code>.</li>
-      </ul>
+      <p>
+        Namespaces, modules, functions and variables are named by RT-Style's <RT·code>naming.html</RT·code>. C does not accept the hyphen in identifiers, so names are demoted there: a single underscore joins words, and a double underscore joins components, as in <RT·code>rounded__x_coordinate</RT·code>.
+      </p>
       <p>
         An exported function from this module carries the full namespace and module prefix, such as <RT·code>ExampleGreet·Math·add</RT·code>.
       </p>
@@ -69,7 +66,7 @@
         When a consumer file, such as <RT·code>hello.CLI.c</RT·code>, contains <RT·code>#include "Math.lib.c"</RT·code>, the compiler processes the file without the <RT·code>ExampleGreet·Math</RT·code> macro defined. It skips the implementation and reads only the function prototype.
       </p>
       <p>
-        When the orchestrator compiles the library object, it evaluates the target name and explicitly passes <RT·code>-DExampleGreet·Math</RT·code> to the compiler. This unlocks the gate, compiling the machine code for the definitions into <RT·code>Math.lib.o</RT·code>.
+        When Harmony.mk compiles the library object, it gives the compiler <RT·code>-D&lt;namespace&gt;·&lt;module&gt;</RT·code>, here <RT·code>-DExampleGreet·Math</RT·code>. This unlocks the gate, compiling the machine code for the definitions into <RT·code>Math.lib.o</RT·code>.
       </p>
 
       <h2>Example: Math.lib.c</h2>
@@ -135,35 +132,36 @@
 
       <h1>Directory structure and namespaces</h1>
       <p>
-        The physical layout of the <RT·code>authored</RT·code> directory dictates how the build orchestrator finds the source code.
+        Every source file is in a namespace source directory, <RT·code>developer/authored/&lt;namespace&gt;.&lt;build tool&gt;</RT·code>, and C sources are built by the <RT·code>make</RT·code> build tool, as in <RT·code>developer/authored/ExampleGreet.make/</RT·code>. The build reads only directories with a suffix; Harmony's <RT·code>naming_file-and-directory.html</RT·code> lists the suffixes. The namespace's name is given to the compiler, so the directory name carries it in its demoted form.
       </p>
-      <ul>
-        <li><strong>Flat Structure:</strong> If a project does not utilize namespaces, the <RT·code>.lib.c</RT·code> and <RT·code>.CLI.c</RT·code> files reside directly inside the <RT·code>developer/authored/</RT·code> directory.</li>
-        <li><strong>Namespaced Structure:</strong> If a project utilizes namespaces, the files are grouped into subdirectories matching the namespace name, such as <RT·code>developer/authored/ExampleGreet/</RT·code>.</li>
-      </ul>
 
       <h1>Making the code</h1>
       <p>
-        The developer compiles the code using the <RT·code>make</RT·code> wrapper script located in <RT·code>developer/tool/make</RT·code>. This script accepts two primary arguments: the build command and the target namespace.
+        The developer builds with <RT·code>developer/tool/build</RT·code>, giving it a namespace and a command for that namespace's build tool:
       </p>
 
       <RT·code>
-        > make &lt;command&gt; [namespace]
+        > build ExampleGreet:all
       </RT·code>
 
       <p>
-        To build the <RT·code>ExampleGreet</RT·code> code, a person issues the following command from the developer workspace:
-      </p>
-
-      <RT·code>
-        > make all ExampleGreet
-      </RT·code>
-
-      <p>
-        Behind the scenes, the <RT·code>make</RT·code> wrapper assigns the namespace to an environment variable and calls the master orchestrator makefile. The orchestrator detects the namespace, updates the source directory search path to <RT·code>authored/ExampleGreet</RT·code>, and injects the appropriate namespace macros during compilation. 
+        For a <RT·code>.make</RT·code> namespace, <RT·code>build</RT·code> runs <RT·code>developer/tool/build_component/make</RT·code>, which sets the namespace in the environment and runs <RT·code>shared/tool/makefile/Harmony.mk</RT·code>. Harmony.mk reads three layers of settings, each able to change what the one before set: its own defaults, then the project's <RT·code>developer/tool/build_component/project.mk</RT·code>, then any <RT·code>.mk</RT·code> file in the namespace's source directory, which has the last say.
       </p>
       <p>
-         The orchestrator compiles the <RT·code>.lib.c</RT·code> files into object files under <RT·code>scratchpad/build/object/</RT·code>, archives them into a library file, and links the <RT·code>.CLI.c</RT·code> objects into standalone executables. The final artifacts are placed in the <RT·code>scratchpad/made/</RT·code> directory.
+        Harmony.mk compiles the <RT·code>.lib.c</RT·code> files into object files under <RT·code>scratchpad/build/object/</RT·code>, archives them into the library, and links the <RT·code>.CLI.c</RT·code> objects into stand-alone executables. The library and the executables are placed in <RT·code>scratchpad/made/&lt;namespace&gt;/</RT·code>.
+      </p>
+
+      <h1>A library's product</h1>
+      <p>
+        A program built in another project against this library needs more than the archive. It needs the interface, and in the single-file module the <RT·code>.lib.c</RT·code> file is its own interface. It can also need settings, such as the flags a program built on the library must be compiled with. So the library's product has three parts, all staged together in <RT·code>scratchpad/made/&lt;namespace&gt;/</RT·code>:
+      </p>
+      <ul>
+        <li>the archive, <RT·code>lib&lt;project&gt;.a</RT·code>, named for the project's demoted name;</li>
+        <li>the <RT·code>.lib.c</RT·code> files, as the interface;</li>
+        <li>the namespace's <RT·code>.mk</RT·code> file, holding the settings.</li>
+      </ul>
+      <p>
+        A consuming project links the promoted directory into its <RT·code>shared/project-dependency</RT·code>, and includes the <RT·code>.mk</RT·code> from a <RT·code>.mk</RT·code> of its own, beside the program that uses the library. The <RT·code>.mk</RT·code> can find the interface and the archive from its own location, so the same file serves the library's own build and every consumer's.
       </p>
 
       <h1>Promoting the artifacts</h1>
@@ -176,7 +174,7 @@
       </RT·code>
 
       <p>
-        The <RT·code>promote</RT·code> tool compares the contents of <RT·code>developer/scratchpad/made/</RT·code> against <RT·code>consumer/made/</RT·code>. It atomically copies any new or updated files to the consumer workspace, stripping write permissions to enforce the immutability of the deployment target. Once promoted, the <RT·code>hello</RT·code> executable is ready for testing.
+        The <RT·code>promote</RT·code> tool compares the contents of <RT·code>developer/scratchpad/made/</RT·code> against <RT·code>consumer/</RT·code>. It atomically copies any new or updated files to the consumer workspace, stripping write permissions to enforce the immutability of the deployment target. Once promoted, the <RT·code>hello</RT·code> executable is ready for testing.
       </p>
 
     </RT·article>
